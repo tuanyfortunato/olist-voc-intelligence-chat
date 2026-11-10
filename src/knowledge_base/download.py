@@ -1,8 +1,8 @@
 """Download da base de avaliações da Olist pela API do Kaggle.
 
-A base completa tem nove tabelas. Baixamos apenas as cinco que o projeto usa:
-avaliações (texto e nota), pedidos (datas de entrega), itens do pedido (ligação
-com o produto), produtos (categoria) e a tradução das categorias.
+A base completa tem nove tabelas, mas só cinco são usadas no projeto: avaliações
+(texto e nota), pedidos (datas de entrega), itens do pedido (ligação com o
+produto), produtos (categoria) e a tradução das categorias.
 
 A autenticação usa o token salvo em ~/.kaggle/access_token.
 """
