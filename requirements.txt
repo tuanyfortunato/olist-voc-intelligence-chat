@@ -1,0 +1,13 @@
+# Leitura e análise dos CSVs da Olist
+pandas==3.1.1
+
+# Permite rodar os notebooks dentro do VS Code
+ipykernel==7.4.0
+
+# Download da base pela API do Kaggle
+kaggle==2.2.5
+# Dependência que a versão 2.2.5 do kaggle usa, mas não instala sozinha
+six==1.17.0
+
+# Leitura do arquivo .env
+python-dotenv==1.2.4
