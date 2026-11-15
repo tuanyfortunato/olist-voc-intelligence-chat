@@ -1,0 +1,17 @@
+# Avaliação das perguntas de teste, com o CSV salvo como artifact.
+# Disparo manual. O conteúdo entra na etapa de geração.
+name: Evaluate
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Teste do workflow
+        run: echo "Workflow pronto para receber conteúdo"
