@@ -61,6 +61,14 @@ data "aws_iam_policy_document" "task" {
     actions   = ["s3:GetObject"]
     resources = ["arn:aws:s3:::${var.index_bucket}/index/current/*"]
   }
+
+  # A calibração e a avaliação rodam em tarefas avulsas, dentro da rede do
+  # banco, e deixam as tabelas em results/ para o workflow baixar
+  statement {
+    sid       = "GravarResultados"
+    actions   = ["s3:PutObject"]
+    resources = ["arn:aws:s3:::${var.index_bucket}/results/*"]
+  }
 }
 
 resource "aws_iam_role_policy" "task" {
