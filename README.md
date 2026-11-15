@@ -18,8 +18,10 @@ Crie o ambiente virtual e instale as dependências:
 ```bash
 python3.12 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 ```
+
+O `requirements-dev.txt` inclui as dependências de produção e acrescenta o notebook, os testes e o Ruff.
 
 Copie o modelo de configuração e ajuste os valores, se necessário:
 

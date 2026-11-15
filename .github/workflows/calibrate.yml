@@ -1,0 +1,17 @@
+# Calibração da busca: 30 comentários por pergunta de teste, com o score.
+# Disparo manual. O conteúdo entra na etapa de recuperação.
+name: Calibrate retrieval
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  calibrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Teste do workflow
+        run: echo "Workflow pronto para receber conteúdo"
