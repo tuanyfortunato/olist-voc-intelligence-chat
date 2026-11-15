@@ -1,6 +1,8 @@
 # Geração do índice do Chroma. Disparo manual.
 # Modo prepare: baixa a base, prepara os documentos e mostra as contagens.
-# Modo full: faz o mesmo e gera o índice (o envio ao S3 entra na etapa de indexação).
+# Modo full: faz o mesmo, gera o índice e envia ao S3 junto com o manifesto.
+# Se a indexação falhar no meio, o que já foi gravado fica em index/work/ no
+# bucket, e a próxima execução continua dali.
 name: Build index
 
 on:
@@ -48,8 +50,30 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: us-east-1
 
+      - name: Recuperar uma indexação interrompida
+        if: inputs.mode == 'full'
+        run: aws s3 sync "s3://${{ vars.INDEX_BUCKET }}/index/work/" data/index/
+
       - name: Preparar a base e gerar o índice
         run: python -m scripts.build_index --mode ${{ inputs.mode }}
+
+      - name: Enviar o índice ao S3
+        if: inputs.mode == 'full'
+        env:
+          INDEX_BUCKET: ${{ vars.INDEX_BUCKET }}
+        run: python -m scripts.upload_index
+
+      - name: Guardar o progresso para a próxima execução
+        if: failure() && inputs.mode == 'full'
+        run: aws s3 sync data/index/ "s3://${{ vars.INDEX_BUCKET }}/index/work/"
+
+      - name: Apagar o progresso parcial
+        if: success() && inputs.mode == 'full'
+        run: aws s3 rm --recursive "s3://${{ vars.INDEX_BUCKET }}/index/work/"
+
+      - name: Tamanho do índice
+        if: success() && inputs.mode == 'full'
+        run: du -sh data/index
 
       - name: Guardar o resumo da preparação
         if: always()
