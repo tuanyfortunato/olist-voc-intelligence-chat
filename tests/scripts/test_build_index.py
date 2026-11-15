@@ -59,8 +59,9 @@ def test_prepare_mode_writes_summary(tmp_path):
 
 def test_build_full_index_writes_manifest(tmp_path, settings):
     write_tables(tmp_path)
+    from src.knowledge_base.embedding_store import read_embeddings
     from src.knowledge_base.preparation import build_documents, load_tables
-    from src.vector_store import open_collection, read_manifest
+    from src.vector_store import read_manifest
 
     documents = build_documents(load_tables(tmp_path))
     index_dir = tmp_path / "index"
@@ -74,4 +75,6 @@ def test_build_full_index_writes_manifest(tmp_path, settings):
     assert manifest.distance == "cosine"
     assert manifest.categories == ["telefonia"]
     assert read_manifest(index_dir) == manifest
-    assert open_collection(index_dir, settings.collection_name).count() == 1
+    frame = read_embeddings(index_dir / "embeddings.parquet")
+    assert list(frame["review_id"]) == ["r1"]
+    assert len(frame["embedding"][0]) == 3

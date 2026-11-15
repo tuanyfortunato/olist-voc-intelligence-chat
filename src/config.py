@@ -23,7 +23,6 @@ class Settings:
 
     # Índice
     index_dir: str = "data/index"
-    collection_name: str = "olist_reviews"
     index_workers: int = 2
 
     # Recuperação. O score mínimo, o top-k e o corte dos comentários curtos

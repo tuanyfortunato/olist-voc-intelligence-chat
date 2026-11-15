@@ -1,8 +1,8 @@
-"""Geração dos embeddings e gravação no Chroma.
+"""Geração dos embeddings e gravação de cada lote.
 
 Os documentos vão ao modelo em lotes, com alguns lotes ao mesmo tempo, e cada
-lote é gravado no Chroma assim que volta. Se a execução parar no meio, a
-próxima pula os documentos que já estão na coleção e continua dali.
+lote é gravado assim que volta. Se a execução parar no meio, a próxima pula os
+documentos que já foram gravados e continua dali.
 """
 
 import logging
@@ -61,13 +61,13 @@ def embed_with_retry(
 
 def index_documents(
     documents: list[ReviewDocument],
-    collection,
+    store,
     embed: EmbedFunction,
     workers: int,
     batch_size: int = 96,
 ) -> IndexStats:
     start = time.monotonic()
-    existing = set(collection.get(include=[])["ids"])
+    existing = store.existing_ids()
     pending = [doc for doc in documents if doc.review_id not in existing]
     skipped = len(documents) - len(pending)
     batches = [pending[i : i + batch_size] for i in range(0, len(pending), batch_size)]
@@ -88,7 +88,7 @@ def index_documents(
         # A gravação fica na thread principal, um lote por vez
         for future in as_completed(futures):
             batch = futures[future]
-            collection.add(
+            store.add(
                 ids=[doc.review_id for doc in batch],
                 embeddings=future.result(),
                 documents=[doc.embedding_text for doc in batch],

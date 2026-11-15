@@ -1,4 +1,4 @@
-"""Envia o índice do Chroma e o manifesto para o S3, substituindo a versão anterior.
+"""Envia os embeddings e o manifesto para o S3, substituindo a versão anterior.
 
 Uso, a partir da raiz do projeto, com a variável INDEX_BUCKET definida:
     python -m scripts.upload_index
@@ -17,9 +17,12 @@ logger = logging.getLogger(__name__)
 
 INDEX_PREFIX = "index/current"
 
+# Só os arquivos finais vão para o S3; as partes intermediárias ficam no runner
+FINAL_FILES = ["embeddings.parquet", "manifest.json"]
+
 
 def upload_index(index_dir: Path, bucket: str, prefix: str = INDEX_PREFIX, s3=None) -> int:
-    """Apaga o que houver no prefixo e envia todos os arquivos de index_dir. Devolve quantos."""
+    """Apaga o que houver no prefixo e envia os arquivos finais de index_dir. Devolve quantos."""
     s3 = s3 or boto3.client("s3", region_name=get_settings().aws_region)
 
     old_keys = [
@@ -31,10 +34,9 @@ def upload_index(index_dir: Path, bucket: str, prefix: str = INDEX_PREFIX, s3=No
         chunk = old_keys[start : start + 1000]
         s3.delete_objects(Bucket=bucket, Delete={"Objects": [{"Key": key} for key in chunk]})
 
-    files = [path for path in Path(index_dir).rglob("*") if path.is_file()]
+    files = [Path(index_dir) / name for name in FINAL_FILES]
     for path in files:
-        key = f"{prefix}/{path.relative_to(index_dir).as_posix()}"
-        s3.upload_file(str(path), bucket, key)
+        s3.upload_file(str(path), bucket, f"{prefix}/{path.name}")
     logger.info(
         "etapa=envio_indice arquivos=%d removidos=%d destino=s3://%s/%s",
         len(files),

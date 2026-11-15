@@ -1,8 +1,12 @@
-"""Prepara a base de conhecimento e gera o índice do Chroma.
+"""Prepara a base de conhecimento e gera os embeddings.
 
 Uso, a partir da raiz do projeto:
     python -m scripts.build_index --mode prepare   # só prepara e mostra os números
-    python -m scripts.build_index --mode full      # prepara, indexa e grava o manifesto
+    python -m scripts.build_index --mode full      # prepara, gera os embeddings e o manifesto
+
+O resultado do modo full fica em data/index/: embeddings.parquet, com um vetor
+por avaliação, e manifest.json. A carga no PostgreSQL é feita depois, por
+scripts/load_vectors.py.
 """
 
 import argparse
@@ -11,11 +15,10 @@ import logging
 from datetime import UTC, datetime
 from pathlib import Path
 
-import chromadb
-
 from src.aws.bedrock import embed_texts, get_runtime_client
 from src.config import Settings, get_settings
 from src.knowledge_base.download import RAW_DATA_DIR
+from src.knowledge_base.embedding_store import ParquetEmbeddingStore
 from src.knowledge_base.indexing import EmbedFunction, index_documents
 from src.knowledge_base.preparation import (
     MIXED_CATEGORY,
@@ -26,28 +29,22 @@ from src.knowledge_base.preparation import (
     summarize,
 )
 from src.logging_config import setup_logging
-from src.vector_store import (
-    DISTANCE,
-    IndexManifest,
-    check_manifest,
-    open_collection,
-    write_manifest,
-)
+from src.vector_store import DISTANCE, IndexManifest, check_manifest, write_manifest
 
 logger = logging.getLogger(__name__)
 
 SUMMARY_PATH = Path("data/prepare_summary.json")
+EMBEDDINGS_FILE = "embeddings.parquet"
 
 
 def build_full_index(
     documents: list[ReviewDocument], settings: Settings, embed: EmbedFunction, index_dir: Path
 ) -> IndexManifest:
-    """Indexa os documentos que ainda não estão na coleção e grava o manifesto."""
-    index_dir.mkdir(parents=True, exist_ok=True)
-    collection = open_collection(index_dir, settings.collection_name, create=True)
+    """Gera os embeddings que ainda faltam, junta tudo num Parquet e grava o manifesto."""
+    store = ParquetEmbeddingStore(index_dir)
     stats = index_documents(
         documents,
-        collection,
+        store,
         embed,
         workers=settings.index_workers,
         batch_size=settings.embedding_batch_size,
@@ -59,9 +56,9 @@ def build_full_index(
         stats.seconds,
     )
 
-    count = collection.count()
+    count = store.write_final(index_dir / EMBEDDINGS_FILE)
     if count != len(documents):
-        raise RuntimeError(f"A coleção tem {count} documentos, mas a base tem {len(documents)}.")
+        raise RuntimeError(f"O arquivo tem {count} embeddings, mas a base tem {len(documents)}.")
 
     manifest = IndexManifest(
         embedding_model_id=settings.embedding_model_id,
@@ -69,7 +66,6 @@ def build_full_index(
         distance=DISTANCE,
         created_at=datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
         document_count=count,
-        chroma_version=chromadb.__version__,
         categories=sorted({doc.category for doc in documents} - {MIXED_CATEGORY, UNKNOWN}),
     )
     write_manifest(index_dir, manifest)

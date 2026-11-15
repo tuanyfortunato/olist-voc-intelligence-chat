@@ -1,9 +1,9 @@
 import pytest
 from botocore.exceptions import ClientError
 
+from src.knowledge_base.embedding_store import ParquetEmbeddingStore, read_embeddings
 from src.knowledge_base.indexing import embed_with_retry, index_documents
 from src.knowledge_base.preparation import ReviewDocument
-from src.vector_store import open_collection
 
 
 def make_doc(i):
@@ -48,8 +48,8 @@ class FlakyEmbed:
 
 
 @pytest.fixture
-def collection(tmp_path):
-    return open_collection(tmp_path, "teste", create=True)
+def store(tmp_path):
+    return ParquetEmbeddingStore(tmp_path)
 
 
 @pytest.fixture
@@ -57,26 +57,31 @@ def docs():
     return [make_doc(i) for i in range(5)]
 
 
-def test_index_documents_skips_existing(collection, docs):
-    index_documents(docs[:2], collection, fake_embed, workers=2, batch_size=2)
-    stats = index_documents(docs, collection, fake_embed, workers=2, batch_size=2)
+def test_index_documents_skips_existing(store, docs):
+    index_documents(docs[:2], store, fake_embed, workers=2, batch_size=2)
+    stats = index_documents(docs, store, fake_embed, workers=2, batch_size=2)
     assert stats.skipped == 2
     assert stats.indexed == 3
-    assert collection.count() == 5
+    assert len(store.existing_ids()) == 5
 
 
-def test_index_documents_sends_batches(collection, docs):
+def test_index_documents_sends_batches(store, docs):
     embed = RecordingEmbed()
-    index_documents(docs, collection, embed, workers=1, batch_size=2)
+    index_documents(docs, store, embed, workers=1, batch_size=2)
     assert sorted(len(batch) for batch in embed.batches) == [1, 2, 2]
 
 
-def test_index_documents_stores_metadata_and_text(collection, docs):
-    index_documents(docs, collection, fake_embed, workers=1, batch_size=10)
-    stored = collection.get(ids=["r3"], include=["metadatas", "documents"])
-    assert stored["documents"] == ["Comentário 3"]
-    assert stored["metadatas"][0]["delivery"] == "no_prazo"
-    assert stored["metadatas"][0]["rating"] == 5
+def test_index_documents_stores_metadata_and_text(store, docs):
+    index_documents(docs, store, fake_embed, workers=1, batch_size=10)
+    store.write_final(store.parts_dir.parent / "embeddings.parquet")
+    row = (
+        read_embeddings(store.parts_dir.parent / "embeddings.parquet")
+        .set_index("review_id")
+        .loc["r3"]
+    )
+    assert row["embedding_text"] == "Comentário 3"
+    assert row["delivery"] == "no_prazo"
+    assert row["rating"] == 5
 
 
 def test_embed_with_retry_retries_throttling():
@@ -99,11 +104,11 @@ def test_embed_with_retry_raises_other_errors_immediately():
     assert embed.count == 1
 
 
-def test_failed_batch_cancels_pending_batches(collection):
+def test_failed_batch_cancels_pending_batches(store):
     docs = [make_doc(i) for i in range(10)]
     embed = FlakyEmbed(fail_times=100, code="ValidationException")
     with pytest.raises(ClientError):
-        index_documents(docs, collection, embed, workers=1, batch_size=1)
+        index_documents(docs, store, embed, workers=1, batch_size=1)
     # A thread pode já ter começado o lote seguinte quando o cancelamento chega
     assert embed.count <= 2
 
