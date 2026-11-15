@@ -31,12 +31,15 @@ def test_select_reviews_respects_top_k():
 
 
 def test_select_reviews_prefers_diverse_over_duplicate():
+    # A pergunta fica entre "a" e "b"; depois de escolher "a", a cópia de "a" não
+    # acrescenta nada, e o MMR prefere "b", mesmo com similaridade menor
+    query = [1, 0.2, 0]
     cands = [
-        cand("a", 0.95, [1, 0, 0]),
-        cand("a_copia", 0.95, [1, 0, 0]),
-        cand("b", 0.7, [0.7, 0.7, 0]),
+        cand("a", 0.98, [1, 0, 0]),
+        cand("a_copia", 0.98, [1, 0, 0]),
+        cand("b", 0.75, [0.6, 0.8, 0]),
     ]
-    ids = [r.review_id for r in select_reviews(cands, [1, 0, 0], 0.0, top_k=2, lambda_mult=0.5)]
+    ids = [r.review_id for r in select_reviews(cands, query, 0.0, top_k=2, lambda_mult=0.5)]
     assert ids[0] in {"a", "a_copia"} and "b" in ids
 
 
