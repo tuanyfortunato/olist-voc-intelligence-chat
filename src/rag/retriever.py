@@ -43,7 +43,9 @@ def _to_candidate(row) -> Candidate:
         original_text=original_text,
         similarity=distance_to_similarity(float(distance)),
     )
-    return Candidate(review=review, embedding=list(embedding))
+    # O pgvector devolve o vetor como objeto Vector ou como array, conforme a versão
+    values = embedding.to_list() if hasattr(embedding, "to_list") else list(embedding)
+    return Candidate(review=review, embedding=[float(value) for value in values])
 
 
 def query_candidates(conn, query_embedding: list[float], n: int) -> list[Candidate]:
