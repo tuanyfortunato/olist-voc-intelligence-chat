@@ -1,9 +1,20 @@
-# Avaliação das perguntas de teste, com o CSV salvo como artifact.
-# Disparo manual. O conteúdo entra na etapa de geração.
+# Avaliação das perguntas de teste pelo pipeline completo. Disparo manual,
+# escolhendo a branch e as perguntas. Roda numa tarefa avulsa do ECS com a
+# imagem da branch, e o CSV fica como artifact da execução.
 name: Evaluate
 
 on:
   workflow_dispatch:
+    inputs:
+      question_ids:
+        description: "Perguntas separadas por vírgula, como 1,2,3,7; vazio roda todas"
+        type: string
+        default: ""
+      log_level:
+        description: "DEBUG mostra os prompts e as respostas completas no log"
+        type: choice
+        options: [INFO, DEBUG]
+        default: INFO
 
 permissions:
   contents: read
@@ -12,6 +23,49 @@ permissions:
 jobs:
   evaluate:
     runs-on: ubuntu-latest
+    timeout-minutes: 75
     steps:
-      - name: Teste do workflow
-        run: echo "Workflow pronto para receber conteúdo"
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.17.2"
+          terraform_wrapper: false
+
+      - name: Acesso à AWS pelo OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Ler os nomes dos recursos no Terraform
+        working-directory: infra
+        run: |
+          terraform init -input=false -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" > /dev/null
+          terraform output -json > ../outputs.json
+          for name in ecr_repository_url ecs_cluster_name task_family task_security_group_id; do
+            echo "$(echo "$name" | tr a-z A-Z)=$(jq -r ".${name}.value" ../outputs.json)" >> "$GITHUB_ENV"
+          done
+          echo "SUBNETS=$(jq -r '.public_subnet_ids.value | join(",")' ../outputs.json)" >> "$GITHUB_ENV"
+
+      - name: Construir e enviar a imagem da branch
+        run: |
+          aws ecr get-login-password | docker login --username AWS --password-stdin "${ECR_REPOSITORY_URL%%/*}"
+          docker build -t "$ECR_REPOSITORY_URL:${{ github.sha }}" .
+          docker push "$ECR_REPOSITORY_URL:${{ github.sha }}"
+
+      - name: Rodar a avaliação
+        run: >-
+          scripts/run_ecs_task.sh "$ECR_REPOSITORY_URL:${{ github.sha }}"
+          env LOG_LEVEL=${{ inputs.log_level }}
+          python -m scripts.run_evaluation --ids "${{ inputs.question_ids }}"
+
+      - name: Baixar o CSV
+        run: |
+          mkdir -p avaliacao
+          aws s3 cp "s3://${{ vars.INDEX_BUCKET }}/results/avaliacao.csv" avaliacao/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: avaliacao
+          path: avaliacao/

@@ -79,3 +79,24 @@ class RagPipeline:
             original_question=question,
             search_topic=topic,
         )
+
+
+def build_pipeline(settings: Settings) -> RagPipeline:
+    """Monta o pipeline com os modelos do Bedrock e a busca no PostgreSQL."""
+    from src.aws.bedrock import embed_query, get_chat_model, get_runtime_client
+    from src.rag.retriever import retrieve
+    from src.vector_db import connect
+
+    client = get_runtime_client(settings)
+
+    def search(embedding: list[float]) -> list[RetrievedReview]:
+        with connect(settings) as conn:
+            return retrieve(conn, embedding, settings)
+
+    return RagPipeline(
+        settings=settings,
+        analysis_llm=get_chat_model(settings, settings.analysis_max_tokens),
+        answer_llm=get_chat_model(settings, settings.answer_max_tokens),
+        embed=lambda text: embed_query(client, text, settings),
+        search=search,
+    )
