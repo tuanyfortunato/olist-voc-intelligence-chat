@@ -1,0 +1,14 @@
+# Configuração das ferramentas de desenvolvimento. O projeto não é empacotado.
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+# O notebook de exploração já foi revisado e não deve ser reformatado
+extend-exclude = ["notebooks"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

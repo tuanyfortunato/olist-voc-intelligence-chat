@@ -1,8 +1,9 @@
-# Leitura e análise dos CSVs da Olist
-pandas==3.1.1
+# Dependências da API e dos scripts que rodam nos workflows.
+# É o que vai para a imagem do contêiner. Ferramentas de desenvolvimento
+# ficam em requirements-dev.txt.
 
-# Permite rodar os notebooks dentro do VS Code
-ipykernel==7.4.0
+# Leitura e preparação dos CSVs da Olist
+pandas==3.1.1
 
 # Download da base pela API do Kaggle
 kaggle==2.2.5
@@ -11,3 +12,26 @@ six==1.17.0
 
 # Leitura do arquivo .env
 python-dotenv==1.2.4
+
+# Acesso à AWS: Bedrock e S3
+boto3==1.44.3
+
+# Banco vetorial
+chromadb==1.5.9
+
+# Modelos do Bedrock, prompts e MMR
+langchain-core==1.8.1
+langchain-aws==1.9.3
+langchain-chroma==1.1.0
+
+# API
+fastapi==0.163.1
+uvicorn==0.54.0
+pydantic==2.14.3
+
+# Leitura das perguntas de teste (evaluation/questions.yaml)
+PyYAML==6.0.3
+
+# Base de fusos horários para o limite diário de perguntas.
+# A imagem slim do Python não traz essa base.
+tzdata==2026.6
