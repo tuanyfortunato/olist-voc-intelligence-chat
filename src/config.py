@@ -34,13 +34,16 @@ class Settings:
     db_password: str = ""
     db_sslmode: str = "require"
 
-    # Recuperação. O score mínimo, o top-k e o corte dos comentários curtos
-    # são calibrados na etapa 5.
+    # Recuperação, com os valores escolhidos na calibração (docs/07): score
+    # mínimo entre o ruído da pergunta sem evidência e os comentários das
+    # perguntas com evidência, 15 comentários depois do MMR, busca pelo tema
+    # reescrito e sem corte de comentários curtos.
     candidates_k: int = 40
     top_k: int = 15
-    min_similarity: float = 0.0
+    min_similarity: float = 0.58
     mmr_lambda: float = 0.5
     min_comment_chars: int = 0
+    use_rewrite: bool = True
 
     # Geração
     analysis_max_tokens: int = 300
@@ -56,6 +59,13 @@ class Settings:
     log_level: str = "INFO"
 
 
+def _convert(raw: str, default):
+    # bool("false") é True em Python, então os campos verdadeiro/falso têm conversão própria
+    if isinstance(default, bool):
+        return raw.strip().lower() in {"1", "true", "sim", "yes"}
+    return type(default)(raw)
+
+
 @lru_cache
 def get_settings() -> Settings:
     """Monta a configuração a partir do ambiente, convertendo cada valor para o tipo do campo."""
@@ -64,5 +74,5 @@ def get_settings() -> Settings:
     for field in fields(Settings):
         raw = os.getenv(field.name.upper())
         if raw is not None:
-            values[field.name] = type(field.default)(raw)
+            values[field.name] = _convert(raw, field.default)
     return Settings(**values)

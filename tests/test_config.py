@@ -31,3 +31,21 @@ def test_env_overrides_and_types(monkeypatch):
 def test_settings_are_cached(monkeypatch):
     get_settings.cache_clear()
     assert get_settings() is get_settings()
+
+
+def test_calibrated_defaults(monkeypatch):
+    for name in ["MIN_SIMILARITY", "TOP_K", "USE_REWRITE", "MIN_COMMENT_CHARS"]:
+        monkeypatch.delenv(name, raising=False)
+    get_settings.cache_clear()
+    settings = get_settings()
+    assert settings.min_similarity == 0.58
+    assert settings.top_k == 15
+    assert settings.use_rewrite is True
+    assert settings.min_comment_chars == 0
+
+
+def test_boolean_from_environment(monkeypatch):
+    for raw, expected in [("false", False), ("0", False), ("true", True), ("1", True)]:
+        monkeypatch.setenv("USE_REWRITE", raw)
+        get_settings.cache_clear()
+        assert get_settings().use_rewrite is expected
