@@ -51,3 +51,14 @@ def test_write_final_joins_parts_without_duplicates(tmp_path):
     assert row["embedding_text"] == "Texto r1 aprovado"
     assert row["original_text"] == "Texto r1 👍"
     assert row["rating"] == 5
+
+
+def test_write_final_accepts_metadata_in_different_key_order(tmp_path):
+    store = ParquetEmbeddingStore(tmp_path)
+    add(store, ["r1"])
+    reversed_metadata = dict(reversed(list(metadata("r2").items())))
+    store.add(
+        ids=["r2"], embeddings=[[0.1, 0.2, 0.3]], documents=["x"], metadatas=[reversed_metadata]
+    )
+
+    assert store.write_final(tmp_path / "embeddings.parquet") == 2

@@ -38,6 +38,9 @@ class ParquetEmbeddingStore:
         frame = pd.DataFrame(metadatas)
         frame["review_id"] = ids
         frame["embedding_text"] = documents
+        # Ordem fixa das colunas: os metadados podem chegar com as chaves em
+        # qualquer ordem, e partes com ordens diferentes não podem ser juntadas
+        frame = frame[sorted(frame.columns)]
         table = pa.Table.from_pandas(frame, preserve_index=False).append_column(
             "embedding", pa.array(embeddings, type=pa.list_(pa.float32()))
         )
