@@ -1,0 +1,74 @@
+# Carga dos embeddings no PostgreSQL. Disparo manual.
+# O banco fica numa rede privada da AWS, que o GitHub Actions não alcança; por
+# isso a carga roda numa tarefa avulsa do ECS, com a mesma imagem da API.
+name: Load vectors
+
+on:
+  workflow_dispatch:
+    inputs:
+      start_api:
+        description: "Ligar a API depois da carga (1 tarefa)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  load:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.17.2"
+          terraform_wrapper: false
+
+      - name: Acesso à AWS pelo OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Ler os nomes dos recursos no Terraform
+        working-directory: infra
+        run: |
+          terraform init -input=false -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" > /dev/null
+          terraform output -json > ../outputs.json
+          for name in ecs_cluster_name ecs_service_name task_family task_security_group_id cloudfront_url; do
+            echo "$(echo "$name" | tr a-z A-Z)=$(jq -r ".${name}.value" ../outputs.json)" >> "$GITHUB_ENV"
+          done
+          echo "SUBNETS=$(jq -r '.public_subnet_ids.value | join(",")' ../outputs.json)" >> "$GITHUB_ENV"
+
+      - name: Rodar a carga numa tarefa avulsa
+        run: |
+          TASK_DEF=$(aws ecs describe-services --cluster "$ECS_CLUSTER_NAME" --services "$ECS_SERVICE_NAME" --query 'services[0].taskDefinition' --output text)
+          TASK_ARN=$(aws ecs run-task \
+            --cluster "$ECS_CLUSTER_NAME" \
+            --task-definition "$TASK_DEF" \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[$SUBNETS],securityGroups=[$TASK_SECURITY_GROUP_ID],assignPublicIp=ENABLED}" \
+            --overrides '{"containerOverrides":[{"name":"api","command":["python","-m","scripts.load_vectors"]}]}' \
+            --query 'tasks[0].taskArn' --output text)
+          echo "TASK_ARN=$TASK_ARN" >> "$GITHUB_ENV"
+          echo "Tarefa: $TASK_ARN"
+          aws ecs wait tasks-stopped --cluster "$ECS_CLUSTER_NAME" --tasks "$TASK_ARN"
+
+      - name: Resultado da carga
+        run: |
+          TASK_ID="${TASK_ARN##*/}"
+          aws logs get-log-events --log-group-name /ecs/olist-voc-api --log-stream-name "api/api/$TASK_ID" \
+            --query 'events[].message' --output text | tr '\t' '\n' | tail -20 || true
+          EXIT_CODE=$(aws ecs describe-tasks --cluster "$ECS_CLUSTER_NAME" --tasks "$TASK_ARN" --query 'tasks[0].containers[0].exitCode' --output text)
+          REASON=$(aws ecs describe-tasks --cluster "$ECS_CLUSTER_NAME" --tasks "$TASK_ARN" --query 'tasks[0].stoppedReason' --output text)
+          echo "Código de saída: $EXIT_CODE ($REASON)"
+          [ "$EXIT_CODE" = "0" ]
+
+      - name: Ligar a API
+        if: inputs.start_api
+        run: |
+          aws ecs update-service --cluster "$ECS_CLUSTER_NAME" --service "$ECS_SERVICE_NAME" --desired-count 1 > /dev/null
+          aws ecs wait services-stable --cluster "$ECS_CLUSTER_NAME" --services "$ECS_SERVICE_NAME"
+          curl -fsS --retry 5 --retry-delay 10 "$CLOUDFRONT_URL/api/health"

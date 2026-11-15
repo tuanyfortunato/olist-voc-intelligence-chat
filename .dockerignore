@@ -1,0 +1,13 @@
+.git
+.github
+.venv
+data
+local
+notebooks
+tests
+infra
+frontend
+docs
+**/__pycache__
+**/*.pyc
+.env

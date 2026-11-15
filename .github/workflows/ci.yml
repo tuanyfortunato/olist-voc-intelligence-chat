@@ -12,6 +12,21 @@ permissions:
 jobs:
   lint-and-test:
     runs-on: ubuntu-latest
+    # PostgreSQL com pgvector só para os testes do banco vetorial
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
     steps:
       - uses: actions/checkout@v4
 
@@ -34,3 +49,14 @@ jobs:
 
       - name: Testes
         run: pytest
+
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Construir a imagem da API
+        run: docker build -t olist-voc-api:ci .
+
+      - name: Conferir que a API e a carga importam dentro da imagem
+        run: docker run --rm olist-voc-api:ci python -c "import src.api.main, scripts.load_vectors"
