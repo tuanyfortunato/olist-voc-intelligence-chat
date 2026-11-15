@@ -1,0 +1,36 @@
+# Arquivos pessoais e de planejamento, fora do versionamento
+local/
+
+# Variáveis de ambiente com configurações e segredos
+.env
+
+# Dados baixados do Kaggle e índice do Chroma (gerados localmente)
+data/
+
+# Ambiente virtual do Python
+.venv/
+
+# Arquivos temporários do Python e do Jupyter
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Arquivos do sistema operacional e do editor
+.DS_Store
+.vscode/
+
+# Terraform: estado, variáveis locais e providers baixados.
+# O estado pode conter senhas e identificadores da conta AWS.
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc

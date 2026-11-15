@@ -1,0 +1,24 @@
+# Geração do índice do Chroma. Disparo manual.
+# Por enquanto só confirma que o workflow está disponível; o conteúdo
+# entra nas etapas de preparação e indexação.
+name: Build index
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "prepare: só prepara a base e mostra os números; full: gera o índice e envia ao S3"
+        type: choice
+        options: [full, prepare]
+        default: full
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build-index:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Teste do workflow
+        run: echo "Workflow pronto para receber conteúdo (modo ${{ inputs.mode }})"
