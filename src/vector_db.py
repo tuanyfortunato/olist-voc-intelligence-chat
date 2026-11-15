@@ -105,12 +105,12 @@ def load_reviews(conn: psycopg.Connection, frame: pd.DataFrame) -> int:
                     values = list(row)
                     values[1] = np.asarray(values[1], dtype=np.float32)
                     copy.write_row(values)
-        # A instância db.t4g.micro tem 1 GB. Com construção em paralelo, o
-        # PostgreSQL pede uma área de memória compartilhada do tamanho de
-        # maintenance_work_mem, e 256 MB não couberam. Sem paralelismo e com
-        # 128 MB, o pgvector termina a construção em disco se precisar.
+        # O índice de 40.521 vetores de 1024 posições precisa de uns 175 MB para
+        # ser construído na memória; com menos, o pgvector usa o disco e leva
+        # dezenas de minutos. Sem paralelismo, porque a construção em paralelo
+        # pede uma área de memória compartilhada que a instância pequena não tem.
         conn.execute("SET LOCAL max_parallel_maintenance_workers = 0")
-        conn.execute("SET LOCAL maintenance_work_mem = '128MB'")
+        conn.execute("SET LOCAL maintenance_work_mem = '512MB'")
         conn.execute(
             f"CREATE INDEX {INDEX_NAME} ON reviews USING hnsw (embedding vector_cosine_ops)"
         )

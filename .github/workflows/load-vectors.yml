@@ -18,6 +18,7 @@ permissions:
 jobs:
   load:
     runs-on: ubuntu-latest
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@v4
 
@@ -54,7 +55,14 @@ jobs:
             --query 'tasks[0].taskArn' --output text)
           echo "TASK_ARN=$TASK_ARN" >> "$GITHUB_ENV"
           echo "Tarefa: $TASK_ARN"
-          aws ecs wait tasks-stopped --cluster "$ECS_CLUSTER_NAME" --tasks "$TASK_ARN"
+          # O "aws ecs wait" desiste em 10 minutos; a construção do índice pode
+          # levar mais. Aqui a espera vai até 60 minutos.
+          for i in $(seq 1 120); do
+            STATUS=$(aws ecs describe-tasks --cluster "$ECS_CLUSTER_NAME" --tasks "$TASK_ARN" --query 'tasks[0].lastStatus' --output text)
+            [ "$STATUS" = "STOPPED" ] && break
+            sleep 30
+          done
+          [ "$STATUS" = "STOPPED" ] || { echo "A tarefa não terminou em 60 minutos."; exit 1; }
 
       - name: Resultado da carga
         run: |
