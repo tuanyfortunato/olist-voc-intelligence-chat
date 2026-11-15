@@ -1,6 +1,6 @@
 # Geração do índice do Chroma. Disparo manual.
-# Por enquanto só confirma que o workflow está disponível; o conteúdo
-# entra nas etapas de preparação e indexação.
+# Por enquanto só confirma o acesso à AWS pelo OIDC; a preparação e a
+# indexação entram nas próximas etapas.
 name: Build index
 
 on:
@@ -20,5 +20,11 @@ jobs:
   build-index:
     runs-on: ubuntu-latest
     steps:
-      - name: Teste do workflow
-        run: echo "Workflow pronto para receber conteúdo (modo ${{ inputs.mode }})"
+      - name: Acesso à AWS pelo OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Conta e papel em uso
+        run: aws sts get-caller-identity
