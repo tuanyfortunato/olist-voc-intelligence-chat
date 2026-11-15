@@ -71,11 +71,12 @@ def index_documents(
     )
 
     indexed = 0
-    with ThreadPoolExecutor(max_workers=workers) as executor:
-        futures = {
-            executor.submit(embed_with_retry, embed, [doc.embedding_text for doc in batch]): batch
-            for batch in batches
-        }
+    executor = ThreadPoolExecutor(max_workers=workers)
+    futures = {
+        executor.submit(embed_with_retry, embed, [doc.embedding_text for doc in batch]): batch
+        for batch in batches
+    }
+    try:
         # A gravação fica na thread principal, um lote por vez
         for future in as_completed(futures):
             batch = futures[future]
@@ -92,5 +93,11 @@ def index_documents(
                 len(pending),
                 time.monotonic() - start,
             )
+    except BaseException:
+        # Um lote que falhou de vez para a execução. Os lotes ainda na fila são
+        # cancelados para não gastar chamadas cujo resultado não seria gravado.
+        executor.shutdown(wait=True, cancel_futures=True)
+        raise
+    executor.shutdown(wait=True)
 
     return IndexStats(indexed=indexed, skipped=skipped, seconds=time.monotonic() - start)

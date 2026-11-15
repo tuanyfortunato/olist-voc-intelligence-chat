@@ -97,3 +97,12 @@ def test_embed_with_retry_raises_other_errors_immediately():
     with pytest.raises(ClientError):
         embed_with_retry(embed, ["x"], sleep=lambda s: None)
     assert embed.count == 1
+
+
+def test_failed_batch_cancels_pending_batches(collection):
+    docs = [make_doc(i) for i in range(10)]
+    embed = FlakyEmbed(fail_times=100, code="ValidationException")
+    with pytest.raises(ClientError):
+        index_documents(docs, collection, embed, workers=1, batch_size=1)
+    # A thread pode já ter começado o lote seguinte quando o cancelamento chega
+    assert embed.count <= 2
