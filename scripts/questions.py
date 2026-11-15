@@ -24,6 +24,9 @@ QUESTION_TYPES = {
 
 @dataclass(frozen=True)
 class TestQuestion:
+    # O nome começa com "Test", e sem isto o pytest tentaria tratá-la como teste
+    __test__ = False
+
     id: int
     question: str
     type: str
