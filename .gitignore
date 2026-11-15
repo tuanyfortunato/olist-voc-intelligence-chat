@@ -18,3 +18,19 @@ __pycache__/
 # Arquivos do sistema operacional e do editor
 .DS_Store
 .vscode/
+
+# Terraform: estado, variáveis locais e providers baixados.
+# O estado pode conter senhas e identificadores da conta AWS.
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
