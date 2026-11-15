@@ -1,5 +1,7 @@
 # Quem pode falar com quem: o CloudFront com o ALB, o ALB com a API e a API
 # (e a tarefa de carga, que usa o mesmo grupo) com o banco.
+# A AWS só aceita caracteres ASCII nas descrições dos grupos de segurança,
+# por isso elas estão sem acento.
 
 data "aws_ec2_managed_prefix_list" "cloudfront" {
   name = "com.amazonaws.global.cloudfront.origin-facing"
@@ -7,7 +9,7 @@ data "aws_ec2_managed_prefix_list" "cloudfront" {
 
 resource "aws_security_group" "alb" {
   name        = "olist-voc-alb"
-  description = "ALB: aceita só o CloudFront"
+  description = "ALB - aceita apenas o CloudFront"
   vpc_id      = aws_vpc.main.id
 
   ingress {
@@ -28,7 +30,7 @@ resource "aws_security_group" "alb" {
 
 resource "aws_security_group" "task" {
   name        = "olist-voc-task"
-  description = "Tarefas do ECS: aceitam só o ALB"
+  description = "Tarefas do ECS - aceitam apenas o ALB"
   vpc_id      = aws_vpc.main.id
 
   ingress {
@@ -50,7 +52,7 @@ resource "aws_security_group" "task" {
 
 resource "aws_security_group" "db" {
   name        = "olist-voc-db"
-  description = "PostgreSQL: aceita só as tarefas do ECS"
+  description = "PostgreSQL - aceita apenas as tarefas do ECS"
   vpc_id      = aws_vpc.main.id
 
   ingress {
