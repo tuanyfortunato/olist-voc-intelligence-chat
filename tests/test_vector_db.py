@@ -102,3 +102,14 @@ def test_manifest_roundtrip_in_database(conn):
     write_manifest_row(conn, manifest)
     write_manifest_row(conn, manifest)
     assert read_manifest_row(conn) == manifest
+
+
+def test_read_index_status(conn):
+    from src.vector_db import load_reviews, read_index_status, write_manifest_row
+    from src.vector_store import IndexManifest
+
+    load_reviews(conn, frame(ROWS))
+    manifest = IndexManifest("cohere.embed-multilingual-v3", 3, "cosine", "x", 3, ["bebes"])
+    write_manifest_row(conn, manifest)
+    status = read_index_status(conn)
+    assert status.manifest == manifest and status.documents == 3
