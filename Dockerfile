@@ -11,6 +11,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY src/ src/
 COPY scripts/ scripts/
+# Perguntas de teste, lidas pela calibração e pela avaliação
+COPY evaluation/ evaluation/
 
 # A API não roda como root dentro do contêiner
 RUN useradd --create-home --uid 1000 app
