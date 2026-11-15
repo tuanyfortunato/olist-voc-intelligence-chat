@@ -11,7 +11,12 @@ variable "project" {
 }
 
 variable "github_repository" {
-  description = "Repositório autorizado a entrar na AWS pelo OIDC, no formato dono/nome"
+  description = <<-EOT
+    Repositório autorizado a entrar na AWS pelo OIDC, no formato que o GitHub
+    usa no token: dono@id_do_dono/nome@id_do_repositorio. Os números não mudam
+    se o repositório for renomeado e impedem que outro repositório criado com
+    o mesmo nome seja aceito.
+  EOT
   type        = string
-  default     = "tuanyfortunato/olist-voc-intelligence-chat"
+  default     = "tuanyfortunato@41431841/olist-voc-intelligence-chat@1452026236"
 }
