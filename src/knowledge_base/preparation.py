@@ -3,7 +3,7 @@
 Cada avaliação com mensagem escrita vira um documento, identificado pelo
 review_id. Os metadados (nota, data, categoria e situação da entrega) vêm das
 tabelas de pedidos, itens e produtos, e nunca ficam vazios: o que falta vira
-"desconhecido", porque o Chroma não aceita valores nulos.
+"desconhecido", porque um valor nulo quebraria os filtros da busca.
 """
 
 from dataclasses import dataclass
@@ -38,7 +38,7 @@ class ReviewDocument:
     embedding_text: str
 
     def metadata(self) -> dict[str, str | int]:
-        """Metadados gravados no Chroma junto com o vetor."""
+        """Metadados guardados junto com o vetor e usados nos filtros da busca."""
         return {
             "review_id": self.review_id,
             "order_id": self.order_id,

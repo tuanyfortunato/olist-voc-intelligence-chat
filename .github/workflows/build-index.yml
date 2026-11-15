@@ -1,15 +1,19 @@
-# Geração do índice do Chroma. Disparo manual.
+# Geração dos embeddings. Disparo manual.
 # Modo prepare: baixa a base, prepara os documentos e mostra as contagens.
-# Modo full: faz o mesmo e gera o índice (o envio ao S3 entra na etapa de indexação).
+# Modo full: faz o mesmo, gera os embeddings e envia ao S3 o embeddings.parquet
+# e o manifesto. Se a indexação falhar no meio, as partes já gravadas ficam em
+# index/work/ no bucket, e a próxima execução continua dali.
+# Modo convert: converte uma única vez os embeddings antigos, gravados no
+# formato do Chroma, para Parquet, sem chamar o modelo de novo.
 name: Build index
 
 on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "prepare: só prepara a base e mostra os números; full: gera o índice e envia ao S3"
+        description: "prepare: só prepara a base; full: gera os embeddings e envia ao S3; convert: converte os embeddings antigos do Chroma"
         type: choice
-        options: [full, prepare]
+        options: [full, prepare, convert]
         default: full
 
 permissions:
@@ -33,23 +37,56 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Token do Kaggle
+        if: inputs.mode != 'convert'
         run: |
           mkdir -p ~/.kaggle
           echo "${{ secrets.KAGGLE_ACCESS_TOKEN }}" > ~/.kaggle/access_token
           chmod 600 ~/.kaggle/access_token
 
       - name: Baixar a base
+        if: inputs.mode != 'convert'
         run: python -m scripts.download_data
 
       - name: Acesso à AWS pelo OIDC
-        if: inputs.mode == 'full'
+        if: inputs.mode != 'prepare'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: us-east-1
 
-      - name: Preparar a base e gerar o índice
+      - name: Recuperar uma indexação interrompida
+        if: inputs.mode == 'full'
+        run: aws s3 sync "s3://${{ vars.INDEX_BUCKET }}/index/work/" data/index/
+
+      - name: Preparar a base e gerar os embeddings
+        if: inputs.mode != 'convert'
         run: python -m scripts.build_index --mode ${{ inputs.mode }}
+
+      - name: Converter os embeddings antigos do Chroma
+        if: inputs.mode == 'convert'
+        run: |
+          aws s3 sync "s3://${{ vars.INDEX_BUCKET }}/index/current/" "s3://${{ vars.INDEX_BUCKET }}/index/chroma-backup/"
+          aws s3 sync "s3://${{ vars.INDEX_BUCKET }}/index/current/" data/chroma/
+          pip install chromadb==1.5.9
+          python -m scripts.convert_chroma
+
+      - name: Enviar os embeddings ao S3
+        if: inputs.mode != 'prepare'
+        env:
+          INDEX_BUCKET: ${{ vars.INDEX_BUCKET }}
+        run: python -m scripts.upload_index
+
+      - name: Guardar o progresso para a próxima execução
+        if: failure() && inputs.mode == 'full'
+        run: aws s3 sync data/index/ "s3://${{ vars.INDEX_BUCKET }}/index/work/"
+
+      - name: Apagar o progresso parcial
+        if: success() && inputs.mode == 'full'
+        run: aws s3 rm --recursive "s3://${{ vars.INDEX_BUCKET }}/index/work/"
+
+      - name: Tamanho dos embeddings
+        if: success() && inputs.mode != 'prepare'
+        run: ls -lh data/index/embeddings.parquet
 
       - name: Guardar o resumo da preparação
         if: always()

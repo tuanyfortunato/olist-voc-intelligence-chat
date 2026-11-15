@@ -55,3 +55,26 @@ def test_prepare_mode_writes_summary(tmp_path):
     assert summary["documents"] == 1
     assert summary["delivery_nao_entregue"] == 1
     assert summary["categories"] == 1
+
+
+def test_build_full_index_writes_manifest(tmp_path, settings):
+    write_tables(tmp_path)
+    from src.knowledge_base.embedding_store import read_embeddings
+    from src.knowledge_base.preparation import build_documents, load_tables
+    from src.vector_store import read_manifest
+
+    documents = build_documents(load_tables(tmp_path))
+    index_dir = tmp_path / "index"
+
+    manifest = build_index.build_full_index(
+        documents, settings, embed=lambda texts: [[0.5] * 3 for _ in texts], index_dir=index_dir
+    )
+
+    assert manifest.document_count == 1
+    assert manifest.embedding_model_id == "cohere.embed-multilingual-v3"
+    assert manifest.distance == "cosine"
+    assert manifest.categories == ["telefonia"]
+    assert read_manifest(index_dir) == manifest
+    frame = read_embeddings(index_dir / "embeddings.parquet")
+    assert list(frame["review_id"]) == ["r1"]
+    assert len(frame["embedding"][0]) == 3
