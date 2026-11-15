@@ -1,6 +1,6 @@
 # Geração do índice do Chroma. Disparo manual.
-# Por enquanto só confirma o acesso à AWS pelo OIDC; a preparação e a
-# indexação entram nas próximas etapas.
+# Modo prepare: baixa a base, prepara os documentos e mostra as contagens.
+# Modo full: faz o mesmo e gera o índice (o envio ao S3 entra na etapa de indexação).
 name: Build index
 
 on:
@@ -19,12 +19,42 @@ permissions:
 jobs:
   build-index:
     runs-on: ubuntu-latest
+    timeout-minutes: 120
     steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Instalar dependências
+        run: pip install -r requirements.txt
+
+      - name: Token do Kaggle
+        run: |
+          mkdir -p ~/.kaggle
+          echo "${{ secrets.KAGGLE_ACCESS_TOKEN }}" > ~/.kaggle/access_token
+          chmod 600 ~/.kaggle/access_token
+
+      - name: Baixar a base
+        run: python -m scripts.download_data
+
       - name: Acesso à AWS pelo OIDC
+        if: inputs.mode == 'full'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: us-east-1
 
-      - name: Conta e papel em uso
-        run: aws sts get-caller-identity
+      - name: Preparar a base e gerar o índice
+        run: python -m scripts.build_index --mode ${{ inputs.mode }}
+
+      - name: Guardar o resumo da preparação
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prepare-summary
+          path: data/prepare_summary.json
+          if-no-files-found: ignore
