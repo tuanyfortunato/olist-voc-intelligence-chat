@@ -106,3 +106,12 @@ def test_failed_batch_cancels_pending_batches(collection):
         index_documents(docs, collection, embed, workers=1, batch_size=1)
     # A thread pode já ter começado o lote seguinte quando o cancelamento chega
     assert embed.count <= 2
+
+
+def test_embed_with_retry_survives_long_throttling_with_capped_delay():
+    embed = FlakyEmbed(fail_times=8, code="ThrottlingException")
+    delays = []
+    assert embed_with_retry(embed, ["x"], sleep=delays.append) == [[0.0] * 4]
+    assert embed.count == 9
+    assert max(delays) <= 61
+    assert delays[-1] >= 60

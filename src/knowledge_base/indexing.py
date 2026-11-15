@@ -6,6 +6,7 @@ próxima pula os documentos que já estão na coleção e continua dali.
 """
 
 import logging
+import random
 import time
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -18,6 +19,9 @@ from src.knowledge_base.preparation import ReviewDocument
 logger = logging.getLogger(__name__)
 
 EmbedFunction = Callable[[list[str]], list[list[float]]]
+
+# Espera máxima entre duas tentativas, em segundos
+MAX_RETRY_DELAY = 60.0
 
 # Erros temporários do Bedrock, que valem uma nova tentativa
 RETRYABLE_ERRORS = {"ThrottlingException", "ServiceUnavailableException", "ModelNotReadyException"}
@@ -33,11 +37,15 @@ class IndexStats:
 def embed_with_retry(
     embed: EmbedFunction,
     texts: list[str],
-    attempts: int = 6,
+    attempts: int = 10,
     base_delay: float = 2.0,
     sleep: Callable[[float], None] = time.sleep,
 ) -> list[list[float]]:
-    """Chama o modelo e, se a AWS limitar as chamadas, espera cada vez mais e tenta de novo."""
+    """Chama o modelo e, se a AWS limitar as chamadas, espera cada vez mais e tenta de novo.
+
+    A espera dobra a cada tentativa até o teto de 60 segundos, com uma pequena
+    parte aleatória para que os lotes em paralelo não voltem no mesmo instante.
+    """
     for attempt in range(attempts):
         try:
             return embed(texts)
@@ -45,7 +53,7 @@ def embed_with_retry(
             code = error.response.get("Error", {}).get("Code")
             if code not in RETRYABLE_ERRORS or attempt == attempts - 1:
                 raise
-            delay = base_delay * 2**attempt
+            delay = min(MAX_RETRY_DELAY, base_delay * 2**attempt) + random.uniform(0, 1)
             logger.warning("etapa=indexacao erro=%s nova_tentativa_em=%.0fs", code, delay)
             sleep(delay)
     raise AssertionError("inalcançável")
