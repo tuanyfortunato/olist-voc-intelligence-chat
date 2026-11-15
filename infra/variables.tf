@@ -42,7 +42,10 @@ variable "log_retention_days" {
 variable "db_instance_class" {
   description = "Classe da instância do PostgreSQL"
   type        = string
-  default     = "db.t4g.micro"
+  # Na db.t4g.micro (1 GB) o índice HNSW não cabe na memória e é construído em
+  # disco, em uns 17 minutos. Como a carga só roda quando os embeddings mudam,
+  # a micro basta. Se a busca ficar lenta, db.t4g.small tem 2 GB.
+  default = "db.t4g.micro"
 }
 
 variable "db_allocated_storage" {

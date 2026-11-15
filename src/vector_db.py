@@ -105,8 +105,12 @@ def load_reviews(conn: psycopg.Connection, frame: pd.DataFrame) -> int:
                     values = list(row)
                     values[1] = np.asarray(values[1], dtype=np.float32)
                     copy.write_row(values)
-        # Memória extra só para esta sessão, para o índice ser construído de uma vez
-        conn.execute("SET LOCAL maintenance_work_mem = '256MB'")
+        # Na db.t4g.micro (1 GB), a construção em paralelo pede uma área de
+        # memória compartilhada que a instância não tem, e mais que 128 MB
+        # deixa o banco sem memória. Com estes valores, o pgvector constrói o
+        # índice de 40.521 vetores em disco, em uns 17 minutos.
+        conn.execute("SET LOCAL max_parallel_maintenance_workers = 0")
+        conn.execute("SET LOCAL maintenance_work_mem = '128MB'")
         conn.execute(
             f"CREATE INDEX {INDEX_NAME} ON reviews USING hnsw (embedding vector_cosine_ops)"
         )
