@@ -1,0 +1,22 @@
+:root {
+  --text: #1f2933;
+  --muted: #52606d;
+  --background: #f5f7fa;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: var(--text);
+  background: var(--background);
+}
+
+main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 48px 16px;
+}
+
+#status {
+  color: var(--muted);
+}
