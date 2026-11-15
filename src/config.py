@@ -21,9 +21,18 @@ class Settings:
     embedding_batch_size: int = 96
     llm_model_id: str = "amazon.nova-micro-v1:0"
 
-    # Índice
+    # Embeddings gerados pela indexação
     index_dir: str = "data/index"
     index_workers: int = 2
+
+    # Banco vetorial (RDS PostgreSQL com pgvector). Na AWS, o host vem da
+    # definição da tarefa e a senha, do Parameter Store.
+    db_host: str = "localhost"
+    db_port: int = 5432
+    db_name: str = "olist"
+    db_user: str = "olist"
+    db_password: str = ""
+    db_sslmode: str = "require"
 
     # Recuperação. O score mínimo, o top-k e o corte dos comentários curtos
     # são calibrados na etapa 5.
