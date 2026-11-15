@@ -1,5 +1,7 @@
-# Calibração da busca: 30 comentários por pergunta de teste, com o score.
-# Disparo manual. O conteúdo entra na etapa de recuperação.
+# Calibração da busca: os 30 comentários mais próximos de cada pergunta de teste,
+# com a pergunta original e com o tema reescrito. Disparo manual, escolhendo a
+# branch. Roda numa tarefa avulsa do ECS com a imagem da branch, e as tabelas
+# ficam como artifact da execução.
 name: Calibrate retrieval
 
 on:
@@ -12,6 +14,47 @@ permissions:
 jobs:
   calibrate:
     runs-on: ubuntu-latest
+    timeout-minutes: 75
     steps:
-      - name: Teste do workflow
-        run: echo "Workflow pronto para receber conteúdo"
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.17.2"
+          terraform_wrapper: false
+
+      - name: Acesso à AWS pelo OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Ler os nomes dos recursos no Terraform
+        working-directory: infra
+        run: |
+          terraform init -input=false -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" > /dev/null
+          terraform output -json > ../outputs.json
+          for name in ecr_repository_url ecs_cluster_name task_family task_security_group_id; do
+            echo "$(echo "$name" | tr a-z A-Z)=$(jq -r ".${name}.value" ../outputs.json)" >> "$GITHUB_ENV"
+          done
+          echo "SUBNETS=$(jq -r '.public_subnet_ids.value | join(",")' ../outputs.json)" >> "$GITHUB_ENV"
+
+      - name: Construir e enviar a imagem da branch
+        run: |
+          aws ecr get-login-password | docker login --username AWS --password-stdin "${ECR_REPOSITORY_URL%%/*}"
+          docker build -t "$ECR_REPOSITORY_URL:${{ github.sha }}" .
+          docker push "$ECR_REPOSITORY_URL:${{ github.sha }}"
+
+      - name: Rodar a calibração
+        run: scripts/run_ecs_task.sh "$ECR_REPOSITORY_URL:${{ github.sha }}" python -m scripts.calibrate_retrieval
+
+      - name: Baixar as tabelas
+        run: |
+          mkdir -p calibracao
+          aws s3 cp "s3://${{ vars.INDEX_BUCKET }}/results/calibracao.csv" calibracao/
+          aws s3 cp "s3://${{ vars.INDEX_BUCKET }}/results/calibracao_resumo.csv" calibracao/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: calibracao
+          path: calibracao/
