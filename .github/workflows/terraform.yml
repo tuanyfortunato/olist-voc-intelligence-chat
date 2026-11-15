@@ -1,0 +1,71 @@
+# Plano do Terraform nos PRs que mudam infra/ e aplicação a cada merge na main.
+# A aplicação roda em todo merge na main, mesmo sem mudança na infraestrutura,
+# porque é ela que dispara o workflow de publicação logo depois.
+name: Terraform
+
+on:
+  pull_request:
+    branches: [develop, main]
+    paths: ["infra/**", ".github/workflows/terraform.yml"]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  id-token: write
+  pull-requests: write
+
+concurrency:
+  group: terraform
+  cancel-in-progress: false
+
+env:
+  TF_VAR_index_bucket: ${{ vars.INDEX_BUCKET }}
+
+jobs:
+  terraform:
+    # PRs vindos de forks não recebem acesso à AWS
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.17.2"
+          terraform_wrapper: false
+
+      - name: Acesso à AWS pelo OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Init
+        run: terraform init -input=false -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}"
+
+      - name: Formatação
+        run: terraform fmt -check -recursive
+
+      - name: Plano
+        if: github.event_name == 'pull_request'
+        run: terraform plan -input=false -no-color -out=plan.tfplan | tee plan.txt
+
+      - name: Comentar o plano no PR
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo "### Plano do Terraform"
+            echo
+            grep -E "will be|must be|^Plan:|No changes" plan.txt | sed 's/^/    /'
+          } > comment.md
+          gh pr comment ${{ github.event.pull_request.number }} --body-file comment.md
+
+      - name: Aplicar
+        if: github.event_name == 'push'
+        run: terraform apply -input=false -auto-approve
