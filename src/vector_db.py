@@ -7,7 +7,7 @@ manifesto dos embeddings carregados, que a API confere ao iniciar.
 """
 
 import json
-from dataclasses import asdict
+from dataclasses import asdict, dataclass
 
 import numpy as np
 import pandas as pd
@@ -31,6 +31,12 @@ COLUMNS = [
 ]
 COLUMN_TYPES = ["text", "vector", "text", "text", "int4", "text", "text", "text", "text", "int4"]
 INDEX_NAME = "reviews_embedding_idx"
+
+
+@dataclass(frozen=True)
+class IndexStatus:
+    manifest: IndexManifest
+    documents: int
 
 
 def connect(settings: Settings, register: bool = True) -> psycopg.Connection:
@@ -129,3 +135,8 @@ def read_manifest_row(conn: psycopg.Connection) -> IndexManifest:
     if row is None:
         raise LookupError("O banco ainda não tem manifesto: rode o workflow Load vectors.")
     return IndexManifest.from_dict(row[0])
+
+
+def read_index_status(conn: psycopg.Connection) -> IndexStatus:
+    """Manifesto e número de linhas do banco, usados pela API ao iniciar e no /api/health."""
+    return IndexStatus(manifest=read_manifest_row(conn), documents=count_reviews(conn))

@@ -49,3 +49,14 @@ jobs:
 
       - name: Testes
         run: pytest
+
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Construir a imagem da API
+        run: docker build -t olist-voc-api:ci .
+
+      - name: Conferir que a API e a carga importam dentro da imagem
+        run: docker run --rm olist-voc-api:ci python -c "import src.api.main, scripts.load_vectors"
