@@ -1,6 +1,7 @@
 # Avaliação das perguntas de teste pelo pipeline completo. Disparo manual,
 # escolhendo a branch e as perguntas. Roda numa tarefa avulsa do ECS com a
-# imagem da branch, e o CSV fica como artifact da execução.
+# imagem da branch, e o CSV fica como artifact da execução. Depois, no próprio
+# runner, o RAGAS calcula as notas das respostas, que entram no mesmo artifact.
 name: Evaluate
 
 on:
@@ -14,6 +15,10 @@ on:
         description: "Rodar também sem filtro as perguntas que têm filtro (13 a 15)"
         type: boolean
         default: false
+      ragas:
+        description: "Calcular as notas do RAGAS, com o Nova Pro como juiz"
+        type: boolean
+        default: true
       answer_model_id:
         description: "Modelo que escreve a resposta"
         type: choice
@@ -74,6 +79,22 @@ jobs:
         run: |
           mkdir -p avaliacao
           aws s3 cp "s3://${{ vars.INDEX_BUCKET }}/results/avaliacao.csv" avaliacao/
+
+      # O RAGAS roda aqui no runner: precisa só do CSV e do Bedrock, não do banco
+      - uses: actions/setup-python@v5
+        if: inputs.ragas
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-ragas.txt
+
+      - name: Notas do RAGAS
+        if: inputs.ragas
+        env:
+          RAGAS_DO_NOT_TRACK: "true"
+        run: |
+          pip install -r requirements-ragas.txt
+          python -m scripts.run_ragas avaliacao/avaliacao.csv --out-dir avaliacao
 
       - uses: actions/upload-artifact@v4
         with:
