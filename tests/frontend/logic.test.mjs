@@ -361,6 +361,56 @@ test("LOADING_STEPS mostra a busca antes da escrita", () => {
   assert.match(LOADING_STEPS[0], /Buscando/);
 });
 
+import {
+  OVERVIEW_AREA,
+  pickAreaSuggestions,
+  SUGGESTION_AREAS,
+  suggestionArea,
+} from "../../frontend/logic.js";
+
+test("suggestionArea encontra a área de uma pergunta da lista", () => {
+  assert.equal(suggestionArea("O que faz um cliente dizer que não volta a comprar?"), "Retenção");
+  assert.equal(suggestionArea("  o que faz um cliente dizer que não volta a comprar?  "), "Retenção");
+  assert.equal(suggestionArea("Pergunta livre?"), null);
+});
+
+test("pickAreaSuggestions puxa duas da mesma área e uma de outra", () => {
+  const question = "O que faz um cliente dizer que não volta a comprar?";
+  for (let i = 0; i < 50; i += 1) {
+    const picked = pickAreaSuggestions(question, [question], 3, 2);
+    assert.equal(picked.length, 3);
+    assert.equal(new Set(picked).size, 3);
+    const areas = picked.map(suggestionArea);
+    assert.equal(areas.filter((area) => area === "Retenção").length, 2);
+    assert.ok(!picked.includes(question));
+  }
+});
+
+test("pickAreaSuggestions na visão geral traz áreas diferentes", () => {
+  const question = SUGGESTION_AREAS.find((item) => item.area === OVERVIEW_AREA).questions[0];
+  for (let i = 0; i < 50; i += 1) {
+    const areas = pickAreaSuggestions(question, [question], 3, 2).map(suggestionArea);
+    assert.equal(areas.length, 3);
+    assert.equal(new Set(areas).size, 3);
+    assert.ok(!areas.includes(OVERVIEW_AREA));
+  }
+});
+
+test("pickAreaSuggestions completa com outras áreas quando a área acaba", () => {
+  const group = SUGGESTION_AREAS.find((item) => item.area === "Pontos fortes").questions;
+  const picked = pickAreaSuggestions(group[0], group, 3, 2);
+  assert.equal(picked.length, 3);
+  for (const question of picked) assert.ok(!group.includes(question));
+});
+
+test("os cartões da tela inicial estão na lista de sugestões", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const html = await readFile(new URL("../../frontend/index.html", import.meta.url), "utf8");
+  const cards = [...html.matchAll(/<span class="example-question">([^<]+)<\/span>/g)].map((m) => m[1]);
+  assert.equal(cards.length, 5);
+  for (const card of cards) assert.ok(suggestionArea(card), card);
+});
+
 import { citedNumbers, quotePreview, splitQuotes, stripCitations } from "../../frontend/logic.js";
 
 test("citedNumbers lista os números citados na ordem e sem repetir", () => {

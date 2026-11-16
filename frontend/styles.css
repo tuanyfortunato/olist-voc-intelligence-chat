@@ -421,6 +421,13 @@ textarea {
   opacity: 0.6;
 }
 
+/* A visão geral ocupa a linha toda, acima das perguntas por área */
+.example-overview {
+  grid-column: 1 / -1;
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+  background: var(--accent-soft);
+}
+
 .example-topic {
   font-size: 0.75rem;
   font-weight: 600;

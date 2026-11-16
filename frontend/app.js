@@ -20,7 +20,7 @@ import {
   MAX_CHARS,
   nextTheme,
   parseAnswerBlocks,
-  pickSuggestions,
+  pickAreaSuggestions,
   remainingSuggestions,
   restrictionNotice,
   similarityLabel,
@@ -87,6 +87,8 @@ let online = true;
 // Número de comentários na base, vindo do /api/health
 let documentCount = null;
 const SUGGESTIONS_PER_ROUND = 3;
+// Quantas das sugestões de cada rodada vêm da mesma área da pergunta
+const SAME_AREA_SUGGESTIONS = 2;
 // Perguntas já sugeridas ou feitas nesta conversa, que não voltam a aparecer.
 // Os exemplos da tela inicial contam como já sugeridos.
 let used = [];
@@ -329,9 +331,9 @@ function suggestionButton(question) {
   return button;
 }
 
-// Acrescenta perguntas sorteadas ao bloco e esconde o botão quando a lista acaba
-function addSuggestions(list, moreButton) {
-  const questions = pickSuggestions(SUGGESTIONS, used, SUGGESTIONS_PER_ROUND);
+// Acrescenta perguntas ao bloco, puxando pela área da pergunta feita, e esconde o botão quando a lista acaba
+function addSuggestions(list, moreButton, question) {
+  const questions = pickAreaSuggestions(question, used, SUGGESTIONS_PER_ROUND, SAME_AREA_SUGGESTIONS);
   used.push(...questions);
   for (const question of questions) list.appendChild(suggestionButton(question));
   moreButton.hidden = remainingSuggestions(SUGGESTIONS, used) === 0;
@@ -350,9 +352,9 @@ function renderSuggestions(container) {
   more.type = "button";
   more.addEventListener("click", () => {
     const first = list.children.length;
-    if (addSuggestions(list, more)) list.children[first].focus();
+    if (addSuggestions(list, more, container.question)) list.children[first].focus();
   });
-  addSuggestions(list, more);
+  addSuggestions(list, more, container.question);
   box.appendChild(more);
   container.after(box);
 }

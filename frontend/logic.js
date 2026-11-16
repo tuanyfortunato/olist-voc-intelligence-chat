@@ -367,51 +367,70 @@ export function nextTheme(theme) {
 // aparecem nos comentários das avaliações (entrega, produto, vendedor,
 // pagamento, troca), e algumas testam o comportamento do chat quando há pouca
 // ou nenhuma evidência, como a do Pix e a da embalagem de presente.
-export const SUGGESTIONS = [
-  "Quais reclamações sobre entrega aparecem com mais frequência?",
-  "O que os clientes relatam sobre produtos que chegaram com defeito?",
-  "Quais são os principais elogios dos clientes?",
-  "O que os clientes relatam sobre o atendimento do vendedor?",
-  "O que os clientes contam sobre produtos diferentes do anunciado?",
-  "O que os clientes acham do aplicativo da loja?",
-  "Os clientes pedem que os produtos venham em embalagem de presente?",
-  "O que os clientes falam sobre pagar com Pix?",
-  "O que os clientes comentam sobre a embalagem dos produtos?",
-  "Como os clientes avaliam a qualidade dos produtos em relação ao preço?",
-  "O que os clientes relatam sobre pedidos que chegaram incompletos?",
-  "Quais problemas os clientes relatam na troca ou devolução de produtos?",
-  "O que os clientes dizem quando o produto chega antes do prazo?",
-  "Como os clientes descrevem a comunicação sobre o andamento do pedido?",
-  "O que os clientes relatam sobre produtos que nunca foram entregues?",
-  "O que os clientes falam sobre o rastreamento das encomendas?",
-  "O que os clientes relatam sobre produtos falsificados ou que não são originais?",
-  "O que os clientes comentam sobre o tamanho e as medidas dos produtos?",
-  "Como os produtos frágeis chegam, segundo os clientes?",
-  "O que os clientes relatam sobre estorno ou reembolso do pagamento?",
-  "O que os clientes falam sobre a nota fiscal dos pedidos?",
-  "Quais reclamações aparecem sobre a montagem de móveis?",
-  "O que os clientes contam sobre a cor do produto ser diferente da foto?",
-  "O que os clientes dizem sobre voltar a comprar na loja?",
-  "O que os clientes relatam sobre pedidos entregues em datas diferentes?",
-  // Perguntas de gestão: o que corrigir primeiro, com qual área falar, o que
-  // manter e o que pode virar risco para a reputação
-  "Quais problemas mais deixam os clientes insatisfeitos a ponto de darem nota 1?",
-  "O que faz um cliente dizer que não volta a comprar?",
-  "Quais reclamações indicam falha do vendedor, e não da transportadora?",
-  "Quais problemas os clientes dizem que se repetem em mais de uma compra?",
-  "Em que parte da entrega os clientes relatam mais problemas: prazo, extravio ou avaria?",
-  "O que os clientes relatam quando o pedido é dividido em mais de uma entrega?",
-  "Como os clientes descrevem a demora para resolver um problema depois da compra?",
-  "O que os clientes dizem quando não conseguem contato com a loja ou o vendedor?",
-  "Quais atitudes do vendedor os clientes mais elogiam?",
-  "O que os clientes esperavam receber de informação e não receberam?",
-  "Quais diferenças entre o anúncio e o produto recebido os clientes mais apontam?",
-  "O que os clientes sugerem para melhorar a descrição dos produtos?",
-  "O que leva os clientes a recomendarem a loja para outras pessoas?",
-  "O que os clientes satisfeitos destacam além da entrega no prazo?",
-  "Que tipo de problema faz o cliente falar em Procon, processo ou reclamação pública?",
-  "O que os clientes relatam sobre cobranças indevidas ou pagamento não reconhecido?",
+// Perguntas de gestão, por área. Os cartões da tela inicial (index.html) usam
+// o mesmo texto de algumas delas. A área da pergunta feita orienta as
+// sugestões seguintes; a visão geral puxa uma pergunta de cada área.
+export const OVERVIEW_AREA = "Visão geral";
+
+export const SUGGESTION_AREAS = [
+  {
+    area: OVERVIEW_AREA,
+    questions: [
+      "Quais são os principais temas de reclamação e de elogio dos clientes?",
+      "Quais são os principais elogios dos clientes?",
+    ],
+  },
+  {
+    area: "Logística",
+    questions: [
+      "Em que parte da entrega os clientes relatam mais problemas: prazo, extravio ou avaria?",
+      "O que os clientes relatam sobre produtos que nunca foram entregues?",
+      "O que os clientes relatam sobre pedidos que chegaram incompletos?",
+      "O que os clientes relatam quando o pedido é dividido em mais de uma entrega?",
+      "Como os clientes descrevem a informação que recebem sobre o andamento do pedido?",
+      "Como os produtos frágeis chegam, segundo os clientes?",
+    ],
+  },
+  {
+    area: "Produto e anúncio",
+    questions: [
+      "O que os clientes relatam sobre produtos que chegaram com defeito?",
+      "Quais diferenças entre o anúncio e o produto recebido os clientes mais apontam?",
+      "O que os clientes comentam sobre o tamanho e as medidas dos produtos?",
+      "Como os clientes avaliam a qualidade dos produtos em relação ao preço?",
+      "O que os clientes relatam sobre produtos falsificados ou que não são originais?",
+    ],
+  },
+  {
+    area: "Vendedores",
+    questions: [
+      "Quais reclamações indicam falha do vendedor, e não da transportadora?",
+      "O que os clientes dizem quando não conseguem contato com a loja ou o vendedor?",
+      "Como os clientes descrevem a demora para resolver um problema depois da compra?",
+      "Quais problemas os clientes relatam na troca ou devolução de produtos?",
+      "O que os clientes relatam sobre estorno ou reembolso do pagamento?",
+    ],
+  },
+  {
+    area: "Retenção",
+    questions: [
+      "O que faz um cliente dizer que não volta a comprar?",
+      "Quais problemas mais deixam os clientes insatisfeitos a ponto de darem nota 1?",
+      "Quais problemas os clientes dizem que se repetem em mais de uma compra?",
+      "Que tipo de problema faz o cliente falar em Procon, processo ou reclamação pública?",
+      "O que leva os clientes a recomendarem a loja para outras pessoas?",
+    ],
+  },
+  {
+    area: "Pontos fortes",
+    questions: [
+      "O que os clientes satisfeitos destacam além da entrega no prazo?",
+      "Quais atitudes do vendedor os clientes mais elogiam?",
+    ],
+  },
 ];
+
+export const SUGGESTIONS = SUGGESTION_AREAS.flatMap((group) => group.questions);
 
 function normalize(question) {
   return question.trim().toLowerCase();
@@ -430,6 +449,53 @@ export function pickSuggestions(pool, used, count, random = Math.random) {
   while (picked.length < count && options.length) {
     const index = Math.floor(random() * options.length);
     picked.push(options.splice(index, 1)[0]);
+  }
+  return picked;
+}
+
+// Uma pergunta de cada área, em áreas sorteadas, para quem começou pelo todo
+function pickAcrossAreas(used, count, random) {
+  const areas = SUGGESTION_AREAS.filter((item) => item.area !== OVERVIEW_AREA);
+  const order = pickSuggestions(
+    areas.map((item) => item.area),
+    [],
+    areas.length,
+    random,
+  );
+  const picked = [];
+  for (const name of order) {
+    if (picked.length >= count) break;
+    const group = areas.find((item) => item.area === name);
+    picked.push(...pickSuggestions(group.questions, [...used, ...picked], 1, random));
+  }
+  if (picked.length < count) {
+    picked.push(...pickSuggestions(SUGGESTIONS, [...used, ...picked], count - picked.length, random));
+  }
+  return picked;
+}
+
+// Área de uma pergunta da lista, ou null para uma pergunta livre
+export function suggestionArea(question) {
+  const wanted = normalize(question || "");
+  const group = SUGGESTION_AREAS.find((item) =>
+    item.questions.some((candidate) => normalize(candidate) === wanted),
+  );
+  return group ? group.area : null;
+}
+
+// Sugestões depois de uma resposta: algumas da mesma área da pergunta, para
+// aprofundar, e o resto de outras áreas, para variar. Sem área conhecida, ou
+// quando a área acaba, o sorteio usa a lista toda.
+export function pickAreaSuggestions(question, used, count, sameArea, random = Math.random) {
+  const area = suggestionArea(question);
+  if (!area) return pickSuggestions(SUGGESTIONS, used, count, random);
+  if (area === OVERVIEW_AREA) return pickAcrossAreas(used, count, random);
+  const inside = SUGGESTION_AREAS.find((item) => item.area === area).questions;
+  const outside = SUGGESTIONS.filter((candidate) => !inside.includes(candidate));
+  const picked = pickSuggestions(inside, used, Math.min(sameArea, count), random);
+  picked.push(...pickSuggestions(outside, [...used, ...picked], count - picked.length, random));
+  if (picked.length < count) {
+    picked.push(...pickSuggestions(SUGGESTIONS, [...used, ...picked], count - picked.length, random));
   }
   return picked;
 }
