@@ -1,0 +1,161 @@
+{
+  "status": "answered",
+  "answer": "- Entre os elogios, vários clientes mencionam a satisfação com a atenção e o compromisso da loja com os clientes [2][10][15].\n- Os clientes também elogiaram a qualidade dos produtos e a aderência à descrição [7][9].\n- A rapidez e a eficiência no atendimento e na entrega foram destacadas [12].\n- A atenção personalizada, como uma cartinha escrita à mão, foi elogiada [3].\n- A recomendação do serviço e produtos por outros clientes também aparece [4][14].",
+  "cited": [
+    {
+      "review_id": "f6853e4f1d0f639a934b661f2787aa6f",
+      "rating": 5,
+      "category": "desconhecido",
+      "delivery": "desconhecida",
+      "review_date": "",
+      "original_text": "Parabéns pelo compromisso com os clientes",
+      "similarity": 0.6535,
+      "number": 2
+    },
+    {
+      "review_id": "02e4db658df4818621288b399304c37f",
+      "rating": 5,
+      "category": "desconhecido",
+      "delivery": "desconhecida",
+      "review_date": "",
+      "original_text": "A loja até mandou uma cartinha escrita a mão me agradecendo pela compra. Que bonitinho :)",
+      "similarity": 0.6494,
+      "number": 3
+    },
+    {
+      "review_id": "bf918a5890a3d818be522475820bb63e",
+      "rating": 5,
+      "category": "desconhecido",
+      "delivery": "desconhecida",
+      "review_date": "",
+      "original_text": "Sou cliente. Recomendo.",
+      "similarity": 0.6635,
+      "number": 4
+    },
+    {
+      "review_id": "c86f311e6de8e88d0ad98fc7a8980ec2",
+      "rating": 5,
+      "category": "desconhecido",
+      "delivery": "desconhecida",
+      "review_date": "",
+      "original_text": "Elogio. Produto original, como na foto.",
+      "similarity": 0.6657,
+      "number": 7
+    },
+    {
+      "review_id": "be9da93815aef0f528780d0ec05c1af7",
+      "rating": 5,
+      "category": "desconhecido",
+      "delivery": "desconhecida",
+      "review_date": "",
+      "original_text": "Cliente satisfeito.",
+      "similarity": 0.6954,
+      "number": 9
+    },
+    {
+      "review_id": "be7bce8f5f511dbb99da56d51aa7b75d",
+      "rating": 5,
+      "category": "desconhecido",
+      "delivery": "desconhecida",
+      "review_date": "",
+      "original_text": "Não tenho nenhuma queixa. só elogios. Fui atendida sem burocracias, no sprazo. recebi emails atenciosos . ESTOU SATISFEITA.",
+      "similarity": 0.6573,
+      "number": 10
+    },
+    {
+      "review_id": "36a2d6684aca8960864dbe51ce39d013",
+      "rating": 5,
+      "category": "desconhecido",
+      "delivery": "desconhecida",
+      "review_date": "",
+      "original_text": "Gostei por conta da rapidez. Se vcs continuarem assim, vão ter cada dia mais clientes. Eu serei um fiel.",
+      "similarity": 0.6497,
+      "number": 12
+    },
+    {
+      "review_id": "2685a4800004a12ec09d27264ff1915f",
+      "rating": 5,
+      "category": "desconhecido",
+      "delivery": "desconhecida",
+      "review_date": "",
+      "original_text": "Recomendo a todos os clientes",
+      "similarity": 0.6871,
+      "number": 14
+    },
+    {
+      "review_id": "a581b4d54299e9e6503ea83af83dfd10",
+      "rating": 5,
+      "category": "desconhecido",
+      "delivery": "desconhecida",
+      "review_date": "",
+      "original_text": "A loja tem um excelente atendimento",
+      "similarity": 0.6536,
+      "number": 15
+    }
+  ],
+  "uncited": [
+    {
+      "review_id": "e6c768c7b438c03b8e0a22ab51325807",
+      "rating": 5,
+      "category": "desconhecido",
+      "delivery": "desconhecida",
+      "review_date": "",
+      "original_text": "Elogios. Ótimo",
+      "similarity": 0.7051,
+      "number": 1
+    },
+    {
+      "review_id": "d3d96cfe12e088db4eb4e94086a71cb3",
+      "rating": 5,
+      "category": "desconhecido",
+      "delivery": "desconhecida",
+      "review_date": "",
+      "original_text": "Vendedores otimos",
+      "similarity": 0.6506,
+      "number": 5
+    },
+    {
+      "review_id": "cd067325c7f9dd11c0e22408e69ce65e",
+      "rating": 5,
+      "category": "desconhecido",
+      "delivery": "desconhecida",
+      "review_date": "",
+      "original_text": "Elegios. Gostei muito obrigado por atender os clientes com muita competência.",
+      "similarity": 0.6731,
+      "number": 6
+    },
+    {
+      "review_id": "6334dbfd7ba3eb86e808861cdd528991",
+      "rating": 5,
+      "category": "desconhecido",
+      "delivery": "desconhecida",
+      "review_date": "",
+      "original_text": "Esta é a terceira vez que compro o produto. Só tenho elogios a fazer.",
+      "similarity": 0.6486,
+      "number": 8
+    },
+    {
+      "review_id": "985234d8c4cf3b005fd5dee7b4e01cce",
+      "rating": 5,
+      "category": "desconhecido",
+      "delivery": "desconhecida",
+      "review_date": "",
+      "original_text": "Otimos produtos otima entrega só elogios",
+      "similarity": 0.6533,
+      "number": 11
+    },
+    {
+      "review_id": "b79a3940cd9e3f388bbba39cea8a132f",
+      "rating": 5,
+      "category": "desconhecido",
+      "delivery": "desconhecida",
+      "review_date": "",
+      "original_text": "Gostei do serviço",
+      "similarity": 0.6596,
+      "number": 13
+    }
+  ],
+  "original_question": "Quais são os principais elogios dos clientes?",
+  "search_topic": "elogios dos clientes",
+  "inferred_ratings": []
+}

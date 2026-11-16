@@ -10,8 +10,10 @@
   --accent-strong: #184b8a;
   --accent-soft: #e8f0fb;
   --on-accent: #ffffff;
-  --star: #e0a321;
-  --star-empty: #d5dbe2;
+  --star: #c27c00;
+  --star-empty: #7d8996;
+  --user-bg: #1f5fae;
+  --user-text: #ffffff;
   --ok: #1d7a4a;
   --ok-bg: #e5f4ec;
   --warn: #8a5a00;
@@ -26,6 +28,8 @@
   --shadow: 0 1px 2px rgba(23, 32, 43, 0.06), 0 4px 16px rgba(23, 32, 43, 0.06);
   --radius: 14px;
   --content: 820px;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Plus Jakarta Sans", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 /* Tema escuro: pelo sistema, quando a pessoa não escolheu o claro, ou pelo botão */
@@ -43,7 +47,9 @@
     --accent-soft: #1d2c3e;
     --on-accent: #0f141a;
     --star: #f0b93a;
-    --star-empty: #3a4652;
+    --star-empty: #6b7785;
+    --user-bg: #24476f;
+    --user-text: #e7ecf1;
     --ok: #6fd29c;
     --ok-bg: #173226;
     --warn: #f0c46a;
@@ -72,7 +78,9 @@
   --accent-soft: #1d2c3e;
   --on-accent: #0f141a;
   --star: #f0b93a;
-  --star-empty: #3a4652;
+  --star-empty: #6b7785;
+  --user-bg: #24476f;
+  --user-text: #e7ecf1;
   --ok: #6fd29c;
   --ok-bg: #173226;
   --warn: #f0c46a;
@@ -97,7 +105,7 @@
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--font-body);
   font-size: 16px;
   line-height: 1.55;
   color: var(--text);
@@ -172,10 +180,33 @@ textarea {
   fill: var(--on-accent);
 }
 
+.brand-mark .brand-star {
+  fill: var(--accent);
+}
+
 .brand h1 {
   margin: 0;
-  font-size: 1.1rem;
+  font-family: var(--font-display);
+  font-size: 1.12rem;
+  font-weight: 800;
   letter-spacing: -0.01em;
+}
+
+/* Ícones de traço, herdando a cor do texto */
+.icon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.icon-fill {
+  fill: currentColor;
+  stroke: none;
 }
 
 .api-status {
@@ -213,6 +244,11 @@ textarea {
 }
 
 .ghost-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  text-decoration: none;
   color: var(--accent);
   background: transparent;
   border: 1px solid var(--border);
@@ -227,21 +263,20 @@ textarea {
 
 /* Botão do tema só com o ícone; o nome fica no title e para o leitor de tela */
 .theme-toggle {
-  display: inline-flex;
-  align-items: center;
   justify-content: center;
   min-width: 36px;
-  padding-left: 10px;
-  padding-right: 10px;
+  padding-left: 9px;
+  padding-right: 9px;
 }
 
 /* Lua para ir ao tema escuro, sol para voltar ao claro */
-.theme-icon::before {
-  content: "\263E";
+.theme-sun,
+.theme-toggle[data-target="light"] .theme-moon {
+  display: none;
 }
 
-.theme-toggle[data-target="light"] .theme-icon::before {
-  content: "\2600";
+.theme-toggle[data-target="light"] .theme-sun {
+  display: block;
 }
 
 /* Conteúdo */
@@ -252,17 +287,87 @@ textarea {
   padding: 32px 16px 24px;
 }
 
-.welcome h2 {
-  margin: 8px 0 8px;
-  font-size: 1.6rem;
-  line-height: 1.25;
-  letter-spacing: -0.02em;
+.eyebrow {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
 }
 
-.welcome > p:not(.fixed-note) {
+.welcome h2 {
+  margin: 6px 0 8px;
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.welcome-lead {
   margin: 0 0 20px;
   color: var(--muted);
   max-width: 64ch;
+}
+
+.cite-sample {
+  cursor: default;
+}
+
+/* Como funciona: três passos do RAG, em linha no computador */
+.how {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 0 24px;
+  padding: 0;
+  list-style: none;
+}
+
+.how li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.how strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.how-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* Autoria, só na tela inicial; na conversa ela fica no "Sobre" e no topo */
+.credit {
+  margin: 28px 0 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+#welcome[hidden] ~ .credit {
+  display: none;
+}
+
+.credit a,
+.about-credit a {
+  color: var(--accent);
+  text-underline-offset: 3px;
 }
 
 .examples {
@@ -335,8 +440,8 @@ textarea {
 .message-user {
   align-self: flex-end;
   max-width: 80%;
-  color: #ffffff;
-  background: #1f5fae;
+  color: var(--user-text);
+  background: var(--user-bg);
   border-radius: var(--radius) var(--radius) 4px var(--radius);
   padding: 10px 16px;
   white-space: pre-wrap;
@@ -412,12 +517,11 @@ textarea {
 
 .notice {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 12px;
+  align-items: flex-start;
+  gap: 10px;
   border: 1px solid;
   border-radius: 10px;
-  padding: 10px 14px;
+  padding: 12px 14px;
   margin-bottom: 14px;
   font-size: 0.92rem;
 }
@@ -426,8 +530,47 @@ textarea {
   margin-bottom: 0;
 }
 
-.notice strong {
+.notice-icon {
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+}
+
+.notice-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  min-width: 0;
+  flex: 1;
+}
+
+.notice-body strong,
+.notice-body .notice-text {
   flex-basis: 100%;
+}
+
+.notice-weak_evidence .notice-icon,
+.notice-limit .notice-icon {
+  color: var(--warn);
+}
+
+.notice-error .notice-icon {
+  color: var(--bad);
+}
+
+.notice-no_evidence .notice-icon,
+.notice-out_of_scope .notice-icon {
+  color: var(--muted);
+}
+
+.notice-sample {
+  background: var(--accent-soft);
+  border-color: transparent;
+}
+
+.notice-sample .notice-icon {
+  color: var(--accent);
 }
 
 .notice-weak_evidence {
@@ -446,10 +589,6 @@ textarea {
   border-color: var(--error-border);
 }
 
-.notice-error span,
-.notice-limit span {
-  flex: 1 1 260px;
-}
 
 /* Limite de perguntas atingido: um aviso, e não um erro */
 .notice-limit {
@@ -561,16 +700,17 @@ textarea {
   align-items: center;
   gap: 8px;
   width: fit-content;
+  min-height: 36px;
   cursor: pointer;
   list-style: none;
   margin: 4px 0;
-  padding: 4px 10px 4px 6px;
-  border-radius: 8px;
-  font-size: 0.82rem;
+  padding: 4px 14px 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.88rem;
   font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
   color: var(--muted);
+  background: var(--surface);
 }
 
 .review-group summary::-webkit-details-marker {
@@ -588,7 +728,7 @@ textarea {
 
 .review-group summary:hover {
   color: var(--accent);
-  background: var(--accent-soft);
+  border-color: var(--accent);
 }
 
 .review-group.cited-group summary {
@@ -1217,11 +1357,31 @@ textarea {
 /* Aviso de API desligada */
 
 .offline-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 10px 12px;
   margin: 0 0 20px;
   padding: 12px 16px;
   background: var(--warn-bg);
   border: 1px solid var(--warn-border);
   border-radius: 10px;
+}
+
+.offline-banner .notice-icon {
+  color: var(--warn);
+}
+
+.offline-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.offline-banner .retry-button {
+  align-self: center;
+  min-height: 36px;
 }
 
 textarea:disabled {
@@ -1351,14 +1511,19 @@ textarea:disabled {
   margin-bottom: 0;
 }
 
+/* Seta redonda, centralizada logo acima do campo de pergunta */
 .to-end {
   position: fixed;
-  right: max(16px, calc((100vw - var(--content)) / 2));
-  bottom: calc(var(--composer-height, 150px) + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(var(--composer-height, 150px) + 4px);
   z-index: 20;
-  min-height: 36px;
-  padding: 0 14px;
-  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
   color: var(--text);
   background: var(--surface);
   border: 1px solid var(--border);
@@ -1371,9 +1536,13 @@ textarea:disabled {
 }
 
 @media (max-width: 640px) {
-  .copy-button,
-  .to-end {
+  .copy-button {
     min-height: 44px;
+  }
+
+  .to-end {
+    width: 44px;
+    height: 44px;
   }
 
   .about {
@@ -1388,22 +1557,122 @@ textarea:disabled {
   }
 
   .topbar {
+    flex-wrap: nowrap;
     gap: 8px;
+  }
+
+  .brand {
+    min-width: 0;
+  }
+
+  .brand-mark {
+    width: 32px;
+    height: 32px;
   }
 
   .top-actions {
     flex-wrap: nowrap;
-    gap: 8px;
-    width: 100%;
+    gap: 4px;
   }
 
   .top-actions .ghost-button {
+    justify-content: center;
+    min-width: 40px;
     min-height: 40px;
-    padding: 0 12px;
-    white-space: nowrap;
+    padding: 0 10px;
+    border-color: transparent;
   }
 
-  .top-actions .theme-toggle {
-    margin-left: auto;
+  .how {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
+/* Botão "Filtros": só no celular, onde a faixa de filtros fica recolhida */
+.filters-toggle {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .filters-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 0 12px;
+    font-size: 0.9rem;
+    color: var(--text);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+  }
+
+  .filters-toggle[data-active="true"] {
+    color: var(--accent);
+    font-weight: 600;
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  .filters-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    font-size: 0.75rem;
+    color: var(--on-accent);
+    background: var(--accent);
+    border-radius: 999px;
+  }
+
+  .ask-form:not([data-filters-open="true"]) .filter-bar {
+    display: none;
+  }
+
+  .filter-bar:not([data-active="true"]) .filter-scope {
+    display: none;
+  }
+
+  .ask-footer .counter {
+    text-align: right;
+  }
+
+  .composer {
+    padding-top: 16px;
+  }
+}
+
+/* Topo do celular numa linha: título e status cortados com reticências, e o
+   GitHub sai do topo (fica no rodapé da tela inicial e no "Sobre") */
+@media (max-width: 640px) {
+  .brand {
+    flex: 1;
+  }
+
+  .brand > div {
+    min-width: 0;
+  }
+
+  .brand h1 {
+    font-size: 1rem;
+  }
+
+  .brand h1,
+  .api-status {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  #api-status-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .top-actions .github-link {
+    display: none;
   }
 }

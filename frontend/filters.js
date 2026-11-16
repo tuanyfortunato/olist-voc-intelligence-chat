@@ -37,7 +37,7 @@ function sameList(a, b) {
   return a.length === b.length && a.every((value, index) => value === b[index]);
 }
 
-export function createFilterBar({ container, announce }) {
+export function createFilterBar({ container, announce, onChange = () => {} }) {
   const state = { ratings: [], category: "", delivery: "" };
   // idle, loading, loaded ou error; a lista só é pedida quando o menu abre
   const categories = { status: "idle", options: [], message: "", request: null };
@@ -98,6 +98,7 @@ export function createFilterBar({ container, announce }) {
     clearAll.disabled = disabled;
     scope.textContent = searchScopeText(filters);
     container.dataset.active = String(Boolean(filters));
+    onChange(filters);
   }
 
   function setValue(kind, value, { silent = false } = {}) {

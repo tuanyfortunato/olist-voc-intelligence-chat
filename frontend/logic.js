@@ -42,21 +42,28 @@ export function parseAnswerBlocks(answer) {
   );
 }
 
+// replacesAnswer: o texto da API já explica a situação e vira o próprio aviso
 const NOTICES = {
   no_evidence: {
     kind: "no_evidence",
+    icon: "search",
     title: "Sem evidência",
     text: "Não há avaliações suficientes sobre esse tema entre as recuperadas.",
+    replacesAnswer: true,
   },
   weak_evidence: {
     kind: "weak_evidence",
+    icon: "alert",
     title: "Evidência fraca",
     text: "Poucas avaliações sustentam esta resposta. Leia como um indício, não como um padrão.",
+    replacesAnswer: false,
   },
   out_of_scope: {
     kind: "out_of_scope",
+    icon: "block",
     title: "Fora do escopo",
     text: "As avaliações dos clientes não respondem a esse tipo de pergunta.",
+    replacesAnswer: true,
   },
 };
 
@@ -102,6 +109,30 @@ export function errorMessage(httpStatus, body) {
     };
   }
   return { kind: "unexpected", message: detail || "Não foi possível responder. Tente de novo." };
+}
+
+// Aparência do aviso de erro: o limite de perguntas é um aviso, e não uma falha
+const ERROR_LOOKS = {
+  quota: { kind: "limit", icon: "clock", title: "Limite de perguntas" },
+  offline: { kind: "error", icon: "clock", title: "Chat fora do ar" },
+  timeout: { kind: "error", icon: "error", title: "A resposta demorou demais" },
+  invalid: { kind: "error", icon: "error", title: "Pergunta fora do tamanho" },
+};
+
+export function errorLook(kind) {
+  return ERROR_LOOKS[kind] || { kind: "error", icon: "error", title: "Não consegui responder" };
+}
+
+// Textos do carregando: primeiro a busca, depois a escrita da resposta
+export const LOADING_STEPS = [
+  "Buscando as avaliações mais parecidas com a pergunta...",
+  "Escrevendo a resposta com as avaliações encontradas...",
+];
+
+// Quantos filtros estão ativos, para o botão "Filtros" do celular
+export function activeFilterCount(filters) {
+  if (!filters) return 0;
+  return ["ratings", "category", "delivery"].filter((key) => filters[key]).length;
 }
 
 // Nova tentativa com a mesma pergunta. No limite de perguntas ou numa pergunta
