@@ -30,3 +30,43 @@ def test_evaluation_rows():
 def test_parse_ids():
     assert parse_ids("1,2, 7") == [1, 2, 7]
     assert parse_ids("") is None
+
+
+class RecordingPipeline:
+    def __init__(self):
+        self.calls = []
+
+    def ask(self, question, history=None):
+        self.calls.append((question, history or []))
+        return AskResult("answered", f"Resposta para {question} [1].", [], [], question, "tema")
+
+
+def test_follow_up_question_runs_each_turn_with_history_from_earlier_question():
+    from scripts.run_evaluation import MANUAL_COLUMNS
+
+    questions = [
+        TestQuestion(1, "Quais reclamações sobre entrega?", "with_evidence", "x"),
+        TestQuestion(
+            12,
+            "E nas notas altas?",
+            "greeting_follow_up",
+            "x",
+            turns=["Oi", "E nas notas altas?"],
+            history_from=1,
+        ),
+    ]
+    pipeline = RecordingPipeline()
+    rows = evaluation_rows(questions, pipeline)
+
+    assert [row["question"] for row in rows] == [
+        "Quais reclamações sobre entrega?",
+        "Oi",
+        "E nas notas altas?",
+    ]
+    assert [row["turn"] for row in rows] == [1, 1, 2]
+    assert pipeline.calls[1][1] == []
+    history = pipeline.calls[2][1]
+    assert history[0].question == "Quais reclamações sobre entrega?"
+    assert history[0].answer == "Resposta para Quais reclamações sobre entrega? [1]."
+    for column in MANUAL_COLUMNS:
+        assert rows[0][column] == ""
