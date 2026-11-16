@@ -6,7 +6,10 @@
   <meta name="description" content="Perguntas sobre a experiência dos clientes da Olist, respondidas a partir dos comentários das avaliações, com cada afirmação ligada às avaliações que a sustentam.">
   <meta name="theme-color" content="#1f5fae">
   <title>Olist Intelligence Chat</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231f5fae'/%3E%3Cpath d='M9 10h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-8l-5 4v-4H9a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2z' fill='%23fff'/%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231f5fae'/%3E%3Cpath d='M9 10h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-8l-5 4v-4H9a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2z' fill='%23fff'/%3E%3Cpath d='M16 11.6l1.2 2.5 2.7.4-2 1.9.5 2.7-2.4-1.3-2.4 1.3.5-2.7-2-1.9 2.7-.4z' fill='%231f5fae'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap">
   <link rel="stylesheet" href="styles.css">
   <script src="theme.js"></script>
 </head>
@@ -17,6 +20,7 @@
       <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
         <rect width="32" height="32" rx="8"></rect>
         <path d="M9 10h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-8l-5 4v-4H9a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2z"></path>
+        <path class="brand-star" d="M16 11.6l1.2 2.5 2.7.4-2 1.9.5 2.7-2.4-1.3-2.4 1.3.5-2.7-2-1.9 2.7-.4z"></path>
       </svg>
       <div>
         <h1>Olist Intelligence Chat</h1>
@@ -27,27 +31,49 @@
       </div>
     </div>
     <div class="top-actions">
-      <button id="new-chat" class="ghost-button" type="button" hidden>Nova conversa</button>
-      <button id="about-button" class="ghost-button" type="button" aria-haspopup="dialog" aria-label="Sobre os dados">Sobre<span class="wide-only"> os dados</span></button>
-      <button id="theme-toggle" class="ghost-button theme-toggle" type="button">
-        <span class="theme-icon" aria-hidden="true"></span>
+      <button id="new-chat" class="ghost-button icon-button" type="button" aria-label="Nova conversa" title="Nova conversa" hidden>
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+        <span class="wide-only">Nova conversa</span>
+      </button>
+      <button id="about-button" class="ghost-button icon-button" type="button" aria-haspopup="dialog" aria-label="Sobre o projeto e os dados" title="Sobre o projeto e os dados">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v6M12 7.5v.01"></path></svg>
+        <span class="wide-only">Sobre</span>
+      </button>
+      <a class="ghost-button icon-button github-link" href="https://github.com/tuanyfortunato/olist-voc-intelligence-chat" target="_blank" rel="noopener" aria-label="Código no GitHub (abre em outra aba)" title="Código no GitHub">
+        <svg class="icon icon-fill" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 12 2z"></path></svg>
+        <span class="wide-only">GitHub</span>
+      </a>
+      <button id="theme-toggle" class="ghost-button icon-button theme-toggle" type="button">
+        <svg class="icon theme-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"></path></svg>
+        <svg class="icon theme-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4"></path></svg>
         <span id="theme-label" class="visually-hidden">Tema escuro</span>
       </button>
     </div>
   </header>
 
   <main class="layout">
-    <p id="offline-banner" class="offline-banner" role="status" hidden>
-      O chat funciona das 9h às 22h, horário de Brasília. Volte nesse horário.
-    </p>
+    <div id="offline-banner" class="offline-banner" role="status" hidden>
+      <svg class="icon notice-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+      <div class="offline-text">
+        <strong>O chat está fora do ar agora</strong>
+        <span>Ele funciona das 9h às 22h, horário de Brasília. Enquanto isso, dá para ver uma resposta real gravada.</span>
+      </div>
+      <button id="example-button" class="retry-button" type="button">Ver uma resposta de exemplo</button>
+    </div>
 
     <section id="welcome" class="welcome" hidden>
+      <p class="eyebrow">Voz do cliente nas avaliações da Olist, 2016 a 2018</p>
       <h2>O que você quer saber sobre os clientes?</h2>
-      <p>
-        As respostas são escritas a partir dos comentários das avaliações da Olist, e cada
-        afirmação cita as avaliações que a sustentam. Clique num número entre colchetes para
-        ler o comentário original.
+      <p class="welcome-lead">
+        As respostas são escritas a partir dos comentários das avaliações, e cada afirmação
+        mostra as avaliações que a sustentam. Toque nos números destacados, como
+        <span class="cite cite-sample" aria-hidden="true">3</span>, para ler o comentário original.
       </p>
+      <ol class="how" aria-label="Como funciona">
+        <li><span class="how-step" aria-hidden="true">1</span><span><strong>Você pergunta</strong> sobre entrega, defeitos, atendimento ou elogios.</span></li>
+        <li><span class="how-step" aria-hidden="true">2</span><span><strong>A busca encontra</strong> os comentários mais parecidos com a pergunta.</span></li>
+        <li><span class="how-step" aria-hidden="true">3</span><span><strong>A resposta cita</strong> cada avaliação usada, para você conferir.</span></li>
+      </ol>
       <div class="examples" id="examples" aria-label="Perguntas de exemplo">
         <button type="button" class="example">
           <span class="example-topic">Entrega</span>
@@ -74,6 +100,11 @@
 
     <section id="conversation" class="conversation" aria-label="Conversa"></section>
     <div id="conversation-end"></div>
+    <p class="credit">
+      Projeto acadêmico do Tech Challenge da pós-graduação AI Scientist da FIAP, feito por
+      Tuany Fortunato. Não é um site oficial da Olist.
+      <a href="https://github.com/tuanyfortunato/olist-voc-intelligence-chat" target="_blank" rel="noopener">Ver o código no GitHub</a>
+    </p>
   </main>
 
   <div class="composer">
@@ -82,6 +113,10 @@
       <label for="question" class="visually-hidden">Pergunta</label>
       <textarea id="question" rows="1" maxlength="500" placeholder="Escreva a sua pergunta sobre as avaliações" aria-describedby="composer-hint"></textarea>
       <div class="ask-footer">
+        <button id="filters-toggle" class="filters-toggle" type="button" aria-expanded="false" aria-controls="filter-bar">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"></path></svg>
+          <span>Filtros</span><span id="filters-count" class="filters-count" hidden></span>
+        </button>
         <span id="composer-hint" class="composer-hint">Enter envia, Shift+Enter quebra a linha</span>
         <span id="counter" class="counter" data-state="ok">0/500</span>
         <button id="send" type="submit">Perguntar</button>
@@ -89,7 +124,9 @@
     </form>
   </div>
 
-  <button id="to-end" class="to-end" type="button" hidden>Ir para o fim</button>
+  <button id="to-end" class="to-end" type="button" aria-label="Ir para o fim da conversa" title="Ir para o fim da conversa" hidden>
+    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"></path></svg>
+  </button>
 
   <template id="about-template">
     <div class="about">
@@ -104,6 +141,15 @@
       <p>
         Ele não mede com que frequência cada problema acontece e não responde a perguntas de
         faturamento ou de outros números da operação.
+      </p>
+      <p>
+        A proximidade mostrada em cada avaliação vai de 0 a 1 e indica o quanto o comentário
+        se parece com a pergunta.
+      </p>
+      <p class="about-credit">
+        Projeto acadêmico do Tech Challenge da pós-graduação AI Scientist da FIAP, feito por
+        Tuany Fortunato. Não é um site oficial da Olist.
+        <a href="https://github.com/tuanyfortunato/olist-voc-intelligence-chat" target="_blank" rel="noopener">Ver o código no GitHub</a>
       </p>
     </div>
   </template>

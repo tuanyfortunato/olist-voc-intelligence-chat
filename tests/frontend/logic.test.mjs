@@ -335,3 +335,28 @@ test("answerAsText leva a resposta e as avaliações citadas", () => {
   );
   assert.equal(answerAsText({ answer: "Olá!", cited: [], uncited: [] }), "Olá!");
 });
+
+import { activeFilterCount, errorLook, LOADING_STEPS } from "../../frontend/logic.js";
+
+test("statusNotice troca a resposta pelo aviso só quando não há resposta", () => {
+  assert.equal(statusNotice("no_evidence").replacesAnswer, true);
+  assert.equal(statusNotice("out_of_scope").replacesAnswer, true);
+  assert.equal(statusNotice("weak_evidence").replacesAnswer, false);
+});
+
+test("errorLook trata o limite como aviso e o resto como erro com título", () => {
+  assert.equal(errorLook("quota").kind, "limit");
+  assert.equal(errorLook("retry").kind, "error");
+  assert.ok(errorLook("unexpected").title);
+});
+
+test("activeFilterCount conta os filtros escolhidos", () => {
+  assert.equal(activeFilterCount(null), 0);
+  assert.equal(activeFilterCount({ ratings: [1, 2] }), 1);
+  assert.equal(activeFilterCount({ ratings: [5], category: "bebes", delivery: "atrasada" }), 3);
+});
+
+test("LOADING_STEPS mostra a busca antes da escrita", () => {
+  assert.equal(LOADING_STEPS.length, 2);
+  assert.match(LOADING_STEPS[0], /Buscando/);
+});

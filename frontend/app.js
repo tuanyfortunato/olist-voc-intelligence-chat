@@ -2,7 +2,10 @@
 // clientes, entra na tela com textContent, nunca como HTML: um comentário com
 // "<script>" aparece escrito, sem ser executado.
 import {
+  activeFilterCount,
   answerAsText,
+  errorLook,
+  LOADING_STEPS,
   canRetry,
   currentTheme,
   categoryLabel,
@@ -37,6 +40,8 @@ const REQUEST_TIMEOUT_MS = 30000;
 const HEALTH_RETRY_MS = 120000;
 // Tempo para desfazer uma conversa apagada
 const UNDO_MS = 6000;
+// Momento em que o texto de carregando passa da busca para a escrita
+const LOADING_STEP_MS = 1200;
 
 const form = document.getElementById("ask-form");
 const questionInput = document.getElementById("question");
@@ -54,6 +59,10 @@ const undoButton = document.getElementById("undo-button");
 const aboutButton = document.getElementById("about-button");
 const toEndButton = document.getElementById("to-end");
 const conversationEnd = document.getElementById("conversation-end");
+const exampleButton = document.getElementById("example-button");
+const filtersToggle = document.getElementById("filters-toggle");
+const filtersCount = document.getElementById("filters-count");
+const askForm = document.getElementById("ask-form");
 
 // O campo da pergunta fica fixo no rodapé e muda de altura com o texto e com
 // a faixa de filtros. A página reserva no fim o espaço que ele ocupa, para
@@ -90,6 +99,42 @@ function element(tag, className, text) {
   return node;
 }
 
+// Ícones de traço simples, montados com createElementNS, sem HTML em texto
+const SVG_NS = "http://www.w3.org/2000/svg";
+const ICONS = {
+  alert: [["path", { d: "M12 3.5 2.5 20h19L12 3.5z" }], ["path", { d: "M12 10v4.5M12 17.5v.01" }]],
+  search: [["circle", { cx: "11", cy: "11", r: "6.5" }], ["path", { d: "m16 16 4.5 4.5" }]],
+  block: [["circle", { cx: "12", cy: "12", r: "9" }], ["path", { d: "m5.6 5.6 12.8 12.8" }]],
+  error: [["circle", { cx: "12", cy: "12", r: "9" }], ["path", { d: "M12 7.5V13M12 16.5v.01" }]],
+  clock: [["circle", { cx: "12", cy: "12", r: "9" }], ["path", { d: "M12 7v5l3 2" }]],
+  sample: [["path", { d: "M5 4h10l4 4v12H5z" }], ["path", { d: "M9 12h6M9 16h6" }]],
+};
+
+function icon(name) {
+  const svg = document.createElementNS(SVG_NS, "svg");
+  svg.setAttribute("class", "icon notice-icon");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("aria-hidden", "true");
+  for (const [tag, attributes] of ICONS[name]) {
+    const shape = document.createElementNS(SVG_NS, tag);
+    for (const [key, value] of Object.entries(attributes)) shape.setAttribute(key, value);
+    svg.appendChild(shape);
+  }
+  return svg;
+}
+
+// Aviso com ícone, título e texto; o ícone e o título não dependem só da cor
+function noticeBox(kind, iconName, title, text) {
+  const box = element("div", `notice notice-${kind}`);
+  box.appendChild(icon(iconName));
+  const body = element("div", "notice-body");
+  if (title) body.appendChild(element("strong", null, title));
+  if (text) body.appendChild(element("span", "notice-text", text));
+  box.appendChild(body);
+  box.body = body;
+  return box;
+}
+
 function announce(text) {
   announcer.textContent = "";
   // O texto muda num segundo momento para o leitor de tela anunciar de novo
@@ -111,6 +156,7 @@ function applyLocks() {
     button.disabled = blocked;
   }
   filterBar.setDisabled(locked);
+  filtersToggle.disabled = locked;
   offlineBanner.hidden = online;
   welcome.hidden = conversation.childElementCount > 0;
 }
@@ -181,7 +227,8 @@ function stars(rating) {
   wrapper.setAttribute("role", "img");
   wrapper.setAttribute("aria-label", `Nota ${rating} de 5`);
   for (let i = 1; i <= 5; i += 1) {
-    const star = element("span", i <= rating ? "star filled" : "star", "★");
+    // Cheia e vazia mudam de forma, e não só de cor
+    const star = element("span", i <= rating ? "star filled" : "star", i <= rating ? "★" : "☆");
     star.setAttribute("aria-hidden", "true");
     wrapper.appendChild(star);
   }
@@ -234,9 +281,11 @@ function reviewCard(review, messageId, cited, { preview = false } = {}) {
   return card;
 }
 
-// Bloco recolhido de avaliações. Abre pelo clique no título ou numa citação [n].
+// Bloco de avaliações. As não citadas abrem pelo título ou por uma citação [n].
+// As citadas começam abertas: são a evidência da resposta.
 function reviewGroup(className, title, reviews, messageId, cited) {
   const details = element("details", `review-group ${className}`);
+  details.open = cited;
   details.appendChild(element("summary", null, `${title} (${reviews.length})`));
   for (const review of reviews) details.appendChild(reviewCard(review, messageId, cited));
   return details;
@@ -248,7 +297,13 @@ function renderReviews(result, messageId) {
   section.setAttribute("aria-label", "Avaliações recuperadas");
   if (result.cited.length) {
     section.appendChild(
-      reviewGroup("cited-group", "Avaliações citadas", result.cited, messageId, true),
+      reviewGroup(
+        "cited-group",
+        result.cited.length === 1 ? "Avaliação usada na resposta" : "Avaliações usadas na resposta",
+        result.cited,
+        messageId,
+        true,
+      ),
     );
   }
   if (result.uncited.length) {
@@ -320,24 +375,32 @@ function copyButton(result) {
 function renderAnswer(container, result, messageId) {
   container.replaceChildren();
   container.removeAttribute("aria-busy");
+  if (container.example) container.appendChild(exampleNote());
   const notice = statusNotice(result.status);
+  // Sem resposta (fora do escopo, sem evidência), o aviso traz o próprio texto
+  // da API, num bloco só, e não há o que copiar
+  const answerless = notice && notice.replacesAnswer;
   if (notice) {
-    const box = element("div", `notice notice-${notice.kind}`);
-    box.appendChild(element("strong", null, notice.title));
-    box.appendChild(element("span", null, notice.text));
+    const box = noticeBox(
+      notice.kind,
+      notice.icon,
+      notice.title,
+      answerless ? result.answer : notice.text,
+    );
     // Com filtros, a falta de evidência pode ser só o recorte escolhido
     const restriction = restrictionNotice(result.status, container.filters);
     if (restriction) {
-      box.appendChild(element("span", "notice-restriction", `${restriction}.`));
+      box.body.appendChild(element("span", "notice-restriction", `${restriction}.`));
       const unfiltered = element("button", "retry-button ask-unfiltered", "Perguntar sem filtros");
       unfiltered.type = "button";
       unfiltered.addEventListener("click", () =>
         startQuestion(container.question, { filters: null }),
       );
-      box.appendChild(unfiltered);
+      box.body.appendChild(unfiltered);
     }
     container.appendChild(box);
   }
+  if (answerless) return;
   // As notas marcadas na faixa valem mais do que as citadas na pergunta; nesse
   // caso a API não deduz nada, e o balão da pergunta já mostra as usadas
   const chosenRatings = container.filters && container.filters.ratings;
@@ -362,7 +425,7 @@ function renderAnswer(container, result, messageId) {
   container.appendChild(answer);
   const evidence = evidenceLine(result.cited.length, result.uncited.length);
   if (evidence) container.appendChild(element("p", "evidence-line", evidence));
-  container.appendChild(copyButton(result));
+  if (!container.example) container.appendChild(copyButton(result));
   // As avaliações ficam no balão, para o cartão aberto por uma citação
   container.reviews = new Map();
   for (const review of result.cited) container.reviews.set(review.number, { review, cited: true });
@@ -374,15 +437,14 @@ function renderAnswer(container, result, messageId) {
 function renderError(container, error, question) {
   container.replaceChildren();
   container.removeAttribute("aria-busy");
-  const box = element("div", "notice notice-error");
   // O limite de perguntas não é uma falha: ganha um aviso amarelo, sem botão
-  if (error.kind === "quota") box.className = "notice notice-limit";
-  box.appendChild(element("span", null, error.message));
+  const look = errorLook(error.kind);
+  const box = noticeBox(look.kind, look.icon, look.title, error.message);
   if (canRetry(error.kind)) {
     const retry = element("button", "retry-button", "Tentar de novo");
     retry.type = "button";
     retry.addEventListener("click", () => send(question, container));
-    box.appendChild(retry);
+    box.body.appendChild(retry);
   }
   container.appendChild(box);
   if (error.kind === "offline") checkApi();
@@ -396,8 +458,14 @@ function renderLoading(container) {
   dots.setAttribute("aria-hidden", "true");
   for (let i = 0; i < 3; i += 1) dots.appendChild(element("span"));
   loading.appendChild(dots);
-  loading.appendChild(element("span", null, "Buscando nas avaliações e escrevendo a resposta..."));
+  const step = element("span", null, LOADING_STEPS[0]);
+  loading.appendChild(step);
   container.appendChild(loading);
+  // A busca leva cerca de um segundo; depois disso o modelo escreve a resposta
+  const timer = setTimeout(() => {
+    if (step.isConnected) step.textContent = LOADING_STEPS[1];
+  }, LOADING_STEP_MS);
+  container.loadingTimer = timer;
 }
 
 async function callApi(question, filters, history) {
@@ -430,6 +498,7 @@ async function send(question, reply) {
   // Os filtros ficam no balão: a nova tentativa usa os mesmos da pergunta original
   const { status, body } = await callApi(question, reply.filters || null, reply.history || []);
   setBusy(false);
+  clearTimeout(reply.loadingTimer);
 
   const messageId = reply.dataset.messageId;
   if (status === 200 && body) {
@@ -631,10 +700,76 @@ toEndButton.addEventListener("click", () => {
   conversationEnd.scrollIntoView({ behavior: "smooth", block: "end" });
 });
 
+// No celular a faixa de filtros fica recolhida atrás do botão "Filtros",
+// que mostra quantos estão ativos
+function updateFiltersToggle(filters) {
+  const count = activeFilterCount(filters);
+  filtersCount.hidden = count === 0;
+  filtersCount.textContent = String(count);
+  filtersToggle.dataset.active = String(count > 0);
+  filtersToggle.setAttribute(
+    "aria-label",
+    count ? `Filtros, ${count} ${count === 1 ? "ativo" : "ativos"}` : "Filtros",
+  );
+}
+
+filtersToggle.addEventListener("click", () => {
+  const open = askForm.dataset.filtersOpen !== "true";
+  askForm.dataset.filtersOpen = String(open);
+  filtersToggle.setAttribute("aria-expanded", String(open));
+});
+
 const filterBar = createFilterBar({
   container: document.getElementById("filter-bar"),
   announce,
+  onChange: updateFiltersToggle,
 });
+
+// Fora do horário, uma resposta real gravada mostra o que o chat faz
+exampleButton.addEventListener("click", async () => {
+  exampleButton.disabled = true;
+  try {
+    const response = await fetch("exemplo.json");
+    if (!response.ok) throw new Error(String(response.status));
+    const result = await response.json();
+    showExample(result);
+  } catch {
+    announce("Não foi possível carregar o exemplo.");
+  } finally {
+    exampleButton.disabled = false;
+  }
+});
+
+function showExample(result) {
+  closeOverlay();
+  discardUndo();
+  conversation.replaceChildren();
+  conversationTurns = [];
+  welcome.hidden = true;
+  messageCount += 1;
+  const turn = element("div", "turn");
+  turn.appendChild(element("h2", "visually-hidden", `Exemplo: ${result.original_question}`));
+  turn.appendChild(element("div", "message-user", result.original_question));
+  const reply = element("div", "message-bot");
+  reply.dataset.messageId = `m${messageCount}`;
+  reply.example = true;
+  turn.appendChild(reply);
+  conversation.appendChild(turn);
+  renderAnswer(reply, result, reply.dataset.messageId);
+  newChatButton.hidden = false;
+  applyLocks();
+  announce("Resposta de exemplo aberta.");
+  turn.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function exampleNote() {
+  return noticeBox(
+    "sample",
+    "sample",
+    "Resposta de exemplo",
+    "Gravada numa rodada de avaliação do projeto. Com o chat no ar, as respostas trazem também a categoria, a data e a entrega de cada avaliação.",
+  );
+}
 
 resetUsed();
 updateThemeButton();
