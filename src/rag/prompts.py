@@ -65,3 +65,27 @@ def build_answer_messages(clean_question: str, context: str) -> list[tuple[str, 
     histórico da conversa nunca chega aqui."""
     user = f"Pergunta do gestor:\n{clean_question}\n\nComentários recuperados:\n{context}"
     return [("system", ANSWER_SYSTEM_PROMPT), ("human", user)]
+
+
+# Respostas fixas, sem chamar o modelo de resposta
+
+OUT_OF_SCOPE_MESSAGE = (
+    "Essa pergunta está fora do que as avaliações dos clientes conseguem responder. "
+    "O chat responde sobre o que os clientes relatam nos comentários, como entrega, "
+    "defeitos, atendimento e elogios, e não tem dados de faturamento, vendas ou outros "
+    "números da operação da Olist."
+)
+
+GREETING_MESSAGE = (
+    "Olá! Eu respondo perguntas sobre a experiência dos clientes da Olist com base nos "
+    "comentários das avaliações, e mostro as avaliações usadas em cada resposta. Alguns "
+    'exemplos: "Quais reclamações sobre entrega aparecem com mais frequência?", "O que '
+    'os clientes relatam sobre produtos que chegaram com defeito?" e "O que os clientes '
+    'acham do aplicativo da loja?".'
+)
+
+NO_EVIDENCE_MESSAGE = (
+    "Não encontrei avaliações sobre esse tema. Nenhum comentário ficou parecido o "
+    "suficiente com a pergunta para servir de evidência. Tente descrever o assunto de "
+    "outra forma ou perguntar sobre outro aspecto da experiência dos clientes."
+)

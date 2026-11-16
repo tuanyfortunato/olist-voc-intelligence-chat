@@ -1,5 +1,8 @@
+import pytest
+
 from src.config import Settings
-from src.rag.pipeline import RagPipeline
+from src.rag.pipeline import RagPipeline, decide_status
+from src.rag.prompts import GREETING_MESSAGE, NO_EVIDENCE_MESSAGE, OUT_OF_SCOPE_MESSAGE
 from src.rag.question_analysis import QuestionAnalysis
 from src.rag.schemas import RetrievedReview
 
@@ -82,3 +85,58 @@ def test_answer_uses_clean_question():
     sent = str(pipe.answer_llm.messages[0])
     assert "O que mais criticam além do atraso?" in sent
     assert "90%" not in sent
+
+
+@pytest.mark.parametrize(
+    "retrieved,cited,status",
+    [
+        (0, 0, "no_evidence"),
+        (5, 0, "no_evidence"),
+        (5, 1, "weak_evidence"),
+        (5, 2, "weak_evidence"),
+        (5, 3, "answered"),
+    ],
+)
+def test_decide_status(retrieved, cited, status):
+    assert decide_status(retrieved, cited) == status
+
+
+def test_no_retrieved_reviews_skips_answer_llm():
+    pipe = fake_pipeline(retrieved=[])
+    result = pipe.ask("O que falam do Pix?")
+    assert result.status == "no_evidence"
+    assert result.answer == NO_EVIDENCE_MESSAGE
+    assert pipe.answer_llm.calls == 0
+
+
+def test_out_of_scope_skips_search_and_answer():
+    pipe = fake_pipeline(kind="out_of_scope", topic="", question="")
+    result = pipe.ask("Qual o faturamento da Olist em 2018?")
+    assert result.status == "out_of_scope" and result.answer == OUT_OF_SCOPE_MESSAGE
+    assert pipe.embedded_texts == [] and pipe.answer_llm.calls == 0
+    assert result.cited == [] and result.uncited == []
+
+
+def test_greeting_returns_fixed_message():
+    pipe = fake_pipeline(kind="greeting", topic="", question="")
+    result = pipe.ask("Oi")
+    assert result.status == "greeting" and result.answer == GREETING_MESSAGE
+    assert pipe.embedded_texts == []
+
+
+def test_weak_evidence_when_two_cited():
+    pipe = fake_pipeline([review("r1"), review("r2"), review("r3")], "Só isso [1][2].")
+    assert pipe.ask("x").status == "weak_evidence"
+
+
+def test_no_citation_keeps_model_text_and_marks_no_evidence():
+    text = "Não há avaliações sobre Pix entre as recuperadas; elas falam de pagamento em geral."
+    pipe = fake_pipeline([review("r1"), review("r2")], text)
+    result = pipe.ask("O que falam do Pix?")
+    assert result.status == "no_evidence" and result.answer == text
+    assert result.cited == [] and len(result.uncited) == 2
+
+
+def test_answered_with_three_citations():
+    pipe = fake_pipeline([review("r1"), review("r2"), review("r3")], "A [1][2][3].")
+    assert pipe.ask("x").status == "answered"

@@ -14,6 +14,7 @@ from dataclasses import replace
 from src.config import Settings
 from src.rag.context_builder import extract_citations, remove_invalid_citations
 from src.rag.generator import generate_answer
+from src.rag.prompts import GREETING_MESSAGE, NO_EVIDENCE_MESSAGE, OUT_OF_SCOPE_MESSAGE
 from src.rag.question_analysis import analyze_question
 from src.rag.schemas import AskResult, ConversationTurn, RetrievedReview
 
@@ -21,6 +22,27 @@ logger = logging.getLogger(__name__)
 
 EmbedFunction = Callable[[str], list[float]]
 SearchFunction = Callable[[list[float]], list[RetrievedReview]]
+
+
+# Até 2 avaliações citadas, a resposta sai com aviso de evidência fraca
+WEAK_EVIDENCE_MAX_CITED = 2
+
+FIXED_MESSAGES = {"out_of_scope": OUT_OF_SCOPE_MESSAGE, "greeting": GREETING_MESSAGE}
+
+
+def decide_status(n_retrieved: int, n_cited: int) -> str:
+    """Situação da resposta a partir das avaliações recuperadas e das citadas.
+
+    Nenhuma recuperada ou nenhuma citada vale como sem evidência; uma ou duas
+    citadas, evidência fraca. A medida é pelas citações, e não pelo score,
+    porque o score não separa temas vizinhos: a busca pelo Pix traz comentários
+    sobre pagamento em geral, com score parecido com o de comentários relevantes.
+    """
+    if n_retrieved == 0 or n_cited == 0:
+        return "no_evidence"
+    if n_cited <= WEAK_EVIDENCE_MAX_CITED:
+        return "weak_evidence"
+    return "answered"
 
 
 class RagPipeline:
@@ -45,11 +67,34 @@ class RagPipeline:
         analysis = result.analysis
         timings["analise_ms"] = (time.monotonic() - start) * 1000
 
+        if analysis.kind in FIXED_MESSAGES:
+            logger.info("etapa=pergunta original=%r tipo=%s", question, analysis.kind)
+            return AskResult(
+                status=analysis.kind,
+                answer=FIXED_MESSAGES[analysis.kind],
+                cited=[],
+                uncited=[],
+                original_question=question,
+                search_topic="",
+            )
+
         topic = analysis.search_topic if self.settings.use_rewrite else question
         start = time.monotonic()
         retrieved = self.search(self.embed(topic))
         timings["busca_ms"] = (time.monotonic() - start) * 1000
         reviews = [replace(review, number=n) for n, review in enumerate(retrieved, start=1)]
+
+        # Nenhum comentário passou do score mínimo: responde sem chamar o modelo
+        if not reviews:
+            logger.info("etapa=pergunta original=%r tema=%r recuperados=0", question, topic)
+            return AskResult(
+                status="no_evidence",
+                answer=NO_EVIDENCE_MESSAGE,
+                cited=[],
+                uncited=[],
+                original_question=question,
+                search_topic=topic,
+            )
 
         start = time.monotonic()
         answer = generate_answer(analysis.clean_question, reviews, self.answer_llm)
@@ -63,16 +108,18 @@ class RagPipeline:
         cited = [by_number[n] for n in check.cited]
         uncited = [review for review in reviews if review.number not in check.cited]
 
+        status = decide_status(len(reviews), len(cited))
         logger.info(
-            "etapa=pergunta original=%r tema=%r recuperados=%d citados=%d %s",
+            "etapa=pergunta original=%r tema=%r situacao=%s recuperados=%d citados=%d %s",
             question,
             topic,
+            status,
             len(reviews),
             len(cited),
             " ".join(f"{k}={v:.0f}" for k, v in timings.items()),
         )
         return AskResult(
-            status="answered",
+            status=status,
             answer=answer,
             cited=cited,
             uncited=uncited,
