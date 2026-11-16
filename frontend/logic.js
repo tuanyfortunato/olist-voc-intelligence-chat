@@ -180,7 +180,6 @@ export const SUGGESTIONS = [
   "Como os clientes descrevem a comunicação sobre o andamento do pedido?",
   "O que os clientes relatam sobre produtos que nunca foram entregues?",
   "O que os clientes falam sobre o rastreamento das encomendas?",
-  "Por que os clientes recomendam a loja?",
   "O que os clientes relatam sobre produtos falsificados ou que não são originais?",
   "O que os clientes comentam sobre o tamanho e as medidas dos produtos?",
   "Como os produtos frágeis chegam, segundo os clientes?",
@@ -190,6 +189,24 @@ export const SUGGESTIONS = [
   "O que os clientes contam sobre a cor do produto ser diferente da foto?",
   "O que os clientes dizem sobre voltar a comprar na loja?",
   "O que os clientes relatam sobre pedidos entregues em datas diferentes?",
+  // Perguntas de gestão: o que corrigir primeiro, com qual área falar, o que
+  // manter e o que pode virar risco para a reputação
+  "Quais problemas mais deixam os clientes insatisfeitos a ponto de darem nota 1?",
+  "O que faz um cliente dizer que não volta a comprar?",
+  "Quais reclamações indicam falha do vendedor, e não da transportadora?",
+  "Quais problemas os clientes dizem que se repetem em mais de uma compra?",
+  "Em que parte da entrega os clientes relatam mais problemas: prazo, extravio ou avaria?",
+  "O que os clientes relatam quando o pedido é dividido em mais de uma entrega?",
+  "Como os clientes descrevem a demora para resolver um problema depois da compra?",
+  "O que os clientes dizem quando não conseguem contato com a loja ou o vendedor?",
+  "Quais atitudes do vendedor os clientes mais elogiam?",
+  "O que os clientes esperavam receber de informação e não receberam?",
+  "Quais diferenças entre o anúncio e o produto recebido os clientes mais apontam?",
+  "O que os clientes sugerem para melhorar a descrição dos produtos?",
+  "O que leva os clientes a recomendarem a loja para outras pessoas?",
+  "O que os clientes satisfeitos destacam além da entrega no prazo?",
+  "Que tipo de problema faz o cliente falar em Procon, processo ou reclamação pública?",
+  "O que os clientes relatam sobre cobranças indevidas ou pagamento não reconhecido?",
 ];
 
 function normalize(question) {
