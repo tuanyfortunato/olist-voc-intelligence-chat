@@ -77,7 +77,7 @@ jobs:
           node-version: "22"
 
       - name: Testes da lógica da página
-        run: node --test tests/frontend/
+        run: node --test "tests/frontend/*.test.mjs"
 
       - name: A página não monta HTML com texto vindo da API
         run: |
