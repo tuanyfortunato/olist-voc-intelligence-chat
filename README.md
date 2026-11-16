@@ -1,4 +1,4 @@
-# Olist Intelligence Chat
+# Voz do Cliente: chat sobre as avaliações da Olist
 
 Um chat em que um gestor faz perguntas sobre a experiência dos clientes da Olist e recebe uma resposta baseada nas avaliações reais que esses clientes escreveram. Cada frase da resposta aponta para os comentários que a sustentam, e a pessoa pode abrir cada um deles para conferir.
 

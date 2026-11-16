@@ -154,7 +154,7 @@ textarea {
   gap: 12px 24px;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 24px;
+  padding: 12px 32px;
   background: color-mix(in srgb, var(--surface) 92%, transparent);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--border);
@@ -167,29 +167,39 @@ textarea {
 }
 
 .brand-mark {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   flex: none;
 }
 
-.brand-mark rect {
+.brand-mark .brand-bg {
   fill: var(--accent);
 }
 
-.brand-mark path {
+.brand-mark .brand-bubble {
+  fill: none;
+  stroke: var(--on-accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.brand-mark .brand-bar {
   fill: var(--on-accent);
-}
-
-.brand-mark .brand-star {
-  fill: var(--accent);
 }
 
 .brand h1 {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 1.12rem;
+  font-size: 1.15rem;
   font-weight: 800;
-  letter-spacing: -0.01em;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.brand-sub {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
 }
 
 /* Ícones de traço, herdando a cor do texto */
@@ -209,13 +219,30 @@ textarea {
   stroke: none;
 }
 
+/* Selo da situação do chat, ao lado dos botões do topo */
 .api-status {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
+  min-height: 28px;
   margin: 0;
+  padding: 0 10px;
+  border-radius: 999px;
   color: var(--muted);
-  font-size: 0.85rem;
+  background: var(--surface-2);
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.api-status[data-state="online"] {
+  color: var(--ok);
+  background: var(--ok-bg);
+}
+
+.api-status[data-state="offline"] {
+  color: var(--bad);
+  background: var(--bad-bg);
 }
 
 .status-dot {
@@ -228,18 +255,16 @@ textarea {
 
 .api-status[data-state="online"] .status-dot {
   background: var(--ok);
-  box-shadow: 0 0 0 3px var(--ok-bg);
 }
 
 .api-status[data-state="offline"] .status-dot {
   background: var(--bad);
-  box-shadow: 0 0 0 3px var(--bad-bg);
 }
 
 .top-actions {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: center;
   gap: 10px 16px;
 }
 
@@ -1652,24 +1677,33 @@ textarea:disabled {
     flex: 1;
   }
 
-  .brand > div {
+  .brand-text {
     min-width: 0;
   }
 
   .brand h1 {
-    font-size: 1rem;
-  }
-
-  .brand h1,
-  .api-status {
+    font-size: 1.05rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
+  .brand-sub {
+    display: none;
+  }
+
+  /* No celular o selo vira só o ponto colorido; o texto fica para o leitor de tela */
+  .api-status {
+    padding: 0 9px;
+  }
+
   #api-status-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
     overflow: hidden;
-    text-overflow: ellipsis;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
   }
 
   .top-actions .github-link {
