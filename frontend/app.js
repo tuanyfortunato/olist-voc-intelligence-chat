@@ -28,6 +28,8 @@ import {
   quotePreview,
   splitQuotes,
   stripCitations,
+  OVERVIEW_AREA,
+  SUGGESTION_AREAS,
   SUGGESTIONS,
   statusNotice,
   TIMEOUT_STATUS,
@@ -77,6 +79,10 @@ new ResizeObserver(() => {
   document.body.style.setProperty("--composer-height", `${composer.offsetHeight}px`);
 }).observe(composer);
 const exampleButtons = document.querySelectorAll("#examples button");
+const areaPanel = document.getElementById("area-panel");
+const areaPanelTitle = document.getElementById("area-panel-title");
+const areaQuestions = document.getElementById("area-questions");
+const areaClose = document.getElementById("area-close");
 
 let messageCount = 0;
 // Trocas desta conversa; ficam só no navegador e somem com "Nova conversa"
@@ -89,14 +95,11 @@ let documentCount = null;
 const SUGGESTIONS_PER_ROUND = 3;
 // Quantas das sugestões de cada rodada vêm da mesma área da pergunta
 const SAME_AREA_SUGGESTIONS = 2;
-// Perguntas já sugeridas ou feitas nesta conversa, que não voltam a aparecer.
-// Os exemplos da tela inicial contam como já sugeridos.
+// Perguntas já sugeridas ou feitas nesta conversa, que não voltam a aparecer
 let used = [];
 
 function resetUsed() {
-  used = [...exampleButtons].map((button) =>
-    button.querySelector(".example-question").textContent.trim(),
-  );
+  used = [];
 }
 
 function element(tag, className, text) {
@@ -157,8 +160,8 @@ function applyLocks() {
   sendButton.disabled = blocked;
   sendButton.textContent = busy ? "Aguarde..." : "Perguntar";
   questionInput.disabled = locked;
-  for (const button of exampleButtons) button.disabled = blocked;
   const waiting = ".suggestion, .more-suggestions, .ask-unfiltered, .retry-button";
+  for (const button of areaQuestions.querySelectorAll(".suggestion")) button.disabled = blocked;
   for (const button of conversation.querySelectorAll(waiting)) {
     button.disabled = blocked;
   }
@@ -510,8 +513,9 @@ async function send(question, reply) {
   const messageId = reply.dataset.messageId;
   if (status === 200 && body) {
     renderAnswer(reply, body, messageId);
-    conversationTurns.push({ question, answer: body.answer });
-    renderSuggestions(reply);
+    reply.turns.push({ question, answer: body.answer });
+    // Se a pessoa saiu da conversa enquanto esperava, as sugestões ficam para quando ela voltar
+    if (reply.isConnected) renderSuggestions(reply);
     announce("Resposta pronta.");
   } else {
     const error = errorMessage(status, body);
@@ -526,9 +530,11 @@ async function send(question, reply) {
 function startQuestion(question, options = {}) {
   if (busy || !online) return false;
   discardUndo();
+  closeArea();
   welcome.hidden = true;
   newChatButton.hidden = false;
   used.push(question);
+  enterChat();
 
   messageCount += 1;
   const filters = options.filters !== undefined ? options.filters : filterBar.current();
@@ -544,6 +550,7 @@ function startQuestion(question, options = {}) {
   reply.question = question;
   // O histórico também fica no balão, para a nova tentativa mandar o mesmo
   reply.history = buildHistory(conversationTurns);
+  reply.turns = conversationTurns;
   turn.appendChild(reply);
   conversation.appendChild(turn);
   send(question, reply);
@@ -580,12 +587,65 @@ questionInput.addEventListener("keydown", (event) => {
 
 questionInput.addEventListener("input", updateComposer);
 
+// Cada cartão da tela inicial é uma área: o clique mostra as perguntas dela
+// para a pessoa escolher, e um segundo clique no mesmo cartão as esconde
+let openArea = null;
+
+function closeArea() {
+  openArea = null;
+  areaPanel.hidden = true;
+  areaQuestions.replaceChildren();
+  for (const button of exampleButtons) button.setAttribute("aria-expanded", "false");
+}
+
+function showArea(name) {
+  const group = SUGGESTION_AREAS.find((item) => item.area === name);
+  if (!group) return;
+  openArea = name;
+  for (const button of exampleButtons) {
+    button.setAttribute("aria-expanded", String(button.dataset.area === name));
+  }
+  areaPanelTitle.textContent = name === OVERVIEW_AREA ? "Perguntas de visão geral" : `Perguntas de ${name}`;
+  areaQuestions.replaceChildren(...group.questions.map(suggestionButton));
+  areaPanel.hidden = false;
+  applyLocks();
+  areaPanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  areaPanelTitle.focus({ preventScroll: true });
+}
+
 for (const button of exampleButtons) {
   button.addEventListener("click", () => {
-    const question = button.querySelector(".example-question").textContent.trim();
-    startQuestion(question);
+    if (openArea === button.dataset.area) {
+      closeArea();
+      return;
+    }
+    showArea(button.dataset.area);
   });
 }
+
+areaClose.addEventListener("click", () => {
+  const name = openArea;
+  closeArea();
+  const card = [...exampleButtons].find((button) => button.dataset.area === name);
+  if (card) card.focus();
+});
+
+// A conversa ganha uma entrada no histórico do navegador. Assim o botão voltar
+// do navegador ou do celular leva de volta à tela inicial, em vez de sair do site.
+function enterChat() {
+  if (history.state && history.state.view === "chat") return;
+  history.pushState({ view: "chat" }, "");
+}
+
+window.addEventListener("popstate", (event) => {
+  const view = event.state && event.state.view;
+  if (view === "chat") {
+    // Avançar depois de voltar: recupera a conversa, se ainda dá para desfazer
+    if (!conversation.childElementCount && !restoreConversation()) history.replaceState(null, "");
+    return;
+  }
+  if (conversation.childElementCount) clearConversation();
+});
 
 // "Nova conversa" guarda o que apagou por alguns segundos, para dar tempo de desfazer
 let undoState = null;
@@ -597,8 +657,10 @@ function discardUndo() {
   undoToast.hidden = true;
 }
 
-newChatButton.addEventListener("click", () => {
-  if (busy) return;
+// Apaga a conversa e volta à tela inicial, guardando o que apagou para desfazer
+let focusAfterClear = false;
+
+function clearConversation() {
   closeOverlay();
   discardUndo();
   undoState = {
@@ -616,11 +678,22 @@ newChatButton.addEventListener("click", () => {
   undoToast.hidden = false;
   undoTimer = setTimeout(discardUndo, UNDO_MS);
   window.scrollTo({ top: 0, behavior: "smooth" });
-  questionInput.focus();
+  // Pelo botão, o foco vai para o campo; pelo voltar do celular, não abre o teclado
+  if (focusAfterClear) questionInput.focus({ preventScroll: true });
+  focusAfterClear = false;
+}
+
+// O botão "Nova conversa" volta uma entrada no histórico, como o voltar do
+// navegador; os dois caminhos apagam a conversa no mesmo lugar
+newChatButton.addEventListener("click", () => {
+  if (busy) return;
+  focusAfterClear = true;
+  if (history.state && history.state.view === "chat") history.back();
+  else clearConversation();
 });
 
-undoButton.addEventListener("click", () => {
-  if (!undoState) return;
+function restoreConversation() {
+  if (!undoState) return false;
   conversation.replaceChildren(...undoState.nodes);
   conversationTurns = undoState.turns;
   used = undoState.used;
@@ -630,6 +703,11 @@ undoButton.addEventListener("click", () => {
   applyLocks();
   announce("Conversa recuperada.");
   conversation.lastElementChild.scrollIntoView({ behavior: "smooth", block: "start" });
+  return true;
+}
+
+undoButton.addEventListener("click", () => {
+  if (restoreConversation()) enterChat();
 });
 
 const themeToggle = document.getElementById("theme-toggle");
@@ -754,7 +832,9 @@ function showExample(result) {
   discardUndo();
   conversation.replaceChildren();
   conversationTurns = [];
+  closeArea();
   welcome.hidden = true;
+  enterChat();
   messageCount += 1;
   const turn = element("div", "turn");
   turn.appendChild(element("h2", "visually-hidden", `Exemplo: ${result.original_question}`));
@@ -780,6 +860,8 @@ function exampleNote() {
   );
 }
 
+// Ao recarregar a página no meio de uma conversa, ela começa de novo na tela inicial
+if (history.state && history.state.view === "chat") history.replaceState(null, "");
 resetUsed();
 updateThemeButton();
 updateComposer();

@@ -76,27 +76,42 @@
         <li><span class="how-step" aria-hidden="true">2</span><span><strong>A busca encontra</strong> os comentários mais parecidos com a pergunta.</span></li>
         <li><span class="how-step" aria-hidden="true">3</span><span><strong>A resposta cita</strong> cada avaliação usada, para você conferir.</span></li>
       </ol>
-      <div class="examples" id="examples" aria-label="Perguntas de exemplo">
-        <button type="button" class="example example-overview">
+      <h3 class="areas-title" id="areas-title">Escolha uma área para ver as perguntas sugeridas</h3>
+      <div class="examples" id="examples" role="group" aria-labelledby="areas-title">
+        <button type="button" class="example example-overview" data-area="Visão geral" aria-expanded="false" aria-controls="area-panel">
           <span class="example-topic">Visão geral</span>
-          <span class="example-question">Quais são os principais temas de reclamação e de elogio dos clientes?</span>
+          <span class="example-summary">Reclamações e elogios em geral</span>
         </button>
-        <button type="button" class="example">
+        <button type="button" class="example" data-area="Logística" aria-expanded="false" aria-controls="area-panel">
           <span class="example-topic">Logística</span>
-          <span class="example-question">Em que parte da entrega os clientes relatam mais problemas: prazo, extravio ou avaria?</span>
+          <span class="example-summary">Prazo, extravio, avaria e rastreio</span>
         </button>
-        <button type="button" class="example">
-          <span class="example-topic">Retenção</span>
-          <span class="example-question">O que faz um cliente dizer que não volta a comprar?</span>
+        <button type="button" class="example" data-area="Produto e anúncio" aria-expanded="false" aria-controls="area-panel">
+          <span class="example-topic">Produto e anúncio</span>
+          <span class="example-summary">Defeitos, medidas e diferença do anúncio</span>
         </button>
-        <button type="button" class="example">
+        <button type="button" class="example" data-area="Vendedores" aria-expanded="false" aria-controls="area-panel">
           <span class="example-topic">Vendedores</span>
-          <span class="example-question">Quais reclamações indicam falha do vendedor, e não da transportadora?</span>
+          <span class="example-summary">Contato com a loja, trocas e reembolso</span>
         </button>
-        <button type="button" class="example">
+        <button type="button" class="example" data-area="Retenção" aria-expanded="false" aria-controls="area-panel">
+          <span class="example-topic">Retenção</span>
+          <span class="example-summary">O que faz o cliente voltar ou desistir</span>
+        </button>
+        <button type="button" class="example" data-area="Pontos fortes" aria-expanded="false" aria-controls="area-panel">
           <span class="example-topic">Pontos fortes</span>
-          <span class="example-question">O que os clientes satisfeitos destacam além da entrega no prazo?</span>
+          <span class="example-summary">O que os clientes mais elogiam</span>
         </button>
+      </div>
+      <div id="area-panel" class="area-panel" role="region" aria-labelledby="area-panel-title" hidden>
+        <div class="area-panel-head">
+          <h3 id="area-panel-title" class="area-panel-title" tabindex="-1"></h3>
+          <button id="area-close" class="area-close" type="button" aria-label="Fechar as perguntas da área" title="Fechar">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+          </button>
+        </div>
+        <p class="area-panel-hint">Clique numa pergunta para enviar, ou escreva a sua no campo abaixo.</p>
+        <div id="area-questions" class="suggestion-list area-questions"></div>
       </div>
       <p class="fixed-note">
         As respostas descrevem as avaliações recuperadas para cada pergunta, e não a base

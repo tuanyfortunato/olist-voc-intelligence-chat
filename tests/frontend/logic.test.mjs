@@ -403,12 +403,11 @@ test("pickAreaSuggestions completa com outras áreas quando a área acaba", () =
   for (const question of picked) assert.ok(!group.includes(question));
 });
 
-test("os cartões da tela inicial estão na lista de sugestões", async () => {
+test("cada cartão da tela inicial abre uma área da lista de sugestões", async () => {
   const { readFile } = await import("node:fs/promises");
   const html = await readFile(new URL("../../frontend/index.html", import.meta.url), "utf8");
-  const cards = [...html.matchAll(/<span class="example-question">([^<]+)<\/span>/g)].map((m) => m[1]);
-  assert.equal(cards.length, 5);
-  for (const card of cards) assert.ok(suggestionArea(card), card);
+  const cards = [...html.matchAll(/data-area="([^"]+)"/g)].map((m) => m[1]);
+  assert.deepEqual(cards, SUGGESTION_AREAS.map((item) => item.area));
 });
 
 import { citedNumbers, quotePreview, splitQuotes, stripCitations } from "../../frontend/logic.js";
