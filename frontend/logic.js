@@ -364,3 +364,30 @@ export function pickSuggestions(pool, used, count, random = Math.random) {
 export function remainingSuggestions(pool, used) {
   return available(pool, used).length;
 }
+
+// Resultado da conferência da chave, feita na rota das categorias, que exige
+// a chave e não consome a cota diária
+export function keyCheckResult(httpStatus) {
+  if (httpStatus === 200) return "ok";
+  if (httpStatus === 401) return "invalid";
+  if ([0, 502, 503, 504].includes(httpStatus)) return "offline";
+  return "error";
+}
+
+// Linha no pé de cada resposta: o tamanho da evidência e o limite da leitura
+export function evidenceLine(citedCount, uncitedCount) {
+  const total = citedCount + uncitedCount;
+  if (!total) return null;
+  const limit = "Não mede a frequência na base inteira.";
+  if (!citedCount) {
+    const all = total === 1 ? "A avaliação recuperada não foi citada" : `Nenhuma das ${total} avaliações recuperadas foi citada`;
+    return `${all} nesta resposta. ${limit}`;
+  }
+  const cited = citedCount === 1 ? "1 avaliação citada" : `${citedCount} avaliações citadas`;
+  const retrieved = total === 1 ? "1 recuperada" : `${total} recuperadas`;
+  return `Baseada em ${cited}, de ${retrieved} para esta pergunta. ${limit}`;
+}
+
+export function similarityLabel(value) {
+  return `Proximidade com a pergunta: ${formatSimilarity(value)}`;
+}

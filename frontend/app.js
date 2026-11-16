@@ -11,21 +11,23 @@ import {
   describeFilters,
   describeInferredRatings,
   errorMessage,
+  evidenceLine,
   formatDate,
-  formatSimilarity,
+  keyCheckResult,
   MAX_CHARS,
   nextTheme,
   parseAnswerBlocks,
   pickSuggestions,
   remainingSuggestions,
   restrictionNotice,
-  shortId,
+  similarityLabel,
   splitCitations,
   SUGGESTIONS,
   statusNotice,
   TIMEOUT_STATUS,
 } from "./logic.js";
 import { createFilterBar } from "./filters.js";
+import { closeOverlay, openOverlay } from "./overlay.js";
 
 const KEY_STORAGE = "olist-voc-access-key";
 // O mesmo nome usado em theme.js, que aplica o tema antes de a página aparecer
@@ -34,6 +36,8 @@ const THEME_STORAGE = "olist-theme";
 const REQUEST_TIMEOUT_MS = 30000;
 // Com a API desligada, a página volta a conferir de tempos em tempos
 const HEALTH_RETRY_MS = 120000;
+// Tempo para desfazer uma conversa apagada
+const UNDO_MS = 6000;
 
 const keyInput = document.getElementById("access-key");
 const keyError = document.getElementById("key-error");
@@ -48,6 +52,13 @@ const newChatButton = document.getElementById("new-chat");
 const apiStatus = document.getElementById("api-status");
 const apiStatusText = document.getElementById("api-status-text");
 const announcer = document.getElementById("announcer");
+const keyGate = document.getElementById("key-gate");
+const keySubmit = document.getElementById("key-submit");
+const keyCancel = document.getElementById("key-cancel");
+const changeKeyButton = document.getElementById("change-key");
+const offlineBanner = document.getElementById("offline-banner");
+const undoToast = document.getElementById("undo-toast");
+const undoButton = document.getElementById("undo-button");
 
 // O campo da pergunta fica fixo no rodapé e muda de altura com o texto e com
 // a faixa de filtros. A página reserva no fim o espaço que ele ocupa, para
@@ -62,6 +73,10 @@ let messageCount = 0;
 // Trocas desta conversa; ficam só no navegador e somem com "Nova conversa"
 let conversationTurns = [];
 let busy = false;
+// Chave já conferida; sem ela, a página mostra só o cartão de entrada
+let accessKey = "";
+// Fica falso quando o /api/health não responde, fora do horário de funcionamento
+let online = true;
 const SUGGESTIONS_PER_ROUND = 3;
 // Perguntas já sugeridas ou feitas nesta conversa, que não voltam a aparecer.
 // Os exemplos da tela inicial contam como já sugeridos.
@@ -85,9 +100,10 @@ function loadKey() {
 
 function saveKey(value) {
   try {
-    sessionStorage.setItem(KEY_STORAGE, value);
+    if (value) sessionStorage.setItem(KEY_STORAGE, value);
+    else sessionStorage.removeItem(KEY_STORAGE);
   } catch {
-    // sem armazenamento, a chave fica só no campo
+    // sem armazenamento, a chave vale até a página ser recarregada
   }
 }
 
@@ -106,15 +122,27 @@ function announce(text) {
   });
 }
 
-function setBusy(value) {
-  busy = value;
-  sendButton.disabled = value;
-  sendButton.textContent = value ? "Aguarde..." : "Perguntar";
-  for (const button of exampleButtons) button.disabled = value;
+// Sem chave ou com a API desligada, nada na página envia pergunta
+function applyLocks() {
+  const locked = !accessKey || !online;
+  const blocked = busy || locked;
+  sendButton.disabled = blocked;
+  sendButton.textContent = busy ? "Aguarde..." : "Perguntar";
+  questionInput.disabled = locked;
+  for (const button of exampleButtons) button.disabled = blocked;
   const waiting = ".suggestion, .more-suggestions, .ask-unfiltered, .retry-button";
   for (const button of conversation.querySelectorAll(waiting)) {
-    button.disabled = value;
+    button.disabled = blocked;
   }
+  filterBar.setDisabled(locked);
+  offlineBanner.hidden = online;
+  changeKeyButton.hidden = !accessKey || !keyGate.hidden;
+  welcome.hidden = !keyGate.hidden || conversation.childElementCount > 0;
+}
+
+function setBusy(value) {
+  busy = value;
+  applyLocks();
 }
 
 function showKeyError(message) {
@@ -122,13 +150,80 @@ function showKeyError(message) {
   keyInput.setAttribute("aria-invalid", "true");
   keyError.textContent = message;
   keyError.hidden = false;
-  keyInput.focus();
 }
 
 function clearKeyError() {
   keyInput.classList.remove("invalid");
   keyInput.removeAttribute("aria-invalid");
   keyError.hidden = true;
+}
+
+// Cartão de entrada. "Trocar a chave" reabre o cartão sem apagar a conversa,
+// e por isso pode ser cancelado; sem chave nenhuma, não.
+function showGate(message, { cancel = false } = {}) {
+  closeOverlay();
+  keyGate.hidden = false;
+  keyCancel.hidden = !cancel;
+  if (message) showKeyError(message);
+  else clearKeyError();
+  applyLocks();
+  window.scrollTo({ top: 0 });
+  keyInput.focus();
+}
+
+function hideGate() {
+  keyGate.hidden = true;
+  keyInput.value = "";
+  clearKeyError();
+  applyLocks();
+}
+
+// A rota das categorias exige a chave e não consome a cota diária
+async function checkKey(key) {
+  try {
+    const response = await fetch("/api/categories", { headers: { "X-Access-Key": key } });
+    return keyCheckResult(response.status);
+  } catch {
+    return keyCheckResult(0);
+  }
+}
+
+function rejectKey() {
+  accessKey = "";
+  saveKey("");
+  showGate("Chave de acesso inválida. Confira e tente de novo.");
+}
+
+const KEY_MESSAGES = {
+  invalid: "Chave de acesso inválida. Confira e tente de novo.",
+  offline: errorMessage(0, null).message,
+  error: "Não foi possível conferir a chave. Tente de novo.",
+};
+
+async function submitKey() {
+  const key = keyInput.value.trim();
+  if (!key) {
+    showKeyError("Digite a chave de acesso.");
+    keyInput.focus();
+    return;
+  }
+  keySubmit.disabled = true;
+  keySubmit.textContent = "Conferindo...";
+  const result = await checkKey(key);
+  keySubmit.disabled = false;
+  keySubmit.textContent = "Entrar";
+  if (result !== "ok") {
+    showKeyError(KEY_MESSAGES[result]);
+    keyInput.focus();
+    return;
+  }
+  accessKey = key;
+  saveKey(key);
+  hideGate();
+  // Uma chave nova pode trazer outra lista de categorias
+  filterBar.reloadCategories();
+  announce("Chave aceita.");
+  questionInput.focus();
 }
 
 // Texto com as citações [n] transformadas em botões que levam à avaliação
@@ -143,10 +238,35 @@ function appendWithCitations(parent, text, messageId) {
       button.type = "button";
       button.setAttribute("aria-label", `Ver a avaliação ${number}`);
       button.title = `Ver a avaliação ${number}`;
-      button.addEventListener("click", () => showReview(messageId, number));
+      button.setAttribute("aria-haspopup", "dialog");
+      button.addEventListener("click", () => previewReview(button, messageId, number));
       parent.appendChild(button);
     }
   }
+}
+
+// Mostra a avaliação citada ao lado da citação, sem tirar a resposta da tela
+let openPreview = null;
+
+function previewReview(button, messageId, number) {
+  if (openPreview && openPreview.button === button && openPreview.handle.isOpen) {
+    openPreview.handle.close();
+    return;
+  }
+  const reply = conversation.querySelector(`[data-message-id="${messageId}"]`);
+  const entry = reply && reply.reviews ? reply.reviews.get(number) : null;
+  if (!entry) return;
+  const content = element("div", "cite-preview");
+  content.appendChild(reviewCard(entry.review, messageId, entry.cited, { preview: true }));
+  const link = element("button", "cite-preview-link", "Ver na lista");
+  link.type = "button";
+  link.addEventListener("click", () => {
+    handle.close({ restoreFocus: false });
+    showReview(messageId, number);
+  });
+  content.appendChild(link);
+  const handle = openOverlay({ anchor: button, title: `Avaliação ${number}`, content });
+  openPreview = { button, handle };
 }
 
 function showReview(messageId, number) {
@@ -155,6 +275,7 @@ function showReview(messageId, number) {
   const details = card.closest("details");
   if (details) details.open = true;
   card.scrollIntoView({ behavior: "smooth", block: "center" });
+  card.focus({ preventScroll: true });
   card.classList.remove("highlight");
   // Força o navegador a reiniciar a animação quando a mesma citação é clicada de novo
   void card.offsetWidth;
@@ -173,10 +294,13 @@ function stars(rating) {
   return wrapper;
 }
 
-function reviewCard(review, messageId, cited) {
+// No cartão aberto pela citação (preview), o elemento não recebe o id da lista
+function reviewCard(review, messageId, cited, { preview = false } = {}) {
   const card = element("article", cited ? "review cited" : "review");
-  card.id = `${messageId}-review-${review.number}`;
-  card.tabIndex = -1;
+  if (!preview) {
+    card.id = `${messageId}-review-${review.number}`;
+    card.tabIndex = -1;
+  }
 
   const head = element("div", "review-head");
   head.appendChild(element("span", "review-number", String(review.number)));
@@ -192,13 +316,26 @@ function reviewCard(review, messageId, cited) {
   const foot = element("div", "review-foot");
   const date = formatDate(review.review_date);
   if (date) foot.appendChild(element("span", null, `Avaliação de ${date}`));
-  const similarity = element("span", null, `Similaridade ${formatSimilarity(review.similarity)}`);
-  similarity.title =
-    "Proximidade entre o comentário e o tema da pergunta, de 0 a 1. Quanto maior, mais próximo.";
-  foot.appendChild(similarity);
-  const id = element("span", "review-id", `ID ${shortId(review.review_id)}`);
-  id.title = `review_id ${review.review_id}`;
-  foot.appendChild(id);
+  foot.appendChild(element("span", null, similarityLabel(review.similarity)));
+  // A explicação e o identificador completo ficam no próprio cartão, e não num
+  // title, que não aparece no toque nem para leitor de tela
+  const toggle = element("button", "review-details-toggle", "Detalhes");
+  toggle.type = "button";
+  toggle.setAttribute("aria-expanded", "false");
+  const details = element("p", "review-details");
+  details.hidden = true;
+  details.appendChild(
+    document.createTextNode(
+      "A proximidade vai de 0 a 1: quanto maior, mais o comentário se parece com o tema da pergunta. Identificador da avaliação: ",
+    ),
+  );
+  details.appendChild(element("span", "review-id", review.review_id));
+  toggle.addEventListener("click", () => {
+    details.hidden = !details.hidden;
+    toggle.setAttribute("aria-expanded", String(!details.hidden));
+  });
+  foot.appendChild(toggle);
+  foot.appendChild(details);
   card.appendChild(foot);
   return card;
 }
@@ -308,6 +445,12 @@ function renderAnswer(container, result, messageId) {
     }
   }
   container.appendChild(answer);
+  const evidence = evidenceLine(result.cited.length, result.uncited.length);
+  if (evidence) container.appendChild(element("p", "evidence-line", evidence));
+  // As avaliações ficam no balão, para o cartão aberto por uma citação
+  container.reviews = new Map();
+  for (const review of result.cited) container.reviews.set(review.number, { review, cited: true });
+  for (const review of result.uncited) container.reviews.set(review.number, { review, cited: false });
   const reviews = renderReviews(result, messageId);
   if (reviews) container.appendChild(reviews);
 }
@@ -324,7 +467,7 @@ function renderError(container, error, question) {
     box.appendChild(retry);
   }
   container.appendChild(box);
-  if (error.kind === "key") showKeyError("Chave de acesso inválida. Confira e tente de novo.");
+  if (error.kind === "key") rejectKey();
   if (error.kind === "offline") checkApi();
 }
 
@@ -363,13 +506,12 @@ async function callApi(question, key, filters, history) {
 // tentativa usa o mesmo balão, sem repetir a pergunta na conversa.
 async function send(question, reply) {
   if (busy) return;
-  const key = keyInput.value.trim();
-  if (!key) {
-    showKeyError("Digite a chave de acesso para perguntar.");
+  if (!accessKey) {
+    showGate();
     return;
   }
-  saveKey(key);
-  clearKeyError();
+  const key = accessKey;
+  closeOverlay();
 
   setBusy(true);
   renderLoading(reply);
@@ -394,11 +536,12 @@ async function send(question, reply) {
 
 // Sem filtros explícitos, a pergunta usa os que estão ativos na faixa
 function startQuestion(question, options = {}) {
-  if (busy) return false;
-  if (!keyInput.value.trim()) {
-    showKeyError("Digite a chave de acesso para perguntar.");
+  if (busy || !online) return false;
+  if (!accessKey) {
+    showGate();
     return false;
   }
+  discardUndo();
   welcome.hidden = true;
   newChatButton.hidden = false;
   used.push(question);
@@ -453,8 +596,13 @@ questionInput.addEventListener("input", updateComposer);
 
 document.getElementById("key-form").addEventListener("submit", (event) => {
   event.preventDefault();
-  questionInput.focus();
+  submitKey();
 });
+keyCancel.addEventListener("click", () => {
+  hideGate();
+  changeKeyButton.focus();
+});
+changeKeyButton.addEventListener("click", () => showGate("", { cancel: true }));
 keyInput.addEventListener("input", clearKeyError);
 
 toggleKey.addEventListener("click", () => {
@@ -472,16 +620,49 @@ for (const button of exampleButtons) {
   });
 }
 
+// "Nova conversa" guarda o que apagou por alguns segundos, para dar tempo de desfazer
+let undoState = null;
+let undoTimer = null;
+
+function discardUndo() {
+  clearTimeout(undoTimer);
+  undoState = null;
+  undoToast.hidden = true;
+}
+
 newChatButton.addEventListener("click", () => {
   if (busy) return;
+  closeOverlay();
+  discardUndo();
+  undoState = {
+    nodes: [...conversation.childNodes],
+    turns: conversationTurns,
+    used,
+    filters: filterBar.current(),
+  };
   conversation.replaceChildren();
   conversationTurns = [];
   filterBar.clear();
   resetUsed();
-  welcome.hidden = false;
   newChatButton.hidden = true;
+  applyLocks();
+  undoToast.hidden = false;
+  undoTimer = setTimeout(discardUndo, UNDO_MS);
   window.scrollTo({ top: 0, behavior: "smooth" });
   questionInput.focus();
+});
+
+undoButton.addEventListener("click", () => {
+  if (!undoState) return;
+  conversation.replaceChildren(...undoState.nodes);
+  conversationTurns = undoState.turns;
+  used = undoState.used;
+  filterBar.restore(undoState.filters);
+  newChatButton.hidden = false;
+  discardUndo();
+  applyLocks();
+  announce("Conversa recuperada.");
+  conversation.lastElementChild.scrollIntoView({ behavior: "smooth", block: "start" });
 });
 
 const themeToggle = document.getElementById("theme-toggle");
@@ -517,7 +698,7 @@ let healthTimer = null;
 
 async function checkApi() {
   clearTimeout(healthTimer);
-  let online = false;
+  online = false;
   try {
     const response = await fetch("/api/health");
     const data = await response.json().catch(() => null);
@@ -531,19 +712,29 @@ async function checkApi() {
     apiStatusText.textContent = errorMessage(0, null).message;
   }
   apiStatus.dataset.state = online ? "online" : "offline";
+  applyLocks();
   if (!online) healthTimer = setTimeout(checkApi, HEALTH_RETRY_MS);
 }
 
 const filterBar = createFilterBar({
   container: document.getElementById("filter-bar"),
-  getKey: () => keyInput.value.trim(),
-  focusKey: () => showKeyError("Digite a chave de acesso para ver as categorias."),
+  getKey: () => accessKey,
+  focusKey: () => showGate(),
   announce,
 });
-keyInput.addEventListener("change", () => filterBar.reloadCategories());
 
-keyInput.value = loadKey();
+// Com uma chave guardada, a página abre direto e confere a chave em segundo
+// plano; sem chave, abre no cartão de entrada.
+accessKey = loadKey();
 resetUsed();
 updateThemeButton();
 updateComposer();
+if (accessKey) {
+  hideGate();
+  checkKey(accessKey).then((result) => {
+    if (result === "invalid") rejectKey();
+  });
+} else {
+  showGate();
+}
 checkApi();

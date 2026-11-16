@@ -3,6 +3,9 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import {
+  evidenceLine,
+  keyCheckResult,
+  similarityLabel,
   chipLabel,
   filterCategories,
   restrictionNotice,
@@ -273,4 +276,26 @@ test("DELIVERY_OPTIONS tem as quatro situações com nome completo", () => {
     ["no_prazo", "atrasada", "nao_entregue", "com_problema"],
   );
   assert.equal(DELIVERY_OPTIONS[3].label, "Com problema (atraso ou não entregue)");
+});
+
+test("keyCheckResult classifica a resposta da conferência da chave", () => {
+  assert.equal(keyCheckResult(200), "ok");
+  assert.equal(keyCheckResult(401), "invalid");
+  for (const status of [0, 502, 503, 504]) assert.equal(keyCheckResult(status), "offline");
+  assert.equal(keyCheckResult(500), "error");
+});
+
+test("evidenceLine resume a evidência da resposta", () => {
+  assert.equal(
+    evidenceLine(10, 5),
+    "Baseada em 10 avaliações citadas, de 15 recuperadas para esta pergunta. Não mede a frequência na base inteira.",
+  );
+  assert.ok(evidenceLine(1, 14).startsWith("Baseada em 1 avaliação citada, de 15 recuperadas"));
+  assert.ok(evidenceLine(1, 0).startsWith("Baseada em 1 avaliação citada, de 1 recuperada para"));
+  assert.ok(evidenceLine(0, 3).startsWith("Nenhuma das 3 avaliações recuperadas foi citada"));
+  assert.equal(evidenceLine(0, 0), null);
+});
+
+test("similarityLabel troca o jargão por uma frase", () => {
+  assert.equal(similarityLabel(0.7136), "Proximidade com a pergunta: 0,71");
 });
