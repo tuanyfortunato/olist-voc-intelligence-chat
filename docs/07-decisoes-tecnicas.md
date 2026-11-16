@@ -102,6 +102,8 @@ Depois de usar a página publicada, revisei a usabilidade. Uma pergunta enviada 
 
 A página segue o tema claro ou escuro do sistema, e um botão no topo deixa a pessoa escolher o outro. A escolha fica guardada no navegador e vale nas próximas visitas; sem escolha, a página continua acompanhando o sistema. Um script pequeno no cabeçalho aplica o tema guardado antes de a página aparecer, para ela não abrir clara e escurecer em seguida.
 
+As avaliações citadas também passaram a vir recolhidas, como as não citadas. A resposta aparece inteira, sem uma lista longa de comentários logo abaixo, e quem quer conferir abre o bloco pelo título ou clica num número entre colchetes, que abre o bloco e leva direto à avaliação.
+
 ## Termos que nenhum comentário menciona
 
 Depois da publicação, a pergunta do Pix mostrou que a folga do score mínimo era pequena demais. O Nova Micro reescreveu o tema como "comentários sobre pagamento com Pix", e não como na calibração, e com esse tema comentários sobre pagamento em geral chegaram a 0,60 e passaram do corte. Numa das respostas, o modelo afirmou que alguns clientes relatavam problemas com o pagamento via Pix, o que nenhum comentário diz. É o tipo de erro que o chat não pode cometer.

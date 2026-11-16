@@ -224,10 +224,14 @@ textarea {
   border-color: var(--accent);
 }
 
+/* Botão do tema só com o ícone; o nome fica no title e para o leitor de tela */
 .theme-toggle {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  min-width: 36px;
+  padding-left: 10px;
+  padding-right: 10px;
 }
 
 /* Lua para ir ao tema escuro, sol para voltar ao claro */
@@ -545,13 +549,48 @@ textarea {
   padding-top: 14px;
 }
 
-.reviews h3 {
-  margin: 0 0 10px;
+/* Os dois blocos de avaliações começam recolhidos */
+.review-group summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  cursor: pointer;
+  list-style: none;
+  margin: 4px 0;
+  padding: 4px 10px 4px 6px;
+  border-radius: 8px;
   font-size: 0.82rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--muted);
+}
+
+.review-group summary::-webkit-details-marker {
+  display: none;
+}
+
+.review-group summary::before {
+  content: "\25B8";
+  transition: transform 0.15s;
+}
+
+.review-group[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.review-group summary:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.review-group.cited-group summary {
+  color: var(--accent);
+}
+
+.review-group[open] summary {
+  margin-bottom: 10px;
 }
 
 .review {
@@ -663,13 +702,6 @@ textarea {
 
 .review-id {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-}
-
-details.uncited summary {
-  cursor: pointer;
-  color: var(--muted);
-  font-size: 0.9rem;
-  margin: 8px 0;
 }
 
 /* Campo da pergunta */
@@ -790,16 +822,6 @@ details.uncited summary {
   .key-form {
     flex: 1;
     order: -1;
-  }
-
-  /* No celular o botão do tema mostra só o ícone; o nome fica para o leitor de tela */
-  #theme-label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
   }
 
   .key-form {

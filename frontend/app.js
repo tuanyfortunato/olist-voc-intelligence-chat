@@ -171,20 +171,27 @@ function reviewCard(review, messageId, cited) {
   return card;
 }
 
+// Bloco recolhido de avaliações. Abre pelo clique no título ou numa citação [n].
+function reviewGroup(className, title, reviews, messageId, cited) {
+  const details = element("details", `review-group ${className}`);
+  details.appendChild(element("summary", null, `${title} (${reviews.length})`));
+  for (const review of reviews) details.appendChild(reviewCard(review, messageId, cited));
+  return details;
+}
+
 function renderReviews(result, messageId) {
   if (!result.cited.length && !result.uncited.length) return null;
   const section = element("section", "reviews");
+  section.setAttribute("aria-label", "Avaliações recuperadas");
   if (result.cited.length) {
-    section.appendChild(element("h3", null, `Avaliações citadas (${result.cited.length})`));
-    for (const review of result.cited) section.appendChild(reviewCard(review, messageId, true));
+    section.appendChild(
+      reviewGroup("cited-group", "Avaliações citadas", result.cited, messageId, true),
+    );
   }
   if (result.uncited.length) {
-    const details = element("details", "uncited");
-    details.appendChild(
-      element("summary", null, `Recuperadas e não citadas (${result.uncited.length})`),
+    section.appendChild(
+      reviewGroup("uncited", "Recuperadas e não citadas", result.uncited, messageId, false),
     );
-    for (const review of result.uncited) details.appendChild(reviewCard(review, messageId, false));
-    section.appendChild(details);
   }
   return section;
 }
@@ -387,7 +394,9 @@ function updateThemeButton() {
   const target = nextTheme(theme);
   themeLabel.textContent = target === "dark" ? "Tema escuro" : "Tema claro";
   themeToggle.dataset.target = target;
-  themeToggle.setAttribute("aria-label", `Mudar para o tema ${target === "dark" ? "escuro" : "claro"}`);
+  const action = `Mudar para o tema ${target === "dark" ? "escuro" : "claro"}`;
+  themeToggle.setAttribute("aria-label", action);
+  themeToggle.title = action;
 }
 
 themeToggle.addEventListener("click", () => {
