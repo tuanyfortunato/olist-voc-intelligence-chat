@@ -21,12 +21,12 @@ from src.rag.prompts import (
     PREMISE_NOTE,
 )
 from src.rag.question_analysis import analyze_question
-from src.rag.schemas import AskResult, ConversationTurn, RetrievedReview
+from src.rag.schemas import AskResult, ConversationTurn, RetrievedReview, SearchFilters
 
 logger = logging.getLogger(__name__)
 
 EmbedFunction = Callable[[str], list[float]]
-SearchFunction = Callable[[list[float]], list[RetrievedReview]]
+SearchFunction = Callable[[list[float], SearchFilters | None], list[RetrievedReview]]
 
 
 # Até 2 avaliações citadas, a resposta sai com aviso de evidência fraca
@@ -69,7 +69,12 @@ class RagPipeline:
         self.embed = embed
         self.search = search
 
-    def ask(self, question: str, history: list[ConversationTurn] | None = None) -> AskResult:
+    def ask(
+        self,
+        question: str,
+        history: list[ConversationTurn] | None = None,
+        filters: SearchFilters | None = None,
+    ) -> AskResult:
         timings = {}
         start = time.monotonic()
         result = analyze_question(question, history or [], self.analysis_llm)
@@ -89,7 +94,7 @@ class RagPipeline:
 
         topic = analysis.search_topic if self.settings.use_rewrite else question
         start = time.monotonic()
-        retrieved = self.search(self.embed(topic))
+        retrieved = self.search(self.embed(topic), filters)
         timings["busca_ms"] = (time.monotonic() - start) * 1000
         reviews = [replace(review, number=n) for n, review in enumerate(retrieved, start=1)]
 
@@ -155,9 +160,9 @@ def build_pipeline(settings: Settings) -> RagPipeline:
 
     client = get_runtime_client(settings)
 
-    def search(embedding: list[float]) -> list[RetrievedReview]:
+    def search(embedding: list[float], filters: SearchFilters | None) -> list[RetrievedReview]:
         with connect(settings) as conn:
-            return retrieve(conn, embedding, settings)
+            return retrieve(conn, embedding, settings, filters)
 
     return RagPipeline(
         settings=settings,

@@ -80,6 +80,47 @@
 
   <div class="composer">
     <form id="ask-form" class="ask-form">
+      <details id="filters" class="filters">
+        <summary>
+          <span class="filters-title">Filtros da busca</span>
+          <span id="filters-summary" class="filters-summary">nenhum</span>
+        </summary>
+        <div class="filters-body">
+          <fieldset class="filter-group">
+            <legend>Notas</legend>
+            <div class="filter-ratings">
+              <label><input type="checkbox" name="rating" value="1"> 1</label>
+              <label><input type="checkbox" name="rating" value="2"> 2</label>
+              <label><input type="checkbox" name="rating" value="3"> 3</label>
+              <label><input type="checkbox" name="rating" value="4"> 4</label>
+              <label><input type="checkbox" name="rating" value="5"> 5</label>
+            </div>
+          </fieldset>
+          <label class="filter-group">
+            <span>Categoria</span>
+            <select id="filter-category">
+              <option value="">Todas</option>
+            </select>
+          </label>
+          <label class="filter-group">
+            <span>Entrega</span>
+            <select id="filter-delivery">
+              <option value="">Todas</option>
+              <option value="no_prazo">No prazo</option>
+              <option value="atrasada">Atrasadas</option>
+              <option value="nao_entregue">Não entregues</option>
+              <option value="com_problema">Com problema</option>
+            </select>
+          </label>
+          <button id="clear-filters" class="ghost-button" type="button">Limpar filtros</button>
+          <p class="filters-note">
+            Nenhuma nota marcada busca em todas. "Com problema" junta as entregas atrasadas e as
+            não entregues. Com uma categoria, os pedidos com produtos de
+            várias categorias ficam de fora; com um filtro de entrega, também os pedidos sem
+            essa informação.
+          </p>
+        </div>
+      </details>
       <label for="question" class="visually-hidden">Pergunta</label>
       <textarea id="question" rows="1" maxlength="500" placeholder="Escreva a sua pergunta sobre as avaliações" aria-describedby="composer-hint"></textarea>
       <div class="ask-footer">

@@ -3,11 +3,13 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import {
+  buildFilters,
   canRetry,
   currentTheme,
   categoryLabel,
   counterState,
   deliveryLabel,
+  describeFilters,
   errorMessage,
   formatDate,
   formatSimilarity,
@@ -118,6 +120,30 @@ test("counterState avisa perto do limite de caracteres", () => {
   assert.equal(counterState(10), "ok");
   assert.equal(counterState(450), "near");
   assert.equal(counterState(500), "full");
+});
+
+test("buildFilters devolve null sem nenhum filtro escolhido", () => {
+  assert.equal(buildFilters({ ratings: [], category: "", delivery: "" }), null);
+});
+
+test("buildFilters monta só os campos escolhidos", () => {
+  assert.deepEqual(buildFilters({ ratings: [2, 1], category: "", delivery: "com_problema" }), {
+    ratings: [1, 2],
+    delivery: "com_problema",
+  });
+  assert.deepEqual(buildFilters({ ratings: [], category: "cama_mesa_banho", delivery: "" }), {
+    category: "cama_mesa_banho",
+  });
+});
+
+test("describeFilters resume os filtros em português", () => {
+  assert.equal(describeFilters(null), "");
+  assert.equal(
+    describeFilters({ ratings: [1, 2], category: "cama_mesa_banho", delivery: "com_problema" }),
+    "notas 1 e 2 · Cama mesa banho · entregas com problema",
+  );
+  assert.equal(describeFilters({ ratings: [5] }), "nota 5");
+  assert.equal(describeFilters({ delivery: "atrasada" }), "entregas atrasadas");
 });
 
 test("currentTheme usa a escolha salva e, sem ela, o tema do sistema", () => {

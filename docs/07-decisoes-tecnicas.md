@@ -121,3 +121,13 @@ A API e o banco ficam ligados das 9h às 22h, no horário de Brasília. Fora dis
 Fora do horário, a página mostra que o chat está desligado e informa o horário. O workflow `Start API` liga o banco, espera ele ficar disponível e liga a API, para testes ou para a gravação do vídeo; o agendamento das 22h desliga os dois de novo. Os workflows que usam o banco, como a carga dos vetores, a calibração e a avaliação, também precisam do banco ligado, e fora do horário dependem do `Start API`.
 
 A AWS religa sozinha uma instância do RDS que fica parada por sete dias. Com o desligamento diário, isso não acontece no projeto.
+
+## Filtros por metadados
+
+A página permite filtrar a busca pela nota da avaliação, pela categoria do produto e pela situação da entrega. Nenhuma nota marcada busca em todas. A opção "com problema" junta as entregas atrasadas e os pedidos não entregues, porque os dois são o que um gestor chamaria de entrega insatisfatória. O filtro de categoria deixa de fora os pedidos com produtos de várias categorias, e o de entrega deixa de fora os pedidos sem essa informação, já que nos dois casos não dá para afirmar que a avaliação pertence ao grupo escolhido. A lista das 73 categorias vem do manifesto dos embeddings, pela rota `/api/categories`.
+
+O filtro é aplicado no próprio PostgreSQL, antes do score mínimo e do MMR. Com filtro, a busca deixa de usar o índice HNSW e compara a pergunta com todos os comentários que passam no filtro. O índice acha os vizinhos mais próximos antes de filtrar, e numa categoria pequena sobrariam poucos comentários; a busca exata garante os 40 candidatos de sempre, e com no máximo 40.521 comentários o custo é pequeno.
+
+A nota, a categoria e a entrega não aparecem no texto dos comentários. A primeira rodada da pergunta "Quais os principais problemas nas avaliações com nota baixa?" deu sem evidência, com e sem filtro, porque o tema da busca ficou "problemas nas avaliações com nota baixa", e nenhum cliente escreve "nota baixa". A análise da pergunta passou a deixar esses assuntos fora do tema, que ficou "problemas e reclamações dos clientes", e a nota passou a ser tratada só pelo filtro.
+
+Para comprovar os filtros, rodei as perguntas 13, 14 e 15 com e sem filtro e contei quantos dos 15 comentários recuperados respeitam o filtro. Com filtro, foram 15 de 15 nas três. Sem filtro, 9 de 15 na pergunta das notas baixas, 8 de 15 na de cama, mesa e banho e 12 de 15 na das entregas atrasadas. A tabela está em `evaluation/results/comparacao_filtros.csv`.

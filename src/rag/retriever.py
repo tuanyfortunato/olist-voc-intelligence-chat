@@ -15,10 +15,13 @@ import numpy as np
 from langchain_core.vectorstores.utils import maximal_marginal_relevance
 
 from src.config import Settings
-from src.rag.schemas import RetrievedReview
+from src.rag.schemas import RetrievedReview, SearchFilters
 from src.vector_store import distance_to_similarity
 
 logger = logging.getLogger(__name__)
+
+# "Entregas com problema" junta as atrasadas e as não entregues
+DELIVERY_GROUPS = {"com_problema": ["atrasada", "nao_entregue"]}
 
 # Quantos vizinhos o índice HNSW examina por busca. O padrão do pgvector é 40,
 # o mesmo número de candidatos pedidos; com folga, o índice não devolve menos
@@ -48,20 +51,49 @@ def _to_candidate(row) -> Candidate:
     return Candidate(review=review, embedding=[float(value) for value in values])
 
 
-def query_candidates(conn, query_embedding: list[float], n: int) -> list[Candidate]:
+def build_filter_sql(filters: SearchFilters | None) -> tuple[str, dict]:
+    """Cláusula WHERE e parâmetros dos filtros. A igualdade já deixa de fora os
+    pedidos de categoria mista e as entregas desconhecidas."""
+    if filters is None:
+        return "", {}
+    conditions, params = [], {}
+    if filters.ratings:
+        conditions.append("rating = ANY(%(ratings)s)")
+        params["ratings"] = list(filters.ratings)
+    if filters.category:
+        conditions.append("category = %(category)s")
+        params["category"] = filters.category
+    if filters.delivery:
+        conditions.append("delivery = ANY(%(deliveries)s)")
+        params["deliveries"] = DELIVERY_GROUPS.get(filters.delivery, [filters.delivery])
+    if not conditions:
+        return "", {}
+    return "WHERE " + " AND ".join(conditions), params
+
+
+def query_candidates(
+    conn, query_embedding: list[float], n: int, filters: SearchFilters | None = None
+) -> list[Candidate]:
     """Os n comentários mais próximos da pergunta, com a similaridade e o vetor de cada um."""
     vector = np.asarray(query_embedding, dtype=np.float32)
+    where, params = build_filter_sql(filters)
     with conn.transaction():
         conn.execute(f"SET LOCAL hnsw.ef_search = {EF_SEARCH}")
+        if where:
+            # O índice HNSW acha os vizinhos mais próximos antes de filtrar; numa
+            # categoria pequena sobrariam poucos. Com filtro, a busca compara a
+            # pergunta com todos os comentários que passam nele (busca exata).
+            conn.execute("SET LOCAL enable_indexscan = off")
         rows = conn.execute(
-            """
+            f"""
             SELECT review_id, rating, category, delivery, review_date, original_text,
                    embedding, embedding <=> %(vector)s AS distance
             FROM reviews
+            {where}
             ORDER BY embedding <=> %(vector)s
             LIMIT %(n)s
             """,
-            {"vector": vector, "n": n},
+            {"vector": vector, "n": n, **params},
         ).fetchall()
     return [_to_candidate(row) for row in rows]
 
@@ -91,9 +123,14 @@ def select_reviews(
     return [kept[i].review for i in order]
 
 
-def retrieve(conn, query_embedding: list[float], settings: Settings) -> list[RetrievedReview]:
+def retrieve(
+    conn,
+    query_embedding: list[float],
+    settings: Settings,
+    filters: SearchFilters | None = None,
+) -> list[RetrievedReview]:
     start = time.monotonic()
-    candidates = query_candidates(conn, query_embedding, settings.candidates_k)
+    candidates = query_candidates(conn, query_embedding, settings.candidates_k, filters)
     search_ms = (time.monotonic() - start) * 1000
     selected = select_reviews(
         candidates,

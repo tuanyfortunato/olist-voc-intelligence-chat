@@ -23,7 +23,7 @@ from src.api.schemas import AskRequest, AskResponse
 from src.config import Settings, get_settings
 from src.logging_config import setup_logging
 from src.rag.pipeline import RagPipeline, build_pipeline
-from src.rag.schemas import ConversationTurn
+from src.rag.schemas import ConversationTurn, SearchFilters
 from src.vector_db import IndexStatus, connect, read_index_status
 from src.vector_store import check_manifest
 
@@ -65,6 +65,7 @@ def create_app(
         status = status_provider()
         check_manifest(status.manifest, settings, status.documents)
         app.state.pipeline = pipeline or build_pipeline(settings)
+        app.state.categories = status.manifest.categories
         logger.info("etapa=inicio documentos=%d", status.documents)
         yield
 
@@ -94,8 +95,9 @@ def create_app(
             logger.warning("etapa=cota limite=%d", quota.limit)
             raise HTTPException(status_code=429, detail=QUOTA_EXCEEDED)
         history = [ConversationTurn(turn.question, turn.answer) for turn in body.history]
+        filters = SearchFilters(**body.filters.model_dump()) if body.filters else None
         try:
-            result = app.state.pipeline.ask(body.question, history)
+            result = app.state.pipeline.ask(body.question, history, filters)
         except (ClientError, BotoCoreError):
             logger.exception("etapa=pergunta erro=bedrock")
             raise HTTPException(status_code=503, detail=MODELS_UNAVAILABLE) from None
@@ -103,5 +105,10 @@ def create_app(
             logger.exception("etapa=pergunta erro=inesperado")
             raise HTTPException(status_code=500, detail=UNEXPECTED_ERROR) from None
         return asdict(result)
+
+    # Categorias para o filtro da página, vindas do manifesto dos embeddings
+    @app.get("/api/categories", dependencies=[Depends(require_access_key)])
+    def categories():
+        return {"categories": app.state.categories}
 
     return app

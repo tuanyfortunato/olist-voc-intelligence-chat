@@ -51,9 +51,12 @@ def fake_pipeline(retrieved=(), answer="Resposta [1].", use_rewrite=True, **anal
         analysis_llm=FakeAnalysisLLM(**analysis),
         answer_llm=FakeAnswerLLM(answer),
         embed=lambda text: embedded.append(text) or [1.0, 0.0, 0.0],
-        search=lambda embedding: list(retrieved),
+        search=lambda embedding, filters=None: (
+            pipeline.searched_filters.append(filters) or list(retrieved)
+        ),
     )
     pipeline.embedded_texts = embedded
+    pipeline.searched_filters = []
     return pipeline
 
 
@@ -196,3 +199,12 @@ def test_no_note_when_model_flags_premise_but_question_is_unchanged():
         removed_premise=True,
     )
     assert PREMISE_NOTE not in pipe.ask(question).answer
+
+
+def test_filters_reach_search():
+    from src.rag.schemas import SearchFilters
+
+    pipe = fake_pipeline([review("r1"), review("r2"), review("r3")], "A [1][2][3].")
+    filters = SearchFilters(category="bebes")
+    pipe.ask("x", filters=filters)
+    assert pipe.searched_filters == [filters]
