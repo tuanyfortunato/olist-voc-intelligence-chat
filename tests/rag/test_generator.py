@@ -35,6 +35,7 @@ def test_system_prompt_rules():
         "não há informação suficiente",
         "percentuais",
         "além de",
+        "não mencionam",
         "principal",
     ]:
         assert rule in ANSWER_SYSTEM_PROMPT, rule
