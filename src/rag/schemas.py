@@ -1,6 +1,6 @@
 """Estruturas de dados que passam de uma etapa do fluxo da pergunta para a outra."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass(frozen=True)
@@ -45,3 +45,5 @@ class AskResult:
     uncited: list[RetrievedReview]
     original_question: str
     search_topic: str
+    # Notas aplicadas como filtro porque a pergunta as mencionava
+    inferred_ratings: list[int] = field(default_factory=list)

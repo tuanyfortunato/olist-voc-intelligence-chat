@@ -870,3 +870,9 @@ details.uncited summary {
   font-size: 0.8rem;
   opacity: 0.85;
 }
+
+.inferred-filter {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 0.86rem;
+}

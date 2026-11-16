@@ -178,3 +178,21 @@ export function describeFilters(filters) {
   if (filters.delivery) parts.push(DELIVERY_FILTER_LABELS[filters.delivery] || filters.delivery);
   return parts.join(" · ");
 }
+
+// Histórico enviado com a pergunta: as 3 últimas trocas, com as respostas cortadas
+// no mesmo limite da API. Serve só para completar perguntas de continuação.
+const HISTORY_TURNS = 3;
+const HISTORY_ANSWER_CHARS = 1500;
+
+export function buildHistory(turns) {
+  return turns.slice(-HISTORY_TURNS).map((turn) => ({
+    question: turn.question,
+    answer: turn.answer.slice(0, HISTORY_ANSWER_CHARS),
+  }));
+}
+
+// Aviso de que a busca foi restrita pelas notas que a própria pergunta mencionou
+export function describeInferredRatings(ratings) {
+  if (!ratings || !ratings.length) return null;
+  return `A busca considerou só as avaliações de ${describeFilters({ ratings })}, citadas na pergunta.`;
+}

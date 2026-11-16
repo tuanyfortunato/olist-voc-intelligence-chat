@@ -14,9 +14,14 @@ class FakeAnalysisLLM:
         topic="tema reescrito",
         question="pergunta limpa",
         removed_premise=False,
+        ratings=(),
     ):
         self.analysis = QuestionAnalysis(
-            kind=kind, search_topic=topic, clean_question=question, removed_premise=removed_premise
+            kind=kind,
+            search_topic=topic,
+            clean_question=question,
+            removed_premise=removed_premise,
+            ratings=list(ratings),
         )
 
     def with_structured_output(self, schema):
@@ -208,3 +213,30 @@ def test_filters_reach_search():
     filters = SearchFilters(category="bebes")
     pipe.ask("x", filters=filters)
     assert pipe.searched_filters == [filters]
+
+
+def test_ratings_from_question_become_filter_when_user_chose_none():
+    from src.rag.schemas import SearchFilters
+
+    pipe = fake_pipeline([review("r1"), review("r2"), review("r3")], "A [1][2][3].", ratings=[4, 5])
+    result = pipe.ask("E nas notas altas?", filters=SearchFilters(category="bebes"))
+    assert pipe.searched_filters == [SearchFilters(ratings=[4, 5], category="bebes")]
+    assert result.inferred_ratings == [4, 5]
+
+
+def test_ratings_chosen_by_user_win_over_ratings_from_question():
+    from src.rag.schemas import SearchFilters
+
+    pipe = fake_pipeline([review("r1"), review("r2"), review("r3")], "A [1][2][3].", ratings=[4, 5])
+    result = pipe.ask("E nas notas altas?", filters=SearchFilters(ratings=[1]))
+    assert pipe.searched_filters == [SearchFilters(ratings=[1])]
+    assert result.inferred_ratings == []
+
+
+def test_history_never_reaches_answer_generation():
+    from src.rag.schemas import ConversationTurn
+
+    pipe = fake_pipeline([review("r1"), review("r2"), review("r3")], "A [1][2][3].")
+    pipe.ask("E nas notas altas?", history=[ConversationTurn("PERGUNTA_ANTIGA", "RESPOSTA_ANTIGA")])
+    sent = str(pipe.answer_llm.messages)
+    assert "PERGUNTA_ANTIGA" not in sent and "RESPOSTA_ANTIGA" not in sent

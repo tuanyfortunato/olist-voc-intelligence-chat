@@ -105,3 +105,10 @@ def test_history_is_only_sent_when_present():
 def test_removed_premise_defaults_to_false():
     data = {"kind": "in_scope", "search_topic": "x", "clean_question": "x"}
     assert validate_analysis(data).removed_premise is False
+
+
+def test_ratings_default_to_empty_and_drop_invalid_values():
+    data = {"kind": "in_scope", "search_topic": "x", "clean_question": "x"}
+    assert validate_analysis(data).ratings == []
+    data["ratings"] = [5, 4, 7, 4, 0]
+    assert validate_analysis(data).ratings == [4, 5]

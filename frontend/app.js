@@ -5,9 +5,11 @@ import {
   canRetry,
   categoryLabel,
   buildFilters,
+  buildHistory,
   counterState,
   deliveryLabel,
   describeFilters,
+  describeInferredRatings,
   errorMessage,
   formatDate,
   formatSimilarity,
@@ -47,6 +49,8 @@ const deliverySelect = document.getElementById("filter-delivery");
 const clearFiltersButton = document.getElementById("clear-filters");
 
 let messageCount = 0;
+// Trocas desta conversa; ficam só no navegador e somem com "Nova conversa"
+let conversationTurns = [];
 let busy = false;
 
 // A chave fica só enquanto a aba estiver aberta. Em navegação privada o
@@ -203,6 +207,8 @@ function renderAnswer(container, result, messageId) {
     box.appendChild(element("span", null, notice.text));
     container.appendChild(box);
   }
+  const inferred = describeInferredRatings(result.inferred_ratings);
+  if (inferred) container.appendChild(element("p", "inferred-filter", inferred));
   const answer = element("div", "answer");
   for (const block of parseAnswerBlocks(result.answer)) {
     if (block.type === "paragraph") {
@@ -252,14 +258,14 @@ function renderLoading(container) {
   container.appendChild(loading);
 }
 
-async function callApi(question, key, filters) {
+async function callApi(question, key, filters, history) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
     const response = await fetch("/api/ask", {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-Access-Key": key },
-      body: JSON.stringify(filters ? { question, history: [], filters } : { question, history: [] }),
+      body: JSON.stringify(filters ? { question, history, filters } : { question, history }),
       signal: controller.signal,
     });
     const body = await response.json().catch(() => null);
@@ -286,12 +292,13 @@ async function send(question, reply) {
   setBusy(true);
   renderLoading(reply);
   // Os filtros ficam no balão: a nova tentativa usa os mesmos da pergunta original
-  const { status, body } = await callApi(question, key, reply.filters || null);
+  const { status, body } = await callApi(question, key, reply.filters || null, reply.history || []);
   setBusy(false);
 
   const messageId = reply.dataset.messageId;
   if (status === 200 && body) {
     renderAnswer(reply, body, messageId);
+    conversationTurns.push({ question, answer: body.answer });
     announce("Resposta pronta.");
   } else {
     const error = errorMessage(status, body);
@@ -320,6 +327,8 @@ function startQuestion(question) {
   const reply = element("div", "message-bot");
   reply.dataset.messageId = `m${messageCount}`;
   reply.filters = filters;
+  // O histórico também fica no balão, para a nova tentativa mandar o mesmo
+  reply.history = buildHistory(conversationTurns);
   turn.appendChild(reply);
   conversation.appendChild(turn);
   send(question, reply);
@@ -381,6 +390,7 @@ for (const button of exampleButtons) {
 newChatButton.addEventListener("click", () => {
   if (busy) return;
   conversation.replaceChildren();
+  conversationTurns = [];
   welcome.hidden = false;
   newChatButton.hidden = true;
   window.scrollTo({ top: 0, behavior: "smooth" });
