@@ -22,3 +22,17 @@ class RetrievedReview:
     review_date: str
     original_text: str
     similarity: float
+    # Número do comentário no contexto enviado ao modelo, o mesmo das citações [n]
+    number: int = 0
+
+
+@dataclass(frozen=True)
+class AskResult:
+    """Resultado de uma pergunta, devolvido pela API à página."""
+
+    status: str
+    answer: str
+    cited: list[RetrievedReview]
+    uncited: list[RetrievedReview]
+    original_question: str
+    search_topic: str
