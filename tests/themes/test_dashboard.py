@@ -33,11 +33,15 @@ def test_summarize_ratings_delivery_and_themes():
     assert summary["delivery"]["no_prazo"]["avg_rating"] == 4.67
     assert summary["themes"]["atraso"] == {"count": 2, "avg_rating": 2.5, "low": 1}
     assert summary["themes"]["defeito"] == {"count": 0, "avg_rating": None, "low": 0}
+    # "a" tem dois temas de setores diferentes e conta uma vez em cada setor
+    assert summary["sectors"]["logistica"] == {"count": 3, "avg_rating": 2.33, "low": 2}
+    assert summary["sectors"]["vendedor"] == {"count": 1, "avg_rating": 1.0, "low": 1}
+    assert summary["sectors"]["produto"]["count"] == 0
 
 
 def test_summarize_monthly_counts_low_and_late():
     monthly = {item["month"]: item for item in summarize(ROWS)["monthly"]}
-    assert monthly["2018-03"] == {"month": "2018-03", "total": 2, "low": 1, "late": 1}
+    assert monthly["2018-03"] == {"month": "2018-03", "total": 2, "low": 1, "high": 1, "late": 1}
     assert list(monthly) == sorted(monthly)
 
 
