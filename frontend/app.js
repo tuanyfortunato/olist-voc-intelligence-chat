@@ -45,6 +45,14 @@ const newChatButton = document.getElementById("new-chat");
 const apiStatus = document.getElementById("api-status");
 const apiStatusText = document.getElementById("api-status-text");
 const announcer = document.getElementById("announcer");
+
+// O campo da pergunta fica fixo no rodapé e muda de altura com o texto e com
+// o painel de filtros. A página reserva no fim o espaço que ele ocupa, para
+// ele não cobrir a última resposta nem as sugestões.
+const composer = document.querySelector(".composer");
+new ResizeObserver(() => {
+  document.body.style.setProperty("--composer-height", `${composer.offsetHeight}px`);
+}).observe(composer);
 const exampleButtons = document.querySelectorAll("#examples button");
 const filtersPanel = document.getElementById("filters");
 const filtersSummary = document.getElementById("filters-summary");

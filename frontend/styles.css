@@ -102,7 +102,8 @@ body {
   line-height: 1.55;
   color: var(--text);
   background: var(--bg);
-  padding-bottom: 150px;
+  /* Espaço para o campo da pergunta, fixo no rodapé; app.js mede a altura real */
+  padding-bottom: calc(var(--composer-height, 150px) + 16px);
 }
 
 .visually-hidden {
