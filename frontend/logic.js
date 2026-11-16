@@ -18,6 +18,43 @@ export function splitCitations(text) {
   return parts;
 }
 
+// Números citados num trecho, na ordem em que aparecem e sem repetição
+export function citedNumbers(text) {
+  const numbers = [];
+  for (const part of splitCitations(text)) {
+    if (part.type !== "cite") continue;
+    for (const number of part.numbers) if (!numbers.includes(number)) numbers.push(number);
+  }
+  return numbers;
+}
+
+// O trecho sem as citações [n], sem espaço solto antes da pontuação
+export function stripCitations(text) {
+  return splitCitations(text)
+    .filter((part) => part.type === "text")
+    .map((part) => part.value)
+    .join("")
+    .replace(/\s+([.,;:!?])/g, "$1")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+// Divide os números entre os mostrados de início e os que ficam para "+N"
+export function splitQuotes(numbers, limit) {
+  return { shown: numbers.slice(0, limit), hidden: numbers.slice(limit) };
+}
+
+// Comentário curto o bastante para caber embaixo da frase; o completo fica no cartão
+export const QUOTE_MAX_CHARS = 180;
+
+export function quotePreview(text, max = QUOTE_MAX_CHARS) {
+  const clean = text.replace(/\s+/g, " ").trim();
+  if (clean.length <= max) return clean;
+  const cut = clean.slice(0, max);
+  const space = cut.lastIndexOf(" ");
+  return `${(space > max * 0.6 ? cut.slice(0, space) : cut).replace(/[\s.,;:!?]+$/, "")}...`;
+}
+
 // Divide a resposta em parágrafos e listas. O modelo escreve em texto simples,
 // com hífen no começo dos itens de lista.
 export function parseAnswerBlocks(answer) {

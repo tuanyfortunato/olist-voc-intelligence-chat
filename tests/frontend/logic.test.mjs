@@ -410,3 +410,29 @@ test("os cartões da tela inicial estão na lista de sugestões", async () => {
   assert.equal(cards.length, 5);
   for (const card of cards) assert.ok(suggestionArea(card), card);
 });
+
+import { citedNumbers, quotePreview, splitQuotes, stripCitations } from "../../frontend/logic.js";
+
+test("citedNumbers lista os números citados na ordem e sem repetir", () => {
+  assert.deepEqual(citedNumbers("Atrasos [1][5] e defeitos [2, 5]."), [1, 5, 2]);
+  assert.deepEqual(citedNumbers("Sem citação."), []);
+});
+
+test("stripCitations tira as citações e o espaço antes da pontuação", () => {
+  assert.equal(stripCitations("Atraso de semanas [1, 2]."), "Atraso de semanas.");
+  assert.equal(stripCitations("Defeitos [3] e trocas [4] aparecem."), "Defeitos e trocas aparecem.");
+});
+
+test("splitQuotes separa os trechos mostrados dos que ficam para depois", () => {
+  assert.deepEqual(splitQuotes([1, 5, 9, 11], 2), { shown: [1, 5], hidden: [9, 11] });
+  assert.deepEqual(splitQuotes([3], 2), { shown: [3], hidden: [] });
+});
+
+test("quotePreview corta comentários longos numa palavra inteira", () => {
+  assert.equal(quotePreview("Chegou rápido."), "Chegou rápido.");
+  const long = "palavra ".repeat(60);
+  const preview = quotePreview(long, 50);
+  assert.ok(preview.length <= 53);
+  assert.ok(preview.endsWith("..."));
+  assert.ok(!preview.includes(" ..."));
+});
