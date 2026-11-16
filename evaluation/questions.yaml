@@ -24,9 +24,12 @@
     lançado em 2020, depois do período da base (2016 a 2018)
 
 - id: 5
-  question: O que os clientes relatam sobre cartões de memória falsificados?
+  question: Os clientes pedem que os produtos venham em embalagem de presente?
   type: weak_evidence
-  expected: Responde com aviso de evidência fraca
+  expected: >-
+    Responde com aviso de evidência fraca. Só 2 comentários pedem a embalagem de
+    presente; a pergunta anterior, sobre cartões de memória falsificados, trazia
+    cerca de 15 comentários sobre produtos falsos e não servia para este caso
 
 - id: 6
   question: Qual o faturamento da Olist em 2018?

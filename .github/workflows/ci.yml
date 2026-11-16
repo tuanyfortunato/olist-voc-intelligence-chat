@@ -66,3 +66,21 @@ jobs:
           docker run --rm olist-voc-api:ci python -c
           "import src.api.main, scripts.load_vectors, scripts.calibrate_retrieval;
           from scripts.questions import load_questions; assert len(load_questions()) == 15"
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Testes da lógica da página
+        run: node --test tests/frontend/
+
+      - name: A página não monta HTML com texto vindo da API
+        run: |
+          if grep -nE "innerHTML|insertAdjacentHTML|outerHTML|document\.write" frontend/*.js; then
+            echo "Use textContent para texto vindo da API."; exit 1
+          fi

@@ -40,10 +40,12 @@ def embed_query(client, text: str, settings: Settings) -> list[float]:
     return embed_texts(client, [text], "search_query", settings)[0]
 
 
-def get_chat_model(settings: Settings, max_tokens: int) -> ChatBedrockConverse:
-    """Nova Micro com temperatura 0, para a avaliação dar o mesmo resultado a cada execução."""
+def get_chat_model(
+    settings: Settings, max_tokens: int, model_id: str | None = None
+) -> ChatBedrockConverse:
+    """Modelo do Nova com temperatura 0, para a avaliação dar o mesmo resultado a cada execução."""
     return ChatBedrockConverse(
-        model=settings.llm_model_id,
+        model=model_id or settings.llm_model_id,
         region_name=settings.aws_region,
         temperature=0,
         max_tokens=max_tokens,
