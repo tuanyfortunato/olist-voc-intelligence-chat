@@ -29,3 +29,11 @@ def test_filters_are_accepted_and_validated():
         AskRequest(question="q", filters={"ratings": [6]})
     with pytest.raises(ValidationError):
         AskRequest(question="q", filters={"delivery": "extraviada"})
+
+
+def test_theme_filter_accepts_known_themes_only():
+    request = AskRequest(question="q", filters={"themes": ["atraso", "avaria", "atraso"]})
+    assert request.filters.themes == ["atraso", "avaria"]
+    assert AskRequest(question="q", filters={"themes": []}).filters.themes is None
+    with pytest.raises(ValidationError):
+        AskRequest(question="q", filters={"themes": ["frete_caro"]})

@@ -1,0 +1,80 @@
+# Classificação das avaliações nos temas do painel e cálculo dos números dele.
+# Disparo manual. Roda numa tarefa avulsa do ECS com a imagem da branch, porque
+# o banco fica numa rede privada. No fim, o dashboard.json e a amostra para a
+# revisão manual são gravados num commit na própria branch.
+name: Classify themes
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "pendentes classifica só o que falta; tudo refaz a classificação; numeros só recalcula o painel"
+        type: choice
+        options: [pendentes, tudo, numeros]
+        default: pendentes
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  classify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.17.2"
+          terraform_wrapper: false
+
+      - name: Acesso à AWS pelo OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Ler os nomes dos recursos no Terraform
+        working-directory: infra
+        run: |
+          terraform init -input=false -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" > /dev/null
+          terraform output -json > ../outputs.json
+          for name in ecr_repository_url ecs_cluster_name task_family task_security_group_id; do
+            echo "$(echo "$name" | tr a-z A-Z)=$(jq -r ".${name}.value" ../outputs.json)" >> "$GITHUB_ENV"
+          done
+          echo "SUBNETS=$(jq -r '.public_subnet_ids.value | join(",")' ../outputs.json)" >> "$GITHUB_ENV"
+          rm ../outputs.json
+
+      - name: Construir e enviar a imagem da branch
+        run: |
+          aws ecr get-login-password | docker login --username AWS --password-stdin "${ECR_REPOSITORY_URL%%/*}"
+          docker build -t "$ECR_REPOSITORY_URL:${{ github.sha }}" .
+          docker push "$ECR_REPOSITORY_URL:${{ github.sha }}"
+
+      - name: Classificar e calcular os números
+        run: |
+          case "${{ inputs.mode }}" in
+            tudo) FLAG="--redo" ;;
+            numeros) FLAG="--skip-classification" ;;
+            *) FLAG="" ;;
+          esac
+          scripts/run_ecs_task.sh "$ECR_REPOSITORY_URL:${{ github.sha }}" python -m scripts.classify_themes $FLAG
+
+      - name: Baixar os resultados
+        run: |
+          aws s3 cp "s3://${{ vars.INDEX_BUCKET }}/results/temas/dashboard.json" frontend/dashboard.json
+          mkdir -p evaluation/temas
+          aws s3 cp "s3://${{ vars.INDEX_BUCKET }}/results/temas/amostra_revisao.csv" evaluation/temas/amostra_revisao.csv
+
+      - name: Gravar os resultados na branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/dashboard.json evaluation/temas/amostra_revisao.csv
+          if git diff --cached --quiet; then
+            echo "Nada mudou nos resultados."
+          else
+            git commit -m "Atualiza os números do painel e a amostra de revisão dos temas"
+            git push
+          fi
