@@ -1,0 +1,57 @@
+# Publica só a página: copia frontend/ para o S3 e invalida o cache do
+# CloudFront, sem construir a imagem nem mexer na API. Serve para mudanças que
+# ficam só na página e funciona mesmo com a API desligada. Na main, o Deploy já
+# publica a página a cada push; este workflow é para quando só ela mudou.
+name: Publish frontend
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+# O mesmo grupo do Deploy, para os dois nunca copiarem a página ao mesmo tempo
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.17.2"
+          terraform_wrapper: false
+
+      - name: Acesso à AWS pelo OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Ler os nomes dos recursos no Terraform
+        working-directory: infra
+        run: |
+          terraform init -input=false -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" > /dev/null
+          terraform output -json > ../outputs.json
+          for name in frontend_bucket cloudfront_distribution_id cloudfront_url; do
+            echo "$(echo "$name" | tr a-z A-Z)=$(jq -r ".${name}.value" ../outputs.json)" >> "$GITHUB_ENV"
+          done
+
+      - name: Publicar a página
+        run: |
+          aws s3 sync frontend/ "s3://$FRONTEND_BUCKET" --delete
+          INVALIDATION=$(aws cloudfront create-invalidation --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" --paths "/*" --query Invalidation.Id --output text)
+          echo "Esperando o CloudFront descartar a versão antiga ($INVALIDATION)..."
+          aws cloudfront wait invalidation-completed --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" --id "$INVALIDATION"
+
+      - name: Conferir a página publicada
+        run: |
+          curl -fsS "$CLOUDFRONT_URL/" | grep -q "<title>" \
+            || { echo "A página não respondeu em $CLOUDFRONT_URL"; exit 1; }
+          echo "Página publicada em $CLOUDFRONT_URL"

@@ -1,4 +1,5 @@
 :root {
+  color-scheme: light;
   --bg: #f3f5f8;
   --surface: #ffffff;
   --surface-2: #f8f9fb;
@@ -27,8 +28,10 @@
   --content: 820px;
 }
 
+/* Tema escuro: pelo sistema, quando a pessoa não escolheu o claro, ou pelo botão */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
     --bg: #0f141a;
     --surface: #181f27;
     --surface-2: #1d252f;
@@ -56,6 +59,34 @@
   }
 }
 
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f141a;
+  --surface: #181f27;
+  --surface-2: #1d252f;
+  --text: #e7ecf1;
+  --muted: #9aa7b4;
+  --border: #2b3540;
+  --accent: #6ea8ec;
+  --accent-strong: #8fbcf2;
+  --accent-soft: #1d2c3e;
+  --on-accent: #0f141a;
+  --star: #f0b93a;
+  --star-empty: #3a4652;
+  --ok: #6fd29c;
+  --ok-bg: #173226;
+  --warn: #f0c46a;
+  --warn-bg: #3a2f17;
+  --warn-border: #c8962f;
+  --bad: #f28b82;
+  --bad-bg: #3b1f1f;
+  --empty-bg: #222b35;
+  --empty-border: #56616d;
+  --error-bg: #3b1f1f;
+  --error-border: #d9534f;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -71,7 +102,8 @@ body {
   line-height: 1.55;
   color: var(--text);
   background: var(--bg);
-  padding-bottom: 150px;
+  /* Espaço para o campo da pergunta, fixo no rodapé; app.js mede a altura real */
+  padding-bottom: calc(var(--composer-height, 150px) + 16px);
 }
 
 .visually-hidden {
@@ -191,6 +223,25 @@ textarea {
 
 .ghost-button:hover {
   border-color: var(--accent);
+}
+
+/* Botão do tema só com o ícone; o nome fica no title e para o leitor de tela */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+/* Lua para ir ao tema escuro, sol para voltar ao claro */
+.theme-icon::before {
+  content: "\263E";
+}
+
+.theme-toggle[data-target="light"] .theme-icon::before {
+  content: "\2600";
 }
 
 .key-form {
@@ -468,6 +519,64 @@ textarea {
   font-size: 0.88rem;
 }
 
+/* Sugestões depois da resposta */
+.suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.suggestions-title {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.suggestion {
+  text-align: left;
+  font-size: 0.9rem;
+  color: var(--accent);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 14px;
+}
+
+.suggestion:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.suggestion:disabled {
+  opacity: 0.6;
+}
+
+.suggestion-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex-basis: 100%;
+}
+
+.more-suggestions {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+  background: transparent;
+  border: 1px dashed var(--border);
+  border-radius: 999px;
+  padding: 5px 14px;
+}
+
+.more-suggestions:hover:not(:disabled) {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
 /* Citação [n] no texto da resposta */
 .cite {
   display: inline-flex;
@@ -499,13 +608,48 @@ textarea {
   padding-top: 14px;
 }
 
-.reviews h3 {
-  margin: 0 0 10px;
+/* Os dois blocos de avaliações começam recolhidos */
+.review-group summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  cursor: pointer;
+  list-style: none;
+  margin: 4px 0;
+  padding: 4px 10px 4px 6px;
+  border-radius: 8px;
   font-size: 0.82rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--muted);
+}
+
+.review-group summary::-webkit-details-marker {
+  display: none;
+}
+
+.review-group summary::before {
+  content: "\25B8";
+  transition: transform 0.15s;
+}
+
+.review-group[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.review-group summary:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.review-group.cited-group summary {
+  color: var(--accent);
+}
+
+.review-group[open] summary {
+  margin-bottom: 10px;
 }
 
 .review {
@@ -617,13 +761,6 @@ textarea {
 
 .review-id {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-}
-
-details.uncited summary {
-  cursor: pointer;
-  color: var(--muted);
-  font-size: 0.9rem;
-  margin: 8px 0;
 }
 
 /* Campo da pergunta */

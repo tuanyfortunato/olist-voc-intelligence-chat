@@ -3,6 +3,7 @@
 // "<script>" aparece escrito, sem ser executado.
 import {
   canRetry,
+  currentTheme,
   categoryLabel,
   buildFilters,
   buildHistory,
@@ -14,14 +15,20 @@ import {
   formatDate,
   formatSimilarity,
   MAX_CHARS,
+  nextTheme,
   parseAnswerBlocks,
+  pickSuggestions,
+  remainingSuggestions,
   shortId,
   splitCitations,
+  SUGGESTIONS,
   statusNotice,
   TIMEOUT_STATUS,
 } from "./logic.js";
 
 const KEY_STORAGE = "olist-voc-access-key";
+// O mesmo nome usado em theme.js, que aplica o tema antes de a página aparecer
+const THEME_STORAGE = "olist-theme";
 // A pergunta leva de 2 a 5 segundos; 30 segundos já indicam um problema
 const REQUEST_TIMEOUT_MS = 30000;
 // Com a API desligada, a página volta a conferir de tempos em tempos
@@ -40,6 +47,14 @@ const newChatButton = document.getElementById("new-chat");
 const apiStatus = document.getElementById("api-status");
 const apiStatusText = document.getElementById("api-status-text");
 const announcer = document.getElementById("announcer");
+
+// O campo da pergunta fica fixo no rodapé e muda de altura com o texto e com
+// o painel de filtros. A página reserva no fim o espaço que ele ocupa, para
+// ele não cobrir a última resposta nem as sugestões.
+const composer = document.querySelector(".composer");
+new ResizeObserver(() => {
+  document.body.style.setProperty("--composer-height", `${composer.offsetHeight}px`);
+}).observe(composer);
 const exampleButtons = document.querySelectorAll("#examples button");
 const filtersPanel = document.getElementById("filters");
 const filtersSummary = document.getElementById("filters-summary");
@@ -52,6 +67,16 @@ let messageCount = 0;
 // Trocas desta conversa; ficam só no navegador e somem com "Nova conversa"
 let conversationTurns = [];
 let busy = false;
+const SUGGESTIONS_PER_ROUND = 3;
+// Perguntas já sugeridas ou feitas nesta conversa, que não voltam a aparecer.
+// Os exemplos da tela inicial contam como já sugeridos.
+let used = [];
+
+function resetUsed() {
+  used = [...exampleButtons].map((button) =>
+    button.querySelector(".example-question").textContent.trim(),
+  );
+}
 
 // A chave fica só enquanto a aba estiver aberta. Em navegação privada o
 // armazenamento pode falhar, e a página continua funcionando sem ele.
@@ -91,6 +116,9 @@ function setBusy(value) {
   sendButton.disabled = value;
   sendButton.textContent = value ? "Aguarde..." : "Perguntar";
   for (const button of exampleButtons) button.disabled = value;
+  for (const button of conversation.querySelectorAll(".suggestion, .more-suggestions")) {
+    button.disabled = value;
+  }
 }
 
 function showKeyError(message) {
@@ -179,22 +207,66 @@ function reviewCard(review, messageId, cited) {
   return card;
 }
 
+// Bloco recolhido de avaliações. Abre pelo clique no título ou numa citação [n].
+function reviewGroup(className, title, reviews, messageId, cited) {
+  const details = element("details", `review-group ${className}`);
+  details.appendChild(element("summary", null, `${title} (${reviews.length})`));
+  for (const review of reviews) details.appendChild(reviewCard(review, messageId, cited));
+  return details;
+}
+
 function renderReviews(result, messageId) {
   if (!result.cited.length && !result.uncited.length) return null;
   const section = element("section", "reviews");
+  section.setAttribute("aria-label", "Avaliações recuperadas");
   if (result.cited.length) {
-    section.appendChild(element("h3", null, `Avaliações citadas (${result.cited.length})`));
-    for (const review of result.cited) section.appendChild(reviewCard(review, messageId, true));
+    section.appendChild(
+      reviewGroup("cited-group", "Avaliações citadas", result.cited, messageId, true),
+    );
   }
   if (result.uncited.length) {
-    const details = element("details", "uncited");
-    details.appendChild(
-      element("summary", null, `Recuperadas e não citadas (${result.uncited.length})`),
+    section.appendChild(
+      reviewGroup("uncited", "Recuperadas e não citadas", result.uncited, messageId, false),
     );
-    for (const review of result.uncited) details.appendChild(reviewCard(review, messageId, false));
-    section.appendChild(details);
   }
   return section;
+}
+
+// Sugestões de novas perguntas, só embaixo da resposta mais recente
+function suggestionButton(question) {
+  const button = element("button", "suggestion", question);
+  button.type = "button";
+  button.disabled = busy;
+  button.addEventListener("click", () => startQuestion(question));
+  return button;
+}
+
+// Acrescenta perguntas sorteadas ao bloco e esconde o botão quando a lista acaba
+function addSuggestions(list, moreButton) {
+  const questions = pickSuggestions(SUGGESTIONS, used, SUGGESTIONS_PER_ROUND);
+  used.push(...questions);
+  for (const question of questions) list.appendChild(suggestionButton(question));
+  moreButton.hidden = remainingSuggestions(SUGGESTIONS, used) === 0;
+  return questions.length;
+}
+
+function renderSuggestions(container) {
+  for (const old of conversation.querySelectorAll(".suggestions")) old.remove();
+  if (!remainingSuggestions(SUGGESTIONS, used)) return;
+  const box = element("div", "suggestions");
+  box.setAttribute("aria-label", "Outras perguntas");
+  box.appendChild(element("p", "suggestions-title", "Outras perguntas"));
+  const list = element("div", "suggestion-list");
+  box.appendChild(list);
+  const more = element("button", "more-suggestions", "Mais sugestões");
+  more.type = "button";
+  more.addEventListener("click", () => {
+    const first = list.children.length;
+    if (addSuggestions(list, more)) list.children[first].focus();
+  });
+  addSuggestions(list, more);
+  box.appendChild(more);
+  container.after(box);
 }
 
 function renderAnswer(container, result, messageId) {
@@ -299,6 +371,7 @@ async function send(question, reply) {
   if (status === 200 && body) {
     renderAnswer(reply, body, messageId);
     conversationTurns.push({ question, answer: body.answer });
+    renderSuggestions(reply);
     announce("Resposta pronta.");
   } else {
     const error = errorMessage(status, body);
@@ -317,6 +390,7 @@ function startQuestion(question) {
   }
   welcome.hidden = true;
   newChatButton.hidden = false;
+  used.push(question);
 
   messageCount += 1;
   const filters = currentFilters();
@@ -391,11 +465,41 @@ newChatButton.addEventListener("click", () => {
   if (busy) return;
   conversation.replaceChildren();
   conversationTurns = [];
+  resetUsed();
   welcome.hidden = false;
   newChatButton.hidden = true;
   window.scrollTo({ top: 0, behavior: "smooth" });
   questionInput.focus();
 });
+
+const themeToggle = document.getElementById("theme-toggle");
+const themeLabel = document.getElementById("theme-label");
+const systemDark = window.matchMedia("(prefers-color-scheme: dark)");
+
+// O botão mostra o tema para o qual a página vai mudar
+function updateThemeButton() {
+  const theme = currentTheme(document.documentElement.dataset.theme, systemDark.matches);
+  const target = nextTheme(theme);
+  themeLabel.textContent = target === "dark" ? "Tema escuro" : "Tema claro";
+  themeToggle.dataset.target = target;
+  const action = `Mudar para o tema ${target === "dark" ? "escuro" : "claro"}`;
+  themeToggle.setAttribute("aria-label", action);
+  themeToggle.title = action;
+}
+
+themeToggle.addEventListener("click", () => {
+  const theme = nextTheme(currentTheme(document.documentElement.dataset.theme, systemDark.matches));
+  document.documentElement.dataset.theme = theme;
+  try {
+    localStorage.setItem(THEME_STORAGE, theme);
+  } catch {
+    // sem armazenamento, o tema vale até a página ser recarregada
+  }
+  updateThemeButton();
+});
+
+// Sem escolha salva, a página acompanha a troca de tema do sistema
+systemDark.addEventListener("change", updateThemeButton);
 
 let healthTimer = null;
 
@@ -483,6 +587,8 @@ filtersPanel.addEventListener("toggle", () => {
 keyInput.addEventListener("change", loadCategories);
 
 keyInput.value = loadKey();
+resetUsed();
+updateThemeButton();
 updateComposer();
 updateFiltersSummary();
 checkApi();
