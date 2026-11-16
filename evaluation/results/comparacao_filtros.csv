@@ -1,0 +1,4 @@
+﻿pergunta,filtro,pergunta_texto,com_filtro_dentro_do_filtro,sem_filtro_dentro_do_filtro,com_filtro_situacao,sem_filtro_situacao
+13,"{""ratings"": [1, 2]}",Quais os principais problemas nas avaliações com nota baixa?,15 de 15,9 de 15,respondida,respondida
+14,"{""category"": ""cama_mesa_banho""}",O que os clientes mais elogiam em cama_mesa_banho?,15 de 15,8 de 15,respondida,respondida
+15,"{""delivery"": ""atrasada""}",Quais temas aparecem nas entregas atrasadas?,15 de 15,12 de 15,respondida,respondida
