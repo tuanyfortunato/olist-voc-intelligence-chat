@@ -36,9 +36,10 @@ class FakePipeline:
         self.calls = 0
         self.received = []
 
-    def ask(self, question, history=None):
+    def ask(self, question, history=None, filters=None):
         self.calls += 1
         self.received.append((question, history))
+        self.filters = filters
         if self.error:
             raise self.error
         return AskResult(

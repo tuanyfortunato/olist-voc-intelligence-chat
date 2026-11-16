@@ -101,3 +101,93 @@ def test_retrieve_applies_threshold_and_top_k(pg_conn, settings):
     load(pg_conn, ROWS)
     result = retrieve(pg_conn, [1.0, 0.0, 0.0], replace(settings, min_similarity=0.5, top_k=5))
     assert {r.review_id for r in result} == {"r1", "r3"}
+
+
+def test_build_filter_sql_without_filters():
+    from src.rag.retriever import build_filter_sql
+    from src.rag.schemas import SearchFilters
+
+    assert build_filter_sql(None) == ("", {})
+    assert build_filter_sql(SearchFilters()) == ("", {})
+
+
+def test_build_filter_sql_single_filters():
+    from src.rag.retriever import build_filter_sql
+    from src.rag.schemas import SearchFilters
+
+    assert build_filter_sql(SearchFilters(ratings=[1, 2])) == (
+        "WHERE rating = ANY(%(ratings)s)",
+        {"ratings": [1, 2]},
+    )
+    assert build_filter_sql(SearchFilters(category="cama_mesa_banho")) == (
+        "WHERE category = %(category)s",
+        {"category": "cama_mesa_banho"},
+    )
+    assert build_filter_sql(SearchFilters(delivery="atrasada")) == (
+        "WHERE delivery = ANY(%(deliveries)s)",
+        {"deliveries": ["atrasada"]},
+    )
+
+
+def test_build_filter_sql_problem_deliveries():
+    from src.rag.retriever import build_filter_sql
+    from src.rag.schemas import SearchFilters
+
+    _, params = build_filter_sql(SearchFilters(delivery="com_problema"))
+    assert params == {"deliveries": ["atrasada", "nao_entregue"]}
+
+
+def test_build_filter_sql_combined():
+    from src.rag.retriever import build_filter_sql
+    from src.rag.schemas import SearchFilters
+
+    clause, params = build_filter_sql(SearchFilters(ratings=[5], category="moveis_decoracao"))
+    assert clause == "WHERE rating = ANY(%(ratings)s) AND category = %(category)s"
+    assert params == {"ratings": [5], "category": "moveis_decoracao"}
+
+
+def load_with_metadata(pg_conn, rows):
+    from src.vector_db import load_reviews
+
+    frame = pd.DataFrame(
+        [
+            {
+                "review_id": review_id,
+                "embedding": np.array(vector, dtype=np.float32),
+                "embedding_text": review_id,
+                "original_text": review_id,
+                "rating": rating,
+                "review_date": "2018-03-10",
+                "category": category,
+                "delivery": delivery,
+                "order_id": f"o_{review_id}",
+                "text_length": 2,
+            }
+            for review_id, vector, rating, category, delivery in rows
+        ]
+    )
+    load_reviews(pg_conn, frame)
+
+
+def test_query_candidates_applies_filters(pg_conn):
+    from src.rag.schemas import SearchFilters
+
+    load_with_metadata(
+        pg_conn,
+        [
+            ("perto_bebes", [1.0, 0.0, 0.0], 1, "bebes", "atrasada"),
+            ("perto_moveis", [0.99, 0.1, 0.0], 5, "moveis", "no_prazo"),
+            ("longe_moveis", [0.0, 1.0, 0.0], 5, "moveis", "nao_entregue"),
+            ("mista", [0.98, 0.0, 0.1], 1, "mista", "desconhecido"),
+        ],
+    )
+    by_category = query_candidates(pg_conn, [1.0, 0.0, 0.0], 10, SearchFilters(category="moveis"))
+    assert [c.review.review_id for c in by_category] == ["perto_moveis", "longe_moveis"]
+
+    by_rating = query_candidates(pg_conn, [1.0, 0.0, 0.0], 10, SearchFilters(ratings=[1]))
+    assert {c.review.review_id for c in by_rating} == {"perto_bebes", "mista"}
+
+    problems = query_candidates(
+        pg_conn, [1.0, 0.0, 0.0], 10, SearchFilters(delivery="com_problema")
+    )
+    assert {c.review.review_id for c in problems} == {"perto_bebes", "longe_moveis"}

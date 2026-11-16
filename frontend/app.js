@@ -5,8 +5,12 @@ import {
   canRetry,
   currentTheme,
   categoryLabel,
+  buildFilters,
+  buildHistory,
   counterState,
   deliveryLabel,
+  describeFilters,
+  describeInferredRatings,
   errorMessage,
   formatDate,
   formatSimilarity,
@@ -43,9 +47,25 @@ const newChatButton = document.getElementById("new-chat");
 const apiStatus = document.getElementById("api-status");
 const apiStatusText = document.getElementById("api-status-text");
 const announcer = document.getElementById("announcer");
+
+// O campo da pergunta fica fixo no rodapé e muda de altura com o texto e com
+// o painel de filtros. A página reserva no fim o espaço que ele ocupa, para
+// ele não cobrir a última resposta nem as sugestões.
+const composer = document.querySelector(".composer");
+new ResizeObserver(() => {
+  document.body.style.setProperty("--composer-height", `${composer.offsetHeight}px`);
+}).observe(composer);
 const exampleButtons = document.querySelectorAll("#examples button");
+const filtersPanel = document.getElementById("filters");
+const filtersSummary = document.getElementById("filters-summary");
+const ratingInputs = document.querySelectorAll('input[name="rating"]');
+const categorySelect = document.getElementById("filter-category");
+const deliverySelect = document.getElementById("filter-delivery");
+const clearFiltersButton = document.getElementById("clear-filters");
 
 let messageCount = 0;
+// Trocas desta conversa; ficam só no navegador e somem com "Nova conversa"
+let conversationTurns = [];
 let busy = false;
 const SUGGESTIONS_PER_ROUND = 3;
 // Perguntas já sugeridas ou feitas nesta conversa, que não voltam a aparecer.
@@ -259,6 +279,8 @@ function renderAnswer(container, result, messageId) {
     box.appendChild(element("span", null, notice.text));
     container.appendChild(box);
   }
+  const inferred = describeInferredRatings(result.inferred_ratings);
+  if (inferred) container.appendChild(element("p", "inferred-filter", inferred));
   const answer = element("div", "answer");
   for (const block of parseAnswerBlocks(result.answer)) {
     if (block.type === "paragraph") {
@@ -308,14 +330,14 @@ function renderLoading(container) {
   container.appendChild(loading);
 }
 
-async function callApi(question, key) {
+async function callApi(question, key, filters, history) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
     const response = await fetch("/api/ask", {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-Access-Key": key },
-      body: JSON.stringify({ question, history: [] }),
+      body: JSON.stringify(filters ? { question, history, filters } : { question, history }),
       signal: controller.signal,
     });
     const body = await response.json().catch(() => null);
@@ -341,12 +363,14 @@ async function send(question, reply) {
 
   setBusy(true);
   renderLoading(reply);
-  const { status, body } = await callApi(question, key);
+  // Os filtros ficam no balão: a nova tentativa usa os mesmos da pergunta original
+  const { status, body } = await callApi(question, key, reply.filters || null, reply.history || []);
   setBusy(false);
 
   const messageId = reply.dataset.messageId;
   if (status === 200 && body) {
     renderAnswer(reply, body, messageId);
+    conversationTurns.push({ question, answer: body.answer });
     renderSuggestions(reply);
     announce("Resposta pronta.");
   } else {
@@ -369,10 +393,16 @@ function startQuestion(question) {
   used.push(question);
 
   messageCount += 1;
+  const filters = currentFilters();
   const turn = element("div", "turn");
-  turn.appendChild(element("div", "message-user", question));
+  const userMessage = element("div", "message-user", question);
+  if (filters) userMessage.appendChild(element("span", "message-filters", `Filtros: ${describeFilters(filters)}`));
+  turn.appendChild(userMessage);
   const reply = element("div", "message-bot");
   reply.dataset.messageId = `m${messageCount}`;
+  reply.filters = filters;
+  // O histórico também fica no balão, para a nova tentativa mandar o mesmo
+  reply.history = buildHistory(conversationTurns);
   turn.appendChild(reply);
   conversation.appendChild(turn);
   send(question, reply);
@@ -395,6 +425,7 @@ form.addEventListener("submit", (event) => {
   // A pergunta só sai do campo depois de enviada
   if (startQuestion(question)) {
     questionInput.value = "";
+    filtersPanel.open = false;
     updateComposer();
   }
 });
@@ -433,6 +464,7 @@ for (const button of exampleButtons) {
 newChatButton.addEventListener("click", () => {
   if (busy) return;
   conversation.replaceChildren();
+  conversationTurns = [];
   resetUsed();
   welcome.hidden = false;
   newChatButton.hidden = true;
@@ -490,8 +522,74 @@ async function checkApi() {
   if (!online) healthTimer = setTimeout(checkApi, HEALTH_RETRY_MS);
 }
 
+function currentFilters() {
+  return buildFilters({
+    ratings: [...ratingInputs].filter((input) => input.checked).map((input) => input.value),
+    category: categorySelect.value,
+    delivery: deliverySelect.value,
+  });
+}
+
+function updateFiltersSummary() {
+  const filters = currentFilters();
+  filtersSummary.textContent = filters ? describeFilters(filters) : "nenhum";
+  filtersPanel.dataset.active = String(Boolean(filters));
+}
+
+// As categorias vêm da API, que exige a chave; sem chave, o filtro fica só com "Todas".
+// A carga em andamento é reaproveitada: a chave e a abertura do painel podem
+// pedir a lista ao mesmo tempo, e sem isso as categorias apareceriam duas vezes.
+let categoriesLoaded = false;
+let categoriesRequest = null;
+
+function loadCategories() {
+  if (categoriesLoaded || categoriesRequest || !keyInput.value.trim()) return categoriesRequest;
+  categoriesRequest = fetchCategories().finally(() => {
+    categoriesRequest = null;
+  });
+  return categoriesRequest;
+}
+
+async function fetchCategories() {
+  const key = keyInput.value.trim();
+  try {
+    const response = await fetch("/api/categories", { headers: { "X-Access-Key": key } });
+    if (!response.ok) return;
+    const data = await response.json();
+    const options = data.categories
+      .map((category) => ({ value: category, label: categoryLabel(category) }))
+      .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
+    for (const option of options) {
+      const node = element("option", null, option.label);
+      node.value = option.value;
+      categorySelect.appendChild(node);
+    }
+    categoriesLoaded = true;
+  } catch {
+    // sem as categorias, o filtro de categoria fica só com "Todas"
+  }
+}
+
+for (const input of [...ratingInputs, categorySelect, deliverySelect]) {
+  input.addEventListener("change", updateFiltersSummary);
+}
+
+clearFiltersButton.addEventListener("click", () => {
+  for (const input of ratingInputs) input.checked = false;
+  categorySelect.value = "";
+  deliverySelect.value = "";
+  updateFiltersSummary();
+});
+
+filtersPanel.addEventListener("toggle", () => {
+  if (filtersPanel.open) loadCategories();
+});
+keyInput.addEventListener("change", loadCategories);
+
 keyInput.value = loadKey();
 resetUsed();
 updateThemeButton();
 updateComposer();
+updateFiltersSummary();
 checkApi();
+loadCategories();

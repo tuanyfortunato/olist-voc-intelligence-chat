@@ -12,7 +12,7 @@ import logging
 from dataclasses import dataclass
 from typing import Literal
 
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, ValidationError, field_validator
 
 from src.rag.prompts import ANALYSIS_PROMPT, HISTORY_INTRO
 from src.rag.schemas import ConversationTurn
@@ -29,6 +29,13 @@ class QuestionAnalysis(BaseModel):
     # Verdadeiro quando a pergunta afirmava como fato algo que foi retirado,
     # como "Já que 90% dos clientes reclamam de atraso"
     removed_premise: bool = False
+    # Notas que a pergunta menciona, como "notas altas" (4 e 5); viram filtro
+    ratings: list[int] = []
+
+    @field_validator("ratings")
+    @classmethod
+    def keep_valid_ratings(cls, value: list[int]) -> list[int]:
+        return sorted({rating for rating in value if 1 <= rating <= 5})
 
 
 @dataclass(frozen=True)

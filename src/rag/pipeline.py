@@ -21,12 +21,12 @@ from src.rag.prompts import (
     PREMISE_NOTE,
 )
 from src.rag.question_analysis import analyze_question
-from src.rag.schemas import AskResult, ConversationTurn, RetrievedReview
+from src.rag.schemas import AskResult, ConversationTurn, RetrievedReview, SearchFilters
 
 logger = logging.getLogger(__name__)
 
 EmbedFunction = Callable[[str], list[float]]
-SearchFunction = Callable[[list[float]], list[RetrievedReview]]
+SearchFunction = Callable[[list[float], SearchFilters | None], list[RetrievedReview]]
 
 
 # Até 2 avaliações citadas, a resposta sai com aviso de evidência fraca
@@ -69,7 +69,12 @@ class RagPipeline:
         self.embed = embed
         self.search = search
 
-    def ask(self, question: str, history: list[ConversationTurn] | None = None) -> AskResult:
+    def ask(
+        self,
+        question: str,
+        history: list[ConversationTurn] | None = None,
+        filters: SearchFilters | None = None,
+    ) -> AskResult:
         timings = {}
         start = time.monotonic()
         result = analyze_question(question, history or [], self.analysis_llm)
@@ -87,9 +92,16 @@ class RagPipeline:
                 search_topic="",
             )
 
+        # As notas mencionadas na pergunta viram filtro quando o gestor não marcou
+        # nenhuma nota no painel; a escolha do painel sempre vale mais
+        inferred_ratings = []
+        if analysis.ratings and not (filters and filters.ratings):
+            inferred_ratings = analysis.ratings
+            filters = replace(filters or SearchFilters(), ratings=inferred_ratings)
+
         topic = analysis.search_topic if self.settings.use_rewrite else question
         start = time.monotonic()
-        retrieved = self.search(self.embed(topic))
+        retrieved = self.search(self.embed(topic), filters)
         timings["busca_ms"] = (time.monotonic() - start) * 1000
         reviews = [replace(review, number=n) for n, review in enumerate(retrieved, start=1)]
 
@@ -103,6 +115,7 @@ class RagPipeline:
                 uncited=[],
                 original_question=question,
                 search_topic=topic,
+                inferred_ratings=inferred_ratings,
             )
 
         start = time.monotonic()
@@ -144,6 +157,7 @@ class RagPipeline:
             uncited=uncited,
             original_question=question,
             search_topic=topic,
+            inferred_ratings=inferred_ratings,
         )
 
 
@@ -155,9 +169,9 @@ def build_pipeline(settings: Settings) -> RagPipeline:
 
     client = get_runtime_client(settings)
 
-    def search(embedding: list[float]) -> list[RetrievedReview]:
+    def search(embedding: list[float], filters: SearchFilters | None) -> list[RetrievedReview]:
         with connect(settings) as conn:
-            return retrieve(conn, embedding, settings)
+            return retrieve(conn, embedding, settings, filters)
 
     return RagPipeline(
         settings=settings,

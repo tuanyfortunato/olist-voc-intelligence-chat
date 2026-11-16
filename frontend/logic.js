@@ -148,6 +148,55 @@ export function counterState(length) {
   return "ok";
 }
 
+// Filtros da busca. Nenhuma nota marcada busca em todas; categoria e entrega
+// vazias também. Sem nenhum filtro, a página não manda o campo.
+export function buildFilters({ ratings, category, delivery }) {
+  const filters = {};
+  if (ratings && ratings.length) filters.ratings = [...ratings].map(Number).sort((a, b) => a - b);
+  if (category) filters.category = category;
+  if (delivery) filters.delivery = delivery;
+  return Object.keys(filters).length ? filters : null;
+}
+
+const DELIVERY_FILTER_LABELS = {
+  no_prazo: "entregas no prazo",
+  atrasada: "entregas atrasadas",
+  nao_entregue: "pedidos não entregues",
+  com_problema: "entregas com problema",
+};
+
+// Resumo dos filtros, como "notas 1 e 2 · Cama mesa banho · entregas com problema"
+export function describeFilters(filters) {
+  if (!filters) return "";
+  const parts = [];
+  if (filters.ratings && filters.ratings.length) {
+    const list = filters.ratings;
+    const joined = list.length === 1 ? `${list[0]}` : `${list.slice(0, -1).join(", ")} e ${list.at(-1)}`;
+    parts.push(`${list.length === 1 ? "nota" : "notas"} ${joined}`);
+  }
+  if (filters.category) parts.push(categoryLabel(filters.category));
+  if (filters.delivery) parts.push(DELIVERY_FILTER_LABELS[filters.delivery] || filters.delivery);
+  return parts.join(" · ");
+}
+
+// Histórico enviado com a pergunta: as 3 últimas trocas, com as respostas cortadas
+// no mesmo limite da API. Serve só para completar perguntas de continuação.
+const HISTORY_TURNS = 3;
+const HISTORY_ANSWER_CHARS = 1500;
+
+export function buildHistory(turns) {
+  return turns.slice(-HISTORY_TURNS).map((turn) => ({
+    question: turn.question,
+    answer: turn.answer.slice(0, HISTORY_ANSWER_CHARS),
+  }));
+}
+
+// Aviso de que a busca foi restrita pelas notas que a própria pergunta mencionou
+export function describeInferredRatings(ratings) {
+  if (!ratings || !ratings.length) return null;
+  return `A busca considerou só as avaliações de ${describeFilters({ ratings })}, citadas na pergunta.`;
+}
+
 // Tema da página. A escolha salva vale sobre o sistema; sem ela, a página
 // segue a aparência do sistema operacional.
 export function currentTheme(saved, systemDark) {

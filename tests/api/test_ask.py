@@ -98,3 +98,29 @@ def test_invalid_body_does_not_consume_quota(fake_pipe):
     with make_client(fake_pipe, quota=quota) as client:
         client.post("/api/ask", json={"question": ""}, headers=KEY)
     assert quota.used == 0
+
+
+def test_filters_reach_pipeline(client, fake_pipe):
+    from src.rag.schemas import SearchFilters
+
+    body = {
+        "question": "Quais temas nas entregas?",
+        "filters": {"delivery": "com_problema", "ratings": [1, 2]},
+    }
+    response = client.post("/api/ask", json=body, headers=KEY)
+    assert response.status_code == 200
+    assert fake_pipe.filters == SearchFilters(
+        ratings=[1, 2], category=None, delivery="com_problema"
+    )
+
+
+def test_no_filters_reach_pipeline_as_none(client, fake_pipe):
+    client.post("/api/ask", json={"question": "x"}, headers=KEY)
+    assert fake_pipe.filters is None
+
+
+def test_categories_require_key_and_come_from_manifest(client):
+    assert client.get("/api/categories").status_code == 401
+    response = client.get("/api/categories", headers=KEY)
+    assert response.status_code == 200
+    assert response.json() == {"categories": ["bebes"]}
