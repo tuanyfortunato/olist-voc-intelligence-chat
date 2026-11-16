@@ -13,8 +13,10 @@ import {
   MAX_CHARS,
   nextTheme,
   parseAnswerBlocks,
+  pickSuggestions,
   shortId,
   splitCitations,
+  SUGGESTIONS,
   statusNotice,
   TIMEOUT_STATUS,
 } from "./logic.js";
@@ -44,6 +46,8 @@ const exampleButtons = document.querySelectorAll("#examples button");
 
 let messageCount = 0;
 let busy = false;
+// Perguntas já feitas nesta conversa, para não sugeri-las de novo
+let asked = [];
 
 // A chave fica só enquanto a aba estiver aberta. Em navegação privada o
 // armazenamento pode falhar, e a página continua funcionando sem ele.
@@ -83,6 +87,7 @@ function setBusy(value) {
   sendButton.disabled = value;
   sendButton.textContent = value ? "Aguarde..." : "Perguntar";
   for (const button of exampleButtons) button.disabled = value;
+  for (const button of conversation.querySelectorAll(".suggestion")) button.disabled = value;
 }
 
 function showKeyError(message) {
@@ -196,6 +201,23 @@ function renderReviews(result, messageId) {
   return section;
 }
 
+// Sugestões de novas perguntas, só embaixo da resposta mais recente
+function renderSuggestions(container) {
+  for (const old of conversation.querySelectorAll(".suggestions")) old.remove();
+  const questions = pickSuggestions(SUGGESTIONS, asked, 3);
+  if (!questions.length) return;
+  const box = element("div", "suggestions");
+  box.setAttribute("aria-label", "Outras perguntas");
+  box.appendChild(element("p", "suggestions-title", "Outras perguntas"));
+  for (const question of questions) {
+    const button = element("button", "suggestion", question);
+    button.type = "button";
+    button.addEventListener("click", () => startQuestion(question));
+    box.appendChild(button);
+  }
+  container.after(box);
+}
+
 function renderAnswer(container, result, messageId) {
   container.replaceChildren();
   container.removeAttribute("aria-busy");
@@ -294,6 +316,7 @@ async function send(question, reply) {
   const messageId = reply.dataset.messageId;
   if (status === 200 && body) {
     renderAnswer(reply, body, messageId);
+    renderSuggestions(reply);
     announce("Resposta pronta.");
   } else {
     const error = errorMessage(status, body);
@@ -312,6 +335,7 @@ function startQuestion(question) {
   }
   welcome.hidden = true;
   newChatButton.hidden = false;
+  asked.push(question);
 
   messageCount += 1;
   const turn = element("div", "turn");
@@ -378,6 +402,7 @@ for (const button of exampleButtons) {
 newChatButton.addEventListener("click", () => {
   if (busy) return;
   conversation.replaceChildren();
+  asked = [];
   welcome.hidden = false;
   newChatButton.hidden = true;
   window.scrollTo({ top: 0, behavior: "smooth" });

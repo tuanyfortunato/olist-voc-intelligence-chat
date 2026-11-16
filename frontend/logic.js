@@ -158,3 +158,26 @@ export function currentTheme(saved, systemDark) {
 export function nextTheme(theme) {
   return theme === "dark" ? "light" : "dark";
 }
+
+// Perguntas sugeridas depois de cada resposta, tiradas da avaliação do projeto
+// (evaluation/questions.yaml), na ordem em que aparecem.
+export const SUGGESTIONS = [
+  "Quais reclamações sobre entrega aparecem com mais frequência?",
+  "O que os clientes relatam sobre produtos que chegaram com defeito?",
+  "Quais são os principais elogios dos clientes?",
+  "O que os clientes relatam sobre o atendimento do vendedor?",
+  "O que os clientes contam sobre produtos diferentes do anunciado?",
+  "O que os clientes acham do aplicativo da loja?",
+  "Os clientes pedem que os produtos venham em embalagem de presente?",
+  "O que os clientes falam sobre pagar com Pix?",
+];
+
+function normalize(question) {
+  return question.trim().toLowerCase();
+}
+
+// As primeiras perguntas da lista que ainda não foram feitas na conversa
+export function pickSuggestions(pool, asked, count) {
+  const done = new Set(asked.map(normalize));
+  return pool.filter((question) => !done.has(normalize(question))).slice(0, count);
+}

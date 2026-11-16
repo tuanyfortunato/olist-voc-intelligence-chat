@@ -104,6 +104,8 @@ A página segue o tema claro ou escuro do sistema, e um botão no topo deixa a p
 
 As avaliações citadas também passaram a vir recolhidas, como as não citadas. A resposta aparece inteira, sem uma lista longa de comentários logo abaixo, e quem quer conferir abre o bloco pelo título ou clica num número entre colchetes, que abre o bloco e leva direto à avaliação.
 
+Os exemplos da tela inicial somem depois da primeira pergunta, e por isso cada resposta termina com três sugestões de outras perguntas. Elas vêm de uma lista com as perguntas da avaliação que respondem bem sem filtros, como a dos elogios e a do atendimento do vendedor, e deixam de fora as que já foram feitas na conversa. Só a resposta mais recente mostra sugestões, para a conversa não ficar repetitiva.
+
 ## Termos que nenhum comentário menciona
 
 Depois da publicação, a pergunta do Pix mostrou que a folga do score mínimo era pequena demais. O Nova Micro reescreveu o tema como "comentários sobre pagamento com Pix", e não como na calibração, e com esse tema comentários sobre pagamento em geral chegaram a 0,60 e passaram do corte. Numa das respostas, o modelo afirmou que alguns clientes relatavam problemas com o pagamento via Pix, o que nenhum comentário diz. É o tipo de erro que o chat não pode cometer.

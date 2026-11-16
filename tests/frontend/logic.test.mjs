@@ -13,6 +13,7 @@ import {
   formatSimilarity,
   nextTheme,
   parseAnswerBlocks,
+  pickSuggestions,
   shortId,
   splitCitations,
   statusNotice,
@@ -127,4 +128,14 @@ test("currentTheme usa a escolha salva e, sem ela, o tema do sistema", () => {
 test("nextTheme alterna entre claro e escuro", () => {
   assert.equal(nextTheme("light"), "dark");
   assert.equal(nextTheme("dark"), "light");
+});
+
+test("pickSuggestions sugere perguntas ainda não feitas na conversa", () => {
+  const pool = ["Pergunta A?", "Pergunta B?", "Pergunta C?", "Pergunta D?"];
+  assert.deepEqual(pickSuggestions(pool, ["Pergunta A?"], 2), ["Pergunta B?", "Pergunta C?"]);
+  assert.deepEqual(pickSuggestions(pool, ["  pergunta b?  ", "Pergunta A?"], 3), [
+    "Pergunta C?",
+    "Pergunta D?",
+  ]);
+  assert.deepEqual(pickSuggestions(pool, pool, 3), []);
 });

@@ -518,6 +518,42 @@ textarea {
   font-size: 0.88rem;
 }
 
+/* Sugestões depois da resposta */
+.suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.suggestions-title {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.suggestion {
+  text-align: left;
+  font-size: 0.9rem;
+  color: var(--accent);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 14px;
+}
+
+.suggestion:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.suggestion:disabled {
+  opacity: 0.6;
+}
+
 /* Citação [n] no texto da resposta */
 .cite {
   display: inline-flex;
