@@ -4,7 +4,7 @@ Toda a infraestrutura do projeto é descrita em Terraform, na pasta `infra/`, e 
 
 ## Bootstrap
 
-A pasta `infra/bootstrap/` cria o que precisa existir antes de qualquer workflow: o bucket que guarda o estado do Terraform, o bucket do índice do Chroma e o acesso do GitHub Actions à AWS por OIDC. É a única parte que roda pelo terminal, porque é ela que cria o acesso usado pelos workflows depois.
+A pasta `infra/bootstrap/` cria o que precisa existir antes de qualquer workflow: o bucket que guarda o estado do Terraform, o bucket dos embeddings e o acesso do GitHub Actions à AWS por OIDC. É a única parte que roda pelo terminal, porque é ela que cria o acesso usado pelos workflows depois.
 
 Com o OIDC, o GitHub não guarda nenhuma chave da AWS. A cada execução ele emite um token que identifica o repositório e a branch, e a AWS troca esse token por uma credencial temporária do papel `olist-voc-github-actions`. O papel só aceita este repositório, nas branches `main`, `develop` e `feature/*` e em PRs. Pull requests vindos de forks não recebem esse token. As permissões são as da política `PowerUserAccess`, que cobre os serviços do projeto mas não o IAM, e uma política própria que libera o IAM apenas para papéis e políticas com o prefixo `olist-voc-`.
 

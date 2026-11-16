@@ -29,7 +29,7 @@ def test_manifest_roundtrip(tmp_path):
 
 
 def test_manifest_from_dict_ignores_unknown_fields():
-    data = {**manifest().__dict__, "chroma_version": "1.5.9"}
+    data = {**manifest().__dict__, "campo_antigo": "valor"}
     assert IndexManifest.from_dict(data) == manifest()
 
 

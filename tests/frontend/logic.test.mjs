@@ -335,3 +335,104 @@ test("answerAsText leva a resposta e as avaliações citadas", () => {
   );
   assert.equal(answerAsText({ answer: "Olá!", cited: [], uncited: [] }), "Olá!");
 });
+
+import { activeFilterCount, errorLook, LOADING_STEPS } from "../../frontend/logic.js";
+
+test("statusNotice troca a resposta pelo aviso só quando não há resposta", () => {
+  assert.equal(statusNotice("no_evidence").replacesAnswer, true);
+  assert.equal(statusNotice("out_of_scope").replacesAnswer, true);
+  assert.equal(statusNotice("weak_evidence").replacesAnswer, false);
+});
+
+test("errorLook trata o limite como aviso e o resto como erro com título", () => {
+  assert.equal(errorLook("quota").kind, "limit");
+  assert.equal(errorLook("retry").kind, "error");
+  assert.ok(errorLook("unexpected").title);
+});
+
+test("activeFilterCount conta os filtros escolhidos", () => {
+  assert.equal(activeFilterCount(null), 0);
+  assert.equal(activeFilterCount({ ratings: [1, 2] }), 1);
+  assert.equal(activeFilterCount({ ratings: [5], category: "bebes", delivery: "atrasada" }), 3);
+});
+
+test("LOADING_STEPS mostra a busca antes da escrita", () => {
+  assert.equal(LOADING_STEPS.length, 2);
+  assert.match(LOADING_STEPS[0], /Buscando/);
+});
+
+import {
+  OVERVIEW_AREA,
+  pickAreaSuggestions,
+  SUGGESTION_AREAS,
+  suggestionArea,
+} from "../../frontend/logic.js";
+
+test("suggestionArea encontra a área de uma pergunta da lista", () => {
+  assert.equal(suggestionArea("O que faz um cliente dizer que não volta a comprar?"), "Retenção");
+  assert.equal(suggestionArea("  o que faz um cliente dizer que não volta a comprar?  "), "Retenção");
+  assert.equal(suggestionArea("Pergunta livre?"), null);
+});
+
+test("pickAreaSuggestions puxa duas da mesma área e uma de outra", () => {
+  const question = "O que faz um cliente dizer que não volta a comprar?";
+  for (let i = 0; i < 50; i += 1) {
+    const picked = pickAreaSuggestions(question, [question], 3, 2);
+    assert.equal(picked.length, 3);
+    assert.equal(new Set(picked).size, 3);
+    const areas = picked.map(suggestionArea);
+    assert.equal(areas.filter((area) => area === "Retenção").length, 2);
+    assert.ok(!picked.includes(question));
+  }
+});
+
+test("pickAreaSuggestions na visão geral traz áreas diferentes", () => {
+  const question = SUGGESTION_AREAS.find((item) => item.area === OVERVIEW_AREA).questions[0];
+  for (let i = 0; i < 50; i += 1) {
+    const areas = pickAreaSuggestions(question, [question], 3, 2).map(suggestionArea);
+    assert.equal(areas.length, 3);
+    assert.equal(new Set(areas).size, 3);
+    assert.ok(!areas.includes(OVERVIEW_AREA));
+  }
+});
+
+test("pickAreaSuggestions completa com outras áreas quando a área acaba", () => {
+  const group = SUGGESTION_AREAS.find((item) => item.area === "Pontos fortes").questions;
+  const picked = pickAreaSuggestions(group[0], group, 3, 2);
+  assert.equal(picked.length, 3);
+  for (const question of picked) assert.ok(!group.includes(question));
+});
+
+test("os cartões da tela inicial estão na lista de sugestões", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const html = await readFile(new URL("../../frontend/index.html", import.meta.url), "utf8");
+  const cards = [...html.matchAll(/<span class="example-question">([^<]+)<\/span>/g)].map((m) => m[1]);
+  assert.equal(cards.length, 5);
+  for (const card of cards) assert.ok(suggestionArea(card), card);
+});
+
+import { citedNumbers, quotePreview, splitQuotes, stripCitations } from "../../frontend/logic.js";
+
+test("citedNumbers lista os números citados na ordem e sem repetir", () => {
+  assert.deepEqual(citedNumbers("Atrasos [1][5] e defeitos [2, 5]."), [1, 5, 2]);
+  assert.deepEqual(citedNumbers("Sem citação."), []);
+});
+
+test("stripCitations tira as citações e o espaço antes da pontuação", () => {
+  assert.equal(stripCitations("Atraso de semanas [1, 2]."), "Atraso de semanas.");
+  assert.equal(stripCitations("Defeitos [3] e trocas [4] aparecem."), "Defeitos e trocas aparecem.");
+});
+
+test("splitQuotes separa os trechos mostrados dos que ficam para depois", () => {
+  assert.deepEqual(splitQuotes([1, 5, 9, 11], 2), { shown: [1, 5], hidden: [9, 11] });
+  assert.deepEqual(splitQuotes([3], 2), { shown: [3], hidden: [] });
+});
+
+test("quotePreview corta comentários longos numa palavra inteira", () => {
+  assert.equal(quotePreview("Chegou rápido."), "Chegou rápido.");
+  const long = "palavra ".repeat(60);
+  const preview = quotePreview(long, 50);
+  assert.ok(preview.length <= 53);
+  assert.ok(preview.endsWith("..."));
+  assert.ok(!preview.includes(" ..."));
+});

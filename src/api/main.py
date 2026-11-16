@@ -69,7 +69,7 @@ def create_app(
         logger.info("etapa=inicio documentos=%d", status.documents)
         yield
 
-    app = FastAPI(title="Olist Intelligence Chat", lifespan=lifespan)
+    app = FastAPI(title="Voz do Cliente", lifespan=lifespan)
     app.state.settings = settings
 
     @app.get("/api/health")

@@ -3,17 +3,15 @@
 # Modo full: faz o mesmo, gera os embeddings e envia ao S3 o embeddings.parquet
 # e o manifesto. Se a indexação falhar no meio, as partes já gravadas ficam em
 # index/work/ no bucket, e a próxima execução continua dali.
-# Modo convert: converte uma única vez os embeddings antigos, gravados no
-# formato do Chroma, para Parquet, sem chamar o modelo de novo.
 name: Build index
 
 on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "prepare: só prepara a base; full: gera os embeddings e envia ao S3; convert: converte os embeddings antigos do Chroma"
+        description: "prepare: só prepara a base; full: gera os embeddings e envia ao S3"
         type: choice
-        options: [full, prepare, convert]
+        options: [full, prepare]
         default: full
 
 permissions:
@@ -37,14 +35,12 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Token do Kaggle
-        if: inputs.mode != 'convert'
         run: |
           mkdir -p ~/.kaggle
           echo "${{ secrets.KAGGLE_ACCESS_TOKEN }}" > ~/.kaggle/access_token
           chmod 600 ~/.kaggle/access_token
 
       - name: Baixar a base
-        if: inputs.mode != 'convert'
         run: python -m scripts.download_data
 
       - name: Acesso à AWS pelo OIDC
@@ -59,16 +55,7 @@ jobs:
         run: aws s3 sync "s3://${{ vars.INDEX_BUCKET }}/index/work/" data/index/
 
       - name: Preparar a base e gerar os embeddings
-        if: inputs.mode != 'convert'
         run: python -m scripts.build_index --mode ${{ inputs.mode }}
-
-      - name: Converter os embeddings antigos do Chroma
-        if: inputs.mode == 'convert'
-        run: |
-          aws s3 sync "s3://${{ vars.INDEX_BUCKET }}/index/current/" "s3://${{ vars.INDEX_BUCKET }}/index/chroma-backup/"
-          aws s3 sync "s3://${{ vars.INDEX_BUCKET }}/index/current/" data/chroma/
-          pip install chromadb==1.5.9
-          python -m scripts.convert_chroma
 
       - name: Enviar os embeddings ao S3
         if: inputs.mode != 'prepare'

@@ -4,7 +4,7 @@ output "state_bucket" {
 }
 
 output "index_bucket" {
-  description = "Bucket do índice do Chroma (variável INDEX_BUCKET no GitHub)"
+  description = "Bucket dos embeddings (variável INDEX_BUCKET no GitHub)"
   value       = aws_s3_bucket.index.bucket
 }
 

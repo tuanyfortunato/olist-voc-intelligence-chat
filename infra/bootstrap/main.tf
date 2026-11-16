@@ -21,7 +21,7 @@ resource "aws_s3_bucket_versioning" "state" {
   }
 }
 
-# Índice do Chroma gerado pelo workflow de indexação e copiado para a imagem da API.
+# Embeddings gerados pelo workflow de indexação e lidos pela carga dos vetores no PostgreSQL.
 resource "aws_s3_bucket" "index" {
   bucket        = local.index_bucket
   force_destroy = true

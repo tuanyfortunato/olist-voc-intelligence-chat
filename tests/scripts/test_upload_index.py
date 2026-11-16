@@ -30,12 +30,12 @@ def test_upload_replaces_previous_index_with_final_files_only(tmp_path):
     (tmp_path / "embeddings.parquet").write_text("x")
     (tmp_path / "parts").mkdir()
     (tmp_path / "parts" / "part-00000.parquet").write_text("x")
-    s3 = FakeS3(existing=["index/current/chroma.sqlite3", "outro/arquivo"])
+    s3 = FakeS3(existing=["index/current/arquivo-antigo.bin", "outro/arquivo"])
 
     count = upload_index(tmp_path, "bucket", "index/current", s3=s3)
 
     assert count == 2
-    assert s3.deleted == ["index/current/chroma.sqlite3"]
+    assert s3.deleted == ["index/current/arquivo-antigo.bin"]
     assert sorted(s3.uploaded) == [
         "index/current/embeddings.parquet",
         "index/current/manifest.json",
