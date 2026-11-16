@@ -67,3 +67,4 @@ class AskResponse(BaseModel):
     uncited: list[ReviewOut]
     original_question: str
     search_topic: str
+    inferred_ratings: list[int] = []

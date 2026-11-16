@@ -92,6 +92,13 @@ class RagPipeline:
                 search_topic="",
             )
 
+        # As notas mencionadas na pergunta viram filtro quando o gestor não marcou
+        # nenhuma nota no painel; a escolha do painel sempre vale mais
+        inferred_ratings = []
+        if analysis.ratings and not (filters and filters.ratings):
+            inferred_ratings = analysis.ratings
+            filters = replace(filters or SearchFilters(), ratings=inferred_ratings)
+
         topic = analysis.search_topic if self.settings.use_rewrite else question
         start = time.monotonic()
         retrieved = self.search(self.embed(topic), filters)
@@ -108,6 +115,7 @@ class RagPipeline:
                 uncited=[],
                 original_question=question,
                 search_topic=topic,
+                inferred_ratings=inferred_ratings,
             )
 
         start = time.monotonic()
@@ -149,6 +157,7 @@ class RagPipeline:
             uncited=uncited,
             original_question=question,
             search_topic=topic,
+            inferred_ratings=inferred_ratings,
         )
 
 

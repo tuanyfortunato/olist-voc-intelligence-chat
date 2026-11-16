@@ -146,6 +146,28 @@ test("describeFilters resume os filtros em português", () => {
   assert.equal(describeFilters({ delivery: "atrasada" }), "entregas atrasadas");
 });
 
+import { buildHistory, describeInferredRatings } from "../../frontend/logic.js";
+
+test("buildHistory manda as 3 últimas trocas, com respostas cortadas", () => {
+  const turns = [1, 2, 3, 4].map((n) => ({ question: `P${n}`, answer: `R${n}` }));
+  assert.deepEqual(buildHistory(turns), [
+    { question: "P2", answer: "R2" },
+    { question: "P3", answer: "R3" },
+    { question: "P4", answer: "R4" },
+  ]);
+  const long = buildHistory([{ question: "P", answer: "x".repeat(2000) }]);
+  assert.equal(long[0].answer.length, 1500);
+  assert.deepEqual(buildHistory([]), []);
+});
+
+test("describeInferredRatings explica a nota tirada da pergunta", () => {
+  assert.equal(describeInferredRatings([]), null);
+  assert.equal(
+    describeInferredRatings([4, 5]),
+    "A busca considerou só as avaliações de notas 4 e 5, citadas na pergunta.",
+  );
+});
+
 test("currentTheme usa a escolha salva e, sem ela, o tema do sistema", () => {
   assert.equal(currentTheme("dark", false), "dark");
   assert.equal(currentTheme("light", true), "light");
