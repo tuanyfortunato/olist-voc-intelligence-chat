@@ -13,7 +13,9 @@ def test_defaults(monkeypatch):
     assert settings.index_workers == 2
     assert settings.top_k == 15
     assert settings.max_question_chars == 500
-    assert settings.daily_question_limit == 300
+    assert settings.daily_question_limit == 1000
+    assert settings.hourly_question_limit_per_ip == 100
+    assert settings.proxy_hops == 2
     assert settings.db_port == 5432
     assert settings.db_sslmode == "require"
 

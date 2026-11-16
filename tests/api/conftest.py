@@ -4,14 +4,11 @@ import pytest
 from fastapi.testclient import TestClient
 
 from src.api.main import create_app
-from src.api.quota import SAO_PAULO, DailyQuota
+from src.api.rate_limit import SAO_PAULO, MemoryCounterStore, QuestionLimiter
 from src.config import Settings
 from src.rag.schemas import AskResult, RetrievedReview
 from src.vector_db import IndexStatus
 from src.vector_store import IndexManifest
-
-ACCESS_KEY = "chave-de-teste"
-KEY = {"X-Access-Key": ACCESS_KEY}
 
 MANIFEST = IndexManifest(
     "cohere.embed-multilingual-v3", 1024, "cosine", "2026-11-15T20:49:11Z", 40521, ["bebes"]
@@ -19,7 +16,11 @@ MANIFEST = IndexManifest(
 
 
 def fixed_clock():
-    return datetime(2026, 11, 16, 10, 0, tzinfo=SAO_PAULO)
+    return datetime(2026, 11, 16, 10, 25, tzinfo=SAO_PAULO)
+
+
+def make_limiter(hourly=100, daily=1000):
+    return QuestionLimiter(hourly, daily, MemoryCounterStore(), now=fixed_clock)
 
 
 def review(review_id, number):
@@ -52,12 +53,12 @@ class FakePipeline:
         )
 
 
-def make_client(pipeline, quota=None, access_key=ACCESS_KEY):
+def make_client(pipeline, limiter=None):
     app = create_app(
-        Settings(access_key=access_key),
+        Settings(),
         status_provider=lambda: IndexStatus(MANIFEST, 40521),
         pipeline=pipeline,
-        quota=quota,
+        limiter=limiter or make_limiter(),
     )
     return TestClient(app, raise_server_exceptions=False)
 
@@ -71,10 +72,3 @@ def fake_pipe():
 def client(fake_pipe):
     with make_client(fake_pipe) as test_client:
         yield test_client
-
-
-@pytest.fixture
-def client_with_quota(fake_pipe):
-    quota = DailyQuota(limit=10, now=fixed_clock)
-    with make_client(fake_pipe, quota=quota) as test_client:
-        yield test_client, quota

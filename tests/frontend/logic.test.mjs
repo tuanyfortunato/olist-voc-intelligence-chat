@@ -5,7 +5,6 @@ import { test } from "node:test";
 import {
   answerAsText,
   evidenceLine,
-  keyCheckResult,
   similarityLabel,
   chipLabel,
   filterCategories,
@@ -70,8 +69,7 @@ test("statusNotice só avisa nas situações sem resposta completa", () => {
 });
 
 test("errorMessage escolhe a mensagem pelo tipo de erro", () => {
-  assert.equal(errorMessage(401, null).kind, "key");
-  assert.equal(errorMessage(429, { detail: "Limite diário de perguntas atingido." }).kind, "quota");
+  assert.equal(errorMessage(429, { detail: "Limite atingido." }).kind, "quota");
   assert.equal(errorMessage(422, { detail: [] }).kind, "invalid");
   assert.equal(errorMessage(503, { detail: "Tente de novo" }).kind, "retry");
   assert.equal(errorMessage(503, null).kind, "offline");
@@ -79,6 +77,12 @@ test("errorMessage escolhe a mensagem pelo tipo de erro", () => {
   assert.equal(errorMessage(504, null).kind, "offline");
   assert.equal(errorMessage(0, null).kind, "offline");
   assert.equal(errorMessage(500, { detail: "x" }).kind, "unexpected");
+});
+
+test("errorMessage mostra a mensagem do limite que vem da API", () => {
+  const detail = "Você chegou ao limite de 100 perguntas por hora.";
+  assert.equal(errorMessage(429, { detail }).message, detail);
+  assert.match(errorMessage(429, null).message, /limite de perguntas/);
 });
 
 test("formatSimilarity usa vírgula e duas casas", () => {
@@ -96,7 +100,7 @@ test("errorMessage trata o tempo limite como erro passageiro", () => {
 });
 
 test("canRetry só oferece nova tentativa quando ela pode dar certo", () => {
-  for (const kind of ["retry", "timeout", "offline", "unexpected", "key"]) {
+  for (const kind of ["retry", "timeout", "offline", "unexpected"]) {
     assert.equal(canRetry(kind), true, kind);
   }
   assert.equal(canRetry("quota"), false);
@@ -278,13 +282,6 @@ test("DELIVERY_OPTIONS tem as quatro situações com nome completo", () => {
     ["no_prazo", "atrasada", "nao_entregue", "com_problema"],
   );
   assert.equal(DELIVERY_OPTIONS[3].label, "Com problema (atraso ou não entregue)");
-});
-
-test("keyCheckResult classifica a resposta da conferência da chave", () => {
-  assert.equal(keyCheckResult(200), "ok");
-  assert.equal(keyCheckResult(401), "invalid");
-  for (const status of [0, 502, 503, 504]) assert.equal(keyCheckResult(status), "offline");
-  assert.equal(keyCheckResult(500), "error");
 });
 
 test("evidenceLine resume a evidência da resposta", () => {

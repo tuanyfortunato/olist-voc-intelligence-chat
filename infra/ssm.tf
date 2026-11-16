@@ -1,8 +1,11 @@
 # Segredos gerados pelo Terraform e guardados no Parameter Store.
-# O ECS injeta os dois na tarefa como variáveis de ambiente.
+# O ECS injeta a senha do banco na tarefa como variável de ambiente.
 
-# Curta e só com minúsculas e números, para ser fácil de digitar na página.
-# A cota diária limita o estrago se alguém a adivinhar.
+# Chave de acesso da página, que deixou de ser usada quando o chat ficou
+# aberto. A tarefa não a recebe mais, mas o parâmetro fica até a próxima
+# publicação: uma tarefa iniciada com a revisão anterior ainda o lê ao subir,
+# e sem ele não subiria. Depois do Deploy, este bloco, a permissão em iam.tf
+# e o output podem ser apagados.
 resource "random_password" "access_key" {
   length  = 8
   special = false

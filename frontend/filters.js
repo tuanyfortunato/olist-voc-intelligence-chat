@@ -37,9 +37,9 @@ function sameList(a, b) {
   return a.length === b.length && a.every((value, index) => value === b[index]);
 }
 
-export function createFilterBar({ container, getKey, focusKey, announce }) {
+export function createFilterBar({ container, announce }) {
   const state = { ratings: [], category: "", delivery: "" };
-  // idle, loading, loaded ou error; a lista só é pedida quando o menu abre ou a chave muda
+  // idle, loading, loaded ou error; a lista só é pedida quando o menu abre
   const categories = { status: "idle", options: [], message: "", request: null };
   const chips = {};
   let openMenu = null;
@@ -247,14 +247,7 @@ export function createFilterBar({ container, getKey, focusKey, announce }) {
 
     function render() {
       search.hidden = categories.status !== "loaded";
-      if (categories.status === "nokey") {
-        const goToKey = button("filter-shortcut", "Digitar a chave");
-        goToKey.addEventListener("click", () => {
-          handle.close({ restoreFocus: false });
-          focusKey();
-        });
-        message("Digite a chave de acesso para ver as categorias", goToKey);
-      } else if (categories.status === "loading" || categories.status === "idle") {
+      if (categories.status === "loading" || categories.status === "idle") {
         message("Carregando as categorias");
       } else if (categories.status === "error") {
         const retry = button("filter-shortcut", "Tentar de novo");
@@ -290,30 +283,24 @@ export function createFilterBar({ container, getKey, focusKey, announce }) {
     if (openMenu && openMenu.kind === "category" && openMenu.render) openMenu.render();
   }
 
-  // A lista vem da API, que exige a chave. A carga em andamento é reaproveitada.
+  // A lista vem da API. A carga em andamento é reaproveitada.
   function loadCategories({ force = false } = {}) {
     if (categories.request) return categories.request;
     if (categories.status === "loaded" && !force) return Promise.resolve();
-    const key = getKey();
-    if (!key) {
-      categories.status = "nokey";
-      refreshCategoryMenu();
-      return Promise.resolve();
-    }
     categories.status = "loading";
     refreshCategoryMenu();
-    categories.request = fetchCategories(key).finally(() => {
+    categories.request = fetchCategories().finally(() => {
       categories.request = null;
       refreshCategoryMenu();
     });
     return categories.request;
   }
 
-  async function fetchCategories(key) {
+  async function fetchCategories() {
     let status = 0;
     let body = null;
     try {
-      const response = await fetch("/api/categories", { headers: { "X-Access-Key": key } });
+      const response = await fetch("/api/categories");
       status = response.status;
       body = await response.json().catch(() => null);
     } catch {
@@ -331,17 +318,11 @@ export function createFilterBar({ container, getKey, focusKey, announce }) {
       .map((value) => ({ value, label: categoryLabel(value) || value }))
       .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
     categories.status = "loaded";
-    // Uma chave nova pode trazer outra lista; a categoria que sumiu sai do filtro
+    // Uma lista nova pode não ter a categoria escolhida; nesse caso ela sai do filtro
     if (state.category && !categories.options.some((option) => option.value === state.category)) {
       setValue("category", "", { silent: true });
       announce("Filtro de categoria removido");
     }
-  }
-
-  function reloadCategories() {
-    categories.status = "idle";
-    categories.options = [];
-    return loadCategories({ force: true });
   }
 
   function setDisabled(value) {
@@ -351,5 +332,5 @@ export function createFilterBar({ container, getKey, focusKey, announce }) {
   }
 
   renderBar();
-  return { current, clear, restore, reloadCategories, setDisabled };
+  return { current, clear, restore, setDisabled };
 }
