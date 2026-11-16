@@ -14,7 +14,6 @@ import {
   errorMessage,
   evidenceLine,
   formatDate,
-  keyCheckResult,
   MAX_CHARS,
   nextTheme,
   parseAnswerBlocks,
@@ -30,7 +29,6 @@ import {
 import { createFilterBar } from "./filters.js";
 import { closeOverlay, openOverlay } from "./overlay.js";
 
-const KEY_STORAGE = "olist-voc-access-key";
 // O mesmo nome usado em theme.js, que aplica o tema antes de a página aparecer
 const THEME_STORAGE = "olist-theme";
 // A pergunta leva de 2 a 5 segundos; 30 segundos já indicam um problema
@@ -40,9 +38,6 @@ const HEALTH_RETRY_MS = 120000;
 // Tempo para desfazer uma conversa apagada
 const UNDO_MS = 6000;
 
-const keyInput = document.getElementById("access-key");
-const keyError = document.getElementById("key-error");
-const toggleKey = document.getElementById("toggle-key");
 const form = document.getElementById("ask-form");
 const questionInput = document.getElementById("question");
 const sendButton = document.getElementById("send");
@@ -53,10 +48,6 @@ const newChatButton = document.getElementById("new-chat");
 const apiStatus = document.getElementById("api-status");
 const apiStatusText = document.getElementById("api-status-text");
 const announcer = document.getElementById("announcer");
-const keyGate = document.getElementById("key-gate");
-const keySubmit = document.getElementById("key-submit");
-const keyCancel = document.getElementById("key-cancel");
-const changeKeyButton = document.getElementById("change-key");
 const offlineBanner = document.getElementById("offline-banner");
 const undoToast = document.getElementById("undo-toast");
 const undoButton = document.getElementById("undo-button");
@@ -77,8 +68,6 @@ let messageCount = 0;
 // Trocas desta conversa; ficam só no navegador e somem com "Nova conversa"
 let conversationTurns = [];
 let busy = false;
-// Chave já conferida; sem ela, a página mostra só o cartão de entrada
-let accessKey = "";
 // Fica falso quando o /api/health não responde, fora do horário de funcionamento
 let online = true;
 // Número de comentários na base, vindo do /api/health
@@ -92,25 +81,6 @@ function resetUsed() {
   used = [...exampleButtons].map((button) =>
     button.querySelector(".example-question").textContent.trim(),
   );
-}
-
-// A chave fica só enquanto a aba estiver aberta. Em navegação privada o
-// armazenamento pode falhar, e a página continua funcionando sem ele.
-function loadKey() {
-  try {
-    return sessionStorage.getItem(KEY_STORAGE) || "";
-  } catch {
-    return "";
-  }
-}
-
-function saveKey(value) {
-  try {
-    if (value) sessionStorage.setItem(KEY_STORAGE, value);
-    else sessionStorage.removeItem(KEY_STORAGE);
-  } catch {
-    // sem armazenamento, a chave vale até a página ser recarregada
-  }
 }
 
 function element(tag, className, text) {
@@ -128,9 +98,9 @@ function announce(text) {
   });
 }
 
-// Sem chave ou com a API desligada, nada na página envia pergunta
+// Com a API desligada, nada na página envia pergunta
 function applyLocks() {
-  const locked = !accessKey || !online;
+  const locked = !online;
   const blocked = busy || locked;
   sendButton.disabled = blocked;
   sendButton.textContent = busy ? "Aguarde..." : "Perguntar";
@@ -142,94 +112,12 @@ function applyLocks() {
   }
   filterBar.setDisabled(locked);
   offlineBanner.hidden = online;
-  changeKeyButton.hidden = !accessKey || !keyGate.hidden;
-  welcome.hidden = !keyGate.hidden || conversation.childElementCount > 0;
+  welcome.hidden = conversation.childElementCount > 0;
 }
 
 function setBusy(value) {
   busy = value;
   applyLocks();
-}
-
-function showKeyError(message) {
-  keyInput.classList.add("invalid");
-  keyInput.setAttribute("aria-invalid", "true");
-  keyError.textContent = message;
-  keyError.hidden = false;
-}
-
-function clearKeyError() {
-  keyInput.classList.remove("invalid");
-  keyInput.removeAttribute("aria-invalid");
-  keyError.hidden = true;
-}
-
-// Cartão de entrada. "Trocar a chave" reabre o cartão sem apagar a conversa,
-// e por isso pode ser cancelado; sem chave nenhuma, não.
-function showGate(message, { cancel = false } = {}) {
-  closeOverlay();
-  keyGate.hidden = false;
-  keyCancel.hidden = !cancel;
-  if (message) showKeyError(message);
-  else clearKeyError();
-  applyLocks();
-  window.scrollTo({ top: 0 });
-  keyInput.focus();
-}
-
-function hideGate() {
-  keyGate.hidden = true;
-  keyInput.value = "";
-  clearKeyError();
-  applyLocks();
-}
-
-// A rota das categorias exige a chave e não consome a cota diária
-async function checkKey(key) {
-  try {
-    const response = await fetch("/api/categories", { headers: { "X-Access-Key": key } });
-    return keyCheckResult(response.status);
-  } catch {
-    return keyCheckResult(0);
-  }
-}
-
-function rejectKey() {
-  accessKey = "";
-  saveKey("");
-  showGate("Chave de acesso inválida. Confira e tente de novo.");
-}
-
-const KEY_MESSAGES = {
-  invalid: "Chave de acesso inválida. Confira e tente de novo.",
-  offline: errorMessage(0, null).message,
-  error: "Não foi possível conferir a chave. Tente de novo.",
-};
-
-async function submitKey() {
-  const key = keyInput.value.trim();
-  if (!key) {
-    showKeyError("Digite a chave de acesso.");
-    keyInput.focus();
-    return;
-  }
-  keySubmit.disabled = true;
-  keySubmit.textContent = "Conferindo...";
-  const result = await checkKey(key);
-  keySubmit.disabled = false;
-  keySubmit.textContent = "Entrar";
-  if (result !== "ok") {
-    showKeyError(KEY_MESSAGES[result]);
-    keyInput.focus();
-    return;
-  }
-  accessKey = key;
-  saveKey(key);
-  hideGate();
-  // Uma chave nova pode trazer outra lista de categorias
-  filterBar.reloadCategories();
-  announce("Chave aceita.");
-  questionInput.focus();
 }
 
 // Texto com as citações [n] transformadas em botões que levam à avaliação
@@ -487,6 +375,8 @@ function renderError(container, error, question) {
   container.replaceChildren();
   container.removeAttribute("aria-busy");
   const box = element("div", "notice notice-error");
+  // O limite de perguntas não é uma falha: ganha um aviso amarelo, sem botão
+  if (error.kind === "quota") box.className = "notice notice-limit";
   box.appendChild(element("span", null, error.message));
   if (canRetry(error.kind)) {
     const retry = element("button", "retry-button", "Tentar de novo");
@@ -495,7 +385,6 @@ function renderError(container, error, question) {
     box.appendChild(retry);
   }
   container.appendChild(box);
-  if (error.kind === "key") rejectKey();
   if (error.kind === "offline") checkApi();
 }
 
@@ -511,13 +400,13 @@ function renderLoading(container) {
   container.appendChild(loading);
 }
 
-async function callApi(question, key, filters, history) {
+async function callApi(question, filters, history) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
     const response = await fetch("/api/ask", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "X-Access-Key": key },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(filters ? { question, history, filters } : { question, history }),
       signal: controller.signal,
     });
@@ -534,17 +423,12 @@ async function callApi(question, key, filters, history) {
 // tentativa usa o mesmo balão, sem repetir a pergunta na conversa.
 async function send(question, reply) {
   if (busy) return;
-  if (!accessKey) {
-    showGate();
-    return;
-  }
-  const key = accessKey;
   closeOverlay();
 
   setBusy(true);
   renderLoading(reply);
   // Os filtros ficam no balão: a nova tentativa usa os mesmos da pergunta original
-  const { status, body } = await callApi(question, key, reply.filters || null, reply.history || []);
+  const { status, body } = await callApi(question, reply.filters || null, reply.history || []);
   setBusy(false);
 
   const messageId = reply.dataset.messageId;
@@ -565,10 +449,6 @@ async function send(question, reply) {
 // Sem filtros explícitos, a pergunta usa os que estão ativos na faixa
 function startQuestion(question, options = {}) {
   if (busy || !online) return false;
-  if (!accessKey) {
-    showGate();
-    return false;
-  }
   discardUndo();
   welcome.hidden = true;
   newChatButton.hidden = false;
@@ -623,25 +503,6 @@ questionInput.addEventListener("keydown", (event) => {
 });
 
 questionInput.addEventListener("input", updateComposer);
-
-document.getElementById("key-form").addEventListener("submit", (event) => {
-  event.preventDefault();
-  submitKey();
-});
-keyCancel.addEventListener("click", () => {
-  hideGate();
-  changeKeyButton.focus();
-});
-changeKeyButton.addEventListener("click", () => showGate("", { cancel: true }));
-keyInput.addEventListener("input", clearKeyError);
-
-toggleKey.addEventListener("click", () => {
-  const show = keyInput.type === "password";
-  keyInput.type = show ? "text" : "password";
-  toggleKey.textContent = show ? "Ocultar" : "Mostrar";
-  toggleKey.setAttribute("aria-label", show ? "Ocultar a chave" : "Mostrar a chave");
-  toggleKey.setAttribute("aria-pressed", String(show));
-});
 
 for (const button of exampleButtons) {
   button.addEventListener("click", () => {
@@ -772,23 +633,11 @@ toEndButton.addEventListener("click", () => {
 
 const filterBar = createFilterBar({
   container: document.getElementById("filter-bar"),
-  getKey: () => accessKey,
-  focusKey: () => showGate(),
   announce,
 });
 
-// Com uma chave guardada, a página abre direto e confere a chave em segundo
-// plano; sem chave, abre no cartão de entrada.
-accessKey = loadKey();
 resetUsed();
 updateThemeButton();
 updateComposer();
-if (accessKey) {
-  hideGate();
-  checkKey(accessKey).then((result) => {
-    if (result === "invalid") rejectKey();
-  });
-} else {
-  showGate();
-}
+applyLocks();
 checkApi();
