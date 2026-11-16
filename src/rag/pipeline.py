@@ -6,10 +6,11 @@ os comentários recuperados e leitura das citações. O histórico da conversa v
 apenas para a análise da pergunta; a geração da resposta nunca o recebe.
 """
 
+import json
 import logging
 import time
 from collections.abc import Callable
-from dataclasses import replace
+from dataclasses import asdict, replace
 
 from src.config import Settings
 from src.rag.context_builder import extract_citations, remove_invalid_citations
@@ -27,6 +28,7 @@ logger = logging.getLogger(__name__)
 
 EmbedFunction = Callable[[str], list[float]]
 SearchFunction = Callable[[list[float], SearchFilters | None], list[RetrievedReview]]
+CountFunction = Callable[[SearchFilters | None], int]
 
 
 # Até 2 avaliações citadas, a resposta sai com aviso de evidência fraca
@@ -62,12 +64,24 @@ class RagPipeline:
         answer_llm,
         embed: EmbedFunction,
         search: SearchFunction,
+        count: CountFunction | None = None,
     ):
         self.settings = settings
         self.analysis_llm = analysis_llm
         self.answer_llm = answer_llm
         self.embed = embed
         self.search = search
+        self.count = count
+
+    def scope_count(self, filters: SearchFilters | None) -> int | None:
+        """Tamanho do recorte da busca. Uma falha aqui não derruba a resposta."""
+        if self.count is None:
+            return None
+        try:
+            return self.count(filters)
+        except Exception:
+            logger.warning("etapa=recorte erro=contagem", exc_info=True)
+            return None
 
     def ask(
         self,
@@ -104,6 +118,7 @@ class RagPipeline:
         retrieved = self.search(self.embed(topic), filters)
         timings["busca_ms"] = (time.monotonic() - start) * 1000
         reviews = [replace(review, number=n) for n, review in enumerate(retrieved, start=1)]
+        scope_count = self.scope_count(filters)
 
         # Nenhum comentário passou do score mínimo: responde sem chamar o modelo
         if not reviews:
@@ -116,6 +131,7 @@ class RagPipeline:
                 original_question=question,
                 search_topic=topic,
                 inferred_ratings=inferred_ratings,
+                scope_count=scope_count,
             )
 
         start = time.monotonic()
@@ -158,13 +174,14 @@ class RagPipeline:
             original_question=question,
             search_topic=topic,
             inferred_ratings=inferred_ratings,
+            scope_count=scope_count,
         )
 
 
 def build_pipeline(settings: Settings) -> RagPipeline:
     """Monta o pipeline com os modelos do Bedrock e a busca no PostgreSQL."""
     from src.aws.bedrock import embed_query, get_chat_model, get_runtime_client
-    from src.rag.retriever import retrieve
+    from src.rag.retriever import count_in_scope, retrieve
     from src.vector_db import connect
 
     client = get_runtime_client(settings)
@@ -172,6 +189,16 @@ def build_pipeline(settings: Settings) -> RagPipeline:
     def search(embedding: list[float], filters: SearchFilters | None) -> list[RetrievedReview]:
         with connect(settings) as conn:
             return retrieve(conn, embedding, settings, filters)
+
+    # A base não muda enquanto a API roda: cada recorte é contado uma vez só
+    counts: dict[str, int] = {}
+
+    def count(filters: SearchFilters | None) -> int:
+        key = json.dumps(asdict(filters) if filters else {}, sort_keys=True)
+        if key not in counts:
+            with connect(settings) as conn:
+                counts[key] = count_in_scope(conn, filters)
+        return counts[key]
 
     return RagPipeline(
         settings=settings,
@@ -181,4 +208,5 @@ def build_pipeline(settings: Settings) -> RagPipeline:
         ),
         embed=lambda text: embed_query(client, text, settings),
         search=search,
+        count=count,
     )

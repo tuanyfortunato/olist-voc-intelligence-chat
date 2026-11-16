@@ -191,3 +191,33 @@ def test_query_candidates_applies_filters(pg_conn):
         pg_conn, [1.0, 0.0, 0.0], 10, SearchFilters(delivery="com_problema")
     )
     assert {c.review.review_id for c in problems} == {"perto_bebes", "longe_moveis"}
+
+
+def test_build_filter_sql_themes():
+    from src.rag.retriever import build_filter_sql
+    from src.rag.schemas import SearchFilters
+
+    clause, params = build_filter_sql(SearchFilters(themes=["atraso", "avaria"]))
+    assert "review_themes" in clause and "themes && %(themes)s" in clause
+    assert params == {"themes": ["atraso", "avaria"]}
+
+
+def test_query_candidates_and_count_by_theme(pg_conn):
+    from src.rag.retriever import count_in_scope
+    from src.rag.schemas import SearchFilters
+    from src.vector_db import ensure_themes_table, write_themes
+
+    load(pg_conn, ROWS)
+    ensure_themes_table(pg_conn)
+    write_themes(pg_conn, {"r1": ["avaria"], "r2": ["entrega_rapida"], "r3": ["defeito"]}, "m")
+
+    found = query_candidates(pg_conn, [1.0, 0.0, 0.0], 10, SearchFilters(themes=["avaria"]))
+    assert [c.review.review_id for c in found] == ["r1"]
+    both = SearchFilters(themes=["avaria", "defeito"])
+    assert {c.review.review_id for c in query_candidates(pg_conn, [1.0, 0.0, 0.0], 10, both)} == {
+        "r1",
+        "r3",
+    }
+    assert count_in_scope(pg_conn) == 3
+    assert count_in_scope(pg_conn, both) == 2
+    assert count_in_scope(pg_conn, SearchFilters(themes=["avaria"], ratings=[5])) == 0

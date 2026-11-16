@@ -13,11 +13,16 @@ class ConversationTurn:
 
 @dataclass(frozen=True)
 class SearchFilters:
-    """Filtros escolhidos na página: notas, categoria e situação da entrega."""
+    """Filtros escolhidos na página: notas, categoria, situação da entrega e temas.
+
+    Com temas, a busca fica nas avaliações marcadas com pelo menos um deles na
+    classificação em lote (os temas de um setor do painel, ou um tema só).
+    """
 
     ratings: list[int] | None = None
     category: str | None = None
     delivery: str | None = None
+    themes: list[str] | None = None
 
 
 @dataclass(frozen=True)
@@ -47,3 +52,6 @@ class AskResult:
     search_topic: str
     # Notas aplicadas como filtro porque a pergunta as mencionava
     inferred_ratings: list[int] = field(default_factory=list)
+    # Quantas avaliações da base passam nos filtros da busca; a resposta usa só
+    # as mais próximas da pergunta entre elas
+    scope_count: int | None = None

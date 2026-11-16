@@ -66,6 +66,11 @@ def build_filter_sql(filters: SearchFilters | None) -> tuple[str, dict]:
     if filters.delivery:
         conditions.append("delivery = ANY(%(deliveries)s)")
         params["deliveries"] = DELIVERY_GROUPS.get(filters.delivery, [filters.delivery])
+    if filters.themes:
+        conditions.append(
+            "review_id IN (SELECT review_id FROM review_themes WHERE themes && %(themes)s)"
+        )
+        params["themes"] = list(filters.themes)
     if not conditions:
         return "", {}
     return "WHERE " + " AND ".join(conditions), params
@@ -96,6 +101,12 @@ def query_candidates(
             {"vector": vector, "n": n, **params},
         ).fetchall()
     return [_to_candidate(row) for row in rows]
+
+
+def count_in_scope(conn, filters: SearchFilters | None = None) -> int:
+    """Quantas avaliações passam nos filtros, para a página dizer onde a busca foi feita."""
+    where, params = build_filter_sql(filters)
+    return conn.execute(f"SELECT count(*) FROM reviews {where}", params).fetchone()[0]
 
 
 def select_reviews(

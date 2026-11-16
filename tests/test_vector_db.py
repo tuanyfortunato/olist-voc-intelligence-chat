@@ -113,3 +113,29 @@ def test_read_index_status(conn):
     write_manifest_row(conn, manifest)
     status = read_index_status(conn)
     assert status.manifest == manifest and status.documents == 3
+
+
+def test_themes_table_classification_and_rows(conn):
+    from src.vector_db import (
+        ensure_themes_table,
+        load_reviews,
+        read_review_rows,
+        read_texts_to_classify,
+        write_themes,
+    )
+
+    load_reviews(conn, frame(ROWS))
+    ensure_themes_table(conn)
+    ensure_themes_table(conn)
+    assert [review_id for review_id, _ in read_texts_to_classify(conn)] == ["r1", "r2", "r3"]
+
+    write_themes(conn, {"r1": ["avaria"], "r2": []}, "modelo")
+    assert read_texts_to_classify(conn) == [("r3", "Parou de funcionar")]
+    assert len(read_texts_to_classify(conn, redo=True)) == 3
+
+    write_themes(conn, {"r1": ["avaria", "nao_volta"]}, "outro")
+    rows = {row[0]: row for row in read_review_rows(conn)}
+    assert rows["r1"][6] == ["avaria", "nao_volta"]
+    assert rows["r2"][6] == []
+    assert rows["r3"][6] == []
+    assert rows["r1"][1:6] == (1, "no_prazo", "cama_mesa_banho", "2018-03-10", "Veio quebrado")
