@@ -1273,3 +1273,7 @@ textarea {
     max-height: 45vh;
   }
 }
+
+.notice-restriction {
+  flex-basis: 100%;
+}

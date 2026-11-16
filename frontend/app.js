@@ -18,6 +18,7 @@ import {
   parseAnswerBlocks,
   pickSuggestions,
   remainingSuggestions,
+  restrictionNotice,
   shortId,
   splitCitations,
   SUGGESTIONS,
@@ -110,7 +111,8 @@ function setBusy(value) {
   sendButton.disabled = value;
   sendButton.textContent = value ? "Aguarde..." : "Perguntar";
   for (const button of exampleButtons) button.disabled = value;
-  for (const button of conversation.querySelectorAll(".suggestion, .more-suggestions")) {
+  const waiting = ".suggestion, .more-suggestions, .ask-unfiltered, .retry-button";
+  for (const button of conversation.querySelectorAll(waiting)) {
     button.disabled = value;
   }
 }
@@ -271,9 +273,23 @@ function renderAnswer(container, result, messageId) {
     const box = element("div", `notice notice-${notice.kind}`);
     box.appendChild(element("strong", null, notice.title));
     box.appendChild(element("span", null, notice.text));
+    // Com filtros, a falta de evidência pode ser só o recorte escolhido
+    const restriction = restrictionNotice(result.status, container.filters);
+    if (restriction) {
+      box.appendChild(element("span", "notice-restriction", `${restriction}.`));
+      const unfiltered = element("button", "retry-button ask-unfiltered", "Perguntar sem filtros");
+      unfiltered.type = "button";
+      unfiltered.addEventListener("click", () =>
+        startQuestion(container.question, { filters: null }),
+      );
+      box.appendChild(unfiltered);
+    }
     container.appendChild(box);
   }
-  const inferred = describeInferredRatings(result.inferred_ratings);
+  // As notas marcadas na faixa valem mais do que as citadas na pergunta; nesse
+  // caso a API não deduz nada, e o balão da pergunta já mostra as usadas
+  const chosenRatings = container.filters && container.filters.ratings;
+  const inferred = chosenRatings ? null : describeInferredRatings(result.inferred_ratings);
   if (inferred) container.appendChild(element("p", "inferred-filter", inferred));
   const answer = element("div", "answer");
   for (const block of parseAnswerBlocks(result.answer)) {
@@ -376,7 +392,8 @@ async function send(question, reply) {
   reply.parentElement.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-function startQuestion(question) {
+// Sem filtros explícitos, a pergunta usa os que estão ativos na faixa
+function startQuestion(question, options = {}) {
   if (busy) return false;
   if (!keyInput.value.trim()) {
     showKeyError("Digite a chave de acesso para perguntar.");
@@ -387,7 +404,7 @@ function startQuestion(question) {
   used.push(question);
 
   messageCount += 1;
-  const filters = filterBar.current();
+  const filters = options.filters !== undefined ? options.filters : filterBar.current();
   const turn = element("div", "turn");
   const userMessage = element("div", "message-user", question);
   if (filters) userMessage.appendChild(element("span", "message-filters", `Filtros: ${describeFilters(filters)}`));
@@ -395,6 +412,7 @@ function startQuestion(question) {
   const reply = element("div", "message-bot");
   reply.dataset.messageId = `m${messageCount}`;
   reply.filters = filters;
+  reply.question = question;
   // O histórico também fica no balão, para a nova tentativa mandar o mesmo
   reply.history = buildHistory(conversationTurns);
   turn.appendChild(reply);
@@ -458,6 +476,7 @@ newChatButton.addEventListener("click", () => {
   if (busy) return;
   conversation.replaceChildren();
   conversationTurns = [];
+  filterBar.clear();
   resetUsed();
   welcome.hidden = false;
   newChatButton.hidden = true;
