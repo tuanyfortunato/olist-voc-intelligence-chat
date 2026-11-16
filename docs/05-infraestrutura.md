@@ -21,3 +21,9 @@ rm -f terraform.tfstate terraform.tfstate.backup
 ```
 
 Depois, os valores gerados são cadastrados no repositório do GitHub: o segredo `AWS_ROLE_ARN` com o output `github_role_arn`, o segredo `KAGGLE_ACCESS_TOKEN` com o token do Kaggle e as variáveis `TF_STATE_BUCKET` e `INDEX_BUCKET` com os nomes dos buckets.
+
+## Endereço próprio
+
+O chat responde em `https://olist-chat.tuanyfortunato.com.br`. A zona DNS de `tuanyfortunato.com.br` é criada e mantida pelo repositório do site pessoal (`tuanyfortunato/site-pessoal`). O arquivo `infra/domain.tf` só lê essa zona e cria nela o certificado do ACM, o registro de validação e os registros A e AAAA que apontam para o CloudFront. Por isso a zona precisa existir antes do primeiro `apply` com este arquivo.
+
+O provedor OIDC do GitHub criado pelo bootstrap deste projeto também é usado pelo site pessoal, porque a conta só pode ter um provedor por endereço. Destruir o bootstrap deste projeto corta o acesso dos workflows do site pessoal à AWS.

@@ -1,5 +1,5 @@
 # Um endereço HTTPS só para a página e a API: "/" vai para o S3 e "/api/*"
-# vai para o ALB. Sem domínio próprio e sem CORS.
+# vai para o ALB. Sem CORS. O endereço próprio (domain.tf) aponta para cá.
 
 data "aws_cloudfront_cache_policy" "optimized" {
   name = "Managed-CachingOptimized"
@@ -25,6 +25,8 @@ resource "aws_cloudfront_distribution" "main" {
   comment             = "olist-voc"
   default_root_object = "index.html"
   price_class         = "PriceClass_100"
+  aliases             = [var.app_domain]
+  is_ipv6_enabled     = true
 
   origin {
     origin_id                = "frontend"
@@ -32,8 +34,8 @@ resource "aws_cloudfront_distribution" "main" {
     origin_access_control_id = aws_cloudfront_origin_access_control.frontend.id
   }
 
-  # Sem domínio próprio, o ALB não tem certificado: o trecho entre o
-  # CloudFront e o ALB é HTTP (limite registrado no README).
+  # O ALB não tem nome próprio nem certificado: o trecho entre o CloudFront
+  # e o ALB é HTTP (limite registrado no README).
   origin {
     origin_id   = "api"
     domain_name = aws_lb.api.dns_name
@@ -75,6 +77,8 @@ resource "aws_cloudfront_distribution" "main" {
   }
 
   viewer_certificate {
-    cloudfront_default_certificate = true
+    acm_certificate_arn      = aws_acm_certificate_validation.app.certificate_arn
+    ssl_support_method       = "sni-only"
+    minimum_protocol_version = "TLSv1.2_2021"
   }
 }
