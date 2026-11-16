@@ -1,4 +1,5 @@
 :root {
+  color-scheme: light;
   --bg: #f3f5f8;
   --surface: #ffffff;
   --surface-2: #f8f9fb;
@@ -27,8 +28,10 @@
   --content: 820px;
 }
 
+/* Tema escuro: pelo sistema, quando a pessoa não escolheu o claro, ou pelo botão */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
     --bg: #0f141a;
     --surface: #181f27;
     --surface-2: #1d252f;
@@ -54,6 +57,34 @@
     --error-border: #d9534f;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 16px rgba(0, 0, 0, 0.25);
   }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f141a;
+  --surface: #181f27;
+  --surface-2: #1d252f;
+  --text: #e7ecf1;
+  --muted: #9aa7b4;
+  --border: #2b3540;
+  --accent: #6ea8ec;
+  --accent-strong: #8fbcf2;
+  --accent-soft: #1d2c3e;
+  --on-accent: #0f141a;
+  --star: #f0b93a;
+  --star-empty: #3a4652;
+  --ok: #6fd29c;
+  --ok-bg: #173226;
+  --warn: #f0c46a;
+  --warn-bg: #3a2f17;
+  --warn-border: #c8962f;
+  --bad: #f28b82;
+  --bad-bg: #3b1f1f;
+  --empty-bg: #222b35;
+  --empty-border: #56616d;
+  --error-bg: #3b1f1f;
+  --error-border: #d9534f;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 16px rgba(0, 0, 0, 0.25);
 }
 
 * {
@@ -191,6 +222,21 @@ textarea {
 
 .ghost-button:hover {
   border-color: var(--accent);
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Lua para ir ao tema escuro, sol para voltar ao claro */
+.theme-icon::before {
+  content: "\263E";
+}
+
+.theme-toggle[data-target="light"] .theme-icon::before {
+  content: "\2600";
 }
 
 .key-form {
@@ -744,6 +790,16 @@ details.uncited summary {
   .key-form {
     flex: 1;
     order: -1;
+  }
+
+  /* No celular o botão do tema mostra só o ícone; o nome fica para o leitor de tela */
+  #theme-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
   }
 
   .key-form {

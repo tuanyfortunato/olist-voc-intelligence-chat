@@ -3,6 +3,7 @@
 // "<script>" aparece escrito, sem ser executado.
 import {
   canRetry,
+  currentTheme,
   categoryLabel,
   counterState,
   deliveryLabel,
@@ -10,6 +11,7 @@ import {
   formatDate,
   formatSimilarity,
   MAX_CHARS,
+  nextTheme,
   parseAnswerBlocks,
   shortId,
   splitCitations,
@@ -18,6 +20,8 @@ import {
 } from "./logic.js";
 
 const KEY_STORAGE = "olist-voc-access-key";
+// O mesmo nome usado em theme.js, que aplica o tema antes de a página aparecer
+const THEME_STORAGE = "olist-theme";
 // A pergunta leva de 2 a 5 segundos; 30 segundos já indicam um problema
 const REQUEST_TIMEOUT_MS = 30000;
 // Com a API desligada, a página volta a conferir de tempos em tempos
@@ -373,6 +377,33 @@ newChatButton.addEventListener("click", () => {
   questionInput.focus();
 });
 
+const themeToggle = document.getElementById("theme-toggle");
+const themeLabel = document.getElementById("theme-label");
+const systemDark = window.matchMedia("(prefers-color-scheme: dark)");
+
+// O botão mostra o tema para o qual a página vai mudar
+function updateThemeButton() {
+  const theme = currentTheme(document.documentElement.dataset.theme, systemDark.matches);
+  const target = nextTheme(theme);
+  themeLabel.textContent = target === "dark" ? "Tema escuro" : "Tema claro";
+  themeToggle.dataset.target = target;
+  themeToggle.setAttribute("aria-label", `Mudar para o tema ${target === "dark" ? "escuro" : "claro"}`);
+}
+
+themeToggle.addEventListener("click", () => {
+  const theme = nextTheme(currentTheme(document.documentElement.dataset.theme, systemDark.matches));
+  document.documentElement.dataset.theme = theme;
+  try {
+    localStorage.setItem(THEME_STORAGE, theme);
+  } catch {
+    // sem armazenamento, o tema vale até a página ser recarregada
+  }
+  updateThemeButton();
+});
+
+// Sem escolha salva, a página acompanha a troca de tema do sistema
+systemDark.addEventListener("change", updateThemeButton);
+
 let healthTimer = null;
 
 async function checkApi() {
@@ -395,5 +426,6 @@ async function checkApi() {
 }
 
 keyInput.value = loadKey();
+updateThemeButton();
 updateComposer();
 checkApi();

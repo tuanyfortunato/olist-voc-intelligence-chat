@@ -4,12 +4,14 @@ import { test } from "node:test";
 
 import {
   canRetry,
+  currentTheme,
   categoryLabel,
   counterState,
   deliveryLabel,
   errorMessage,
   formatDate,
   formatSimilarity,
+  nextTheme,
   parseAnswerBlocks,
   shortId,
   splitCitations,
@@ -113,4 +115,16 @@ test("counterState avisa perto do limite de caracteres", () => {
   assert.equal(counterState(10), "ok");
   assert.equal(counterState(450), "near");
   assert.equal(counterState(500), "full");
+});
+
+test("currentTheme usa a escolha salva e, sem ela, o tema do sistema", () => {
+  assert.equal(currentTheme("dark", false), "dark");
+  assert.equal(currentTheme("light", true), "light");
+  assert.equal(currentTheme(null, true), "dark");
+  assert.equal(currentTheme("qualquer", false), "light");
+});
+
+test("nextTheme alterna entre claro e escuro", () => {
+  assert.equal(nextTheme("light"), "dark");
+  assert.equal(nextTheme("dark"), "light");
 });

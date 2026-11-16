@@ -8,6 +8,7 @@
   <title>Olist Intelligence Chat</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231f5fae'/%3E%3Cpath d='M9 10h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-8l-5 4v-4H9a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2z' fill='%23fff'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="styles.css">
+  <script src="theme.js"></script>
 </head>
 <body>
   <header class="topbar">
@@ -26,6 +27,10 @@
     </div>
     <div class="top-actions">
       <button id="new-chat" class="ghost-button" type="button" hidden>Nova conversa</button>
+      <button id="theme-toggle" class="ghost-button theme-toggle" type="button">
+        <span class="theme-icon" aria-hidden="true"></span>
+        <span id="theme-label">Tema escuro</span>
+      </button>
       <form id="key-form" class="key-form" autocomplete="off">
         <label for="access-key">Chave de acesso</label>
         <div class="key-field">

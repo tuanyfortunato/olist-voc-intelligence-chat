@@ -147,3 +147,14 @@ export function counterState(length) {
   if (length >= MAX_CHARS * 0.9) return "near";
   return "ok";
 }
+
+// Tema da página. A escolha salva vale sobre o sistema; sem ela, a página
+// segue a aparência do sistema operacional.
+export function currentTheme(saved, systemDark) {
+  if (saved === "light" || saved === "dark") return saved;
+  return systemDark ? "dark" : "light";
+}
+
+export function nextTheme(theme) {
+  return theme === "dark" ? "light" : "dark";
+}
