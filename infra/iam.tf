@@ -53,6 +53,8 @@ data "aws_iam_policy_document" "task" {
     resources = [
       "arn:aws:bedrock:${var.aws_region}::foundation-model/cohere.embed-multilingual-v3",
       "arn:aws:bedrock:${var.aws_region}::foundation-model/amazon.nova-micro-v1:0",
+      # Em teste como modelo da resposta, para citações mais fiéis
+      "arn:aws:bedrock:${var.aws_region}::foundation-model/amazon.nova-lite-v1:0",
     ]
   }
 
