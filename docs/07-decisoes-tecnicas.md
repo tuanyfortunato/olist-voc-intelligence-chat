@@ -56,6 +56,8 @@ A carga dos vetores roda numa tarefa avulsa do ECS, com a mesma imagem da API e 
 
 Os testes do banco precisam de um PostgreSQL com pgvector. O CI sobe um banco desses só para os testes, e no meu computador esses testes são pulados. O CI também constrói a imagem da API a cada PR, para que um erro no Dockerfile apareça antes da publicação.
 
+O `Deploy` publica tudo junto: constrói a imagem, troca a revisão da tarefa, espera a API estabilizar e só no fim copia a página para o S3. Para uma mudança só na página, criei o workflow manual `Publish frontend`, que copia `frontend/` para o S3, invalida o cache do CloudFront, espera a invalidação terminar e confere que a página responde. Ele leva cerca de um minuto e funciona com a API desligada, fora do horário de funcionamento. Não o liguei aos pushes na `main`, porque ali o `Deploy` já publica a página, e os dois usam o mesmo grupo de concorrência para nunca copiarem a página ao mesmo tempo. Ele só é seguro quando a página não depende de nada novo na API; quando depende, o caminho é o `Deploy`.
+
 ## Calibração da busca
 
 Para escolher o score mínimo, o número de comentários e o uso da reescrita, rodei as perguntas 1 a 11 da avaliação e busquei, para cada uma, os 30 comentários mais próximos, sem corte e sem MMR, com a pergunta original e com o tema reescrito pelo Nova Micro. As duas tabelas estão em `evaluation/calibration/`: a completa, com os 30 comentários de cada busca, e o resumo, com o score em algumas posições.
