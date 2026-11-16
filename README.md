@@ -1,4 +1,4 @@
-# Olist VoC Intelligence Chat
+# Olist Intelligence Chat
 
 Chatbot que responde perguntas sobre a experiência dos clientes da Olist com base nas avaliações reais da plataforma, mostrando quais avaliações sustentam cada resposta. A solução usa RAG (Retrieval-Augmented Generation) sobre os comentários do *Brazilian E-Commerce Public Dataset by Olist*.
 

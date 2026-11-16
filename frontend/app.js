@@ -2,25 +2,44 @@
 // clientes, entra na tela com textContent, nunca como HTML: um comentário com
 // "<script>" aparece escrito, sem ser executado.
 import {
+  canRetry,
+  categoryLabel,
+  counterState,
+  deliveryLabel,
   errorMessage,
+  formatDate,
   formatSimilarity,
+  MAX_CHARS,
   parseAnswerBlocks,
+  shortId,
   splitCitations,
   statusNotice,
+  TIMEOUT_STATUS,
 } from "./logic.js";
 
 const KEY_STORAGE = "olist-voc-access-key";
-const MAX_CHARS = 500;
+// A pergunta leva de 2 a 5 segundos; 30 segundos já indicam um problema
+const REQUEST_TIMEOUT_MS = 30000;
+// Com a API desligada, a página volta a conferir de tempos em tempos
+const HEALTH_RETRY_MS = 120000;
 
 const keyInput = document.getElementById("access-key");
+const keyError = document.getElementById("key-error");
+const toggleKey = document.getElementById("toggle-key");
 const form = document.getElementById("ask-form");
 const questionInput = document.getElementById("question");
 const sendButton = document.getElementById("send");
 const counter = document.getElementById("counter");
 const conversation = document.getElementById("conversation");
+const welcome = document.getElementById("welcome");
+const newChatButton = document.getElementById("new-chat");
 const apiStatus = document.getElementById("api-status");
+const apiStatusText = document.getElementById("api-status-text");
+const announcer = document.getElementById("announcer");
+const exampleButtons = document.querySelectorAll("#examples button");
 
 let messageCount = 0;
+let busy = false;
 
 // A chave fica só enquanto a aba estiver aberta. Em navegação privada o
 // armazenamento pode falhar, e a página continua funcionando sem ele.
@@ -47,8 +66,33 @@ function element(tag, className, text) {
   return node;
 }
 
-function scrollToEnd() {
-  window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+function announce(text) {
+  announcer.textContent = "";
+  // O texto muda num segundo momento para o leitor de tela anunciar de novo
+  requestAnimationFrame(() => {
+    announcer.textContent = text;
+  });
+}
+
+function setBusy(value) {
+  busy = value;
+  sendButton.disabled = value;
+  sendButton.textContent = value ? "Aguarde..." : "Perguntar";
+  for (const button of exampleButtons) button.disabled = value;
+}
+
+function showKeyError(message) {
+  keyInput.classList.add("invalid");
+  keyInput.setAttribute("aria-invalid", "true");
+  keyError.textContent = message;
+  keyError.hidden = false;
+  keyInput.focus();
+}
+
+function clearKeyError() {
+  keyInput.classList.remove("invalid");
+  keyInput.removeAttribute("aria-invalid");
+  keyError.hidden = true;
 }
 
 // Texto com as citações [n] transformadas em botões que levam à avaliação
@@ -59,8 +103,9 @@ function appendWithCitations(parent, text, messageId) {
       continue;
     }
     for (const number of part.numbers) {
-      const button = element("button", "cite", `[${number}]`);
+      const button = element("button", "cite", String(number));
       button.type = "button";
+      button.setAttribute("aria-label", `Ver a avaliação ${number}`);
       button.title = `Ver a avaliação ${number}`;
       button.addEventListener("click", () => showReview(messageId, number));
       parent.appendChild(button);
@@ -74,17 +119,51 @@ function showReview(messageId, number) {
   const details = card.closest("details");
   if (details) details.open = true;
   card.scrollIntoView({ behavior: "smooth", block: "center" });
+  card.classList.remove("highlight");
+  // Força o navegador a reiniciar a animação quando a mesma citação é clicada de novo
+  void card.offsetWidth;
   card.classList.add("highlight");
-  setTimeout(() => card.classList.remove("highlight"), 1600);
+}
+
+function stars(rating) {
+  const wrapper = element("span", "stars");
+  wrapper.setAttribute("role", "img");
+  wrapper.setAttribute("aria-label", `Nota ${rating} de 5`);
+  for (let i = 1; i <= 5; i += 1) {
+    const star = element("span", i <= rating ? "star filled" : "star", "★");
+    star.setAttribute("aria-hidden", "true");
+    wrapper.appendChild(star);
+  }
+  return wrapper;
 }
 
 function reviewCard(review, messageId, cited) {
   const card = element("article", cited ? "review cited" : "review");
   card.id = `${messageId}-review-${review.number}`;
-  card.appendChild(element("span", "review-number", `[${review.number}]`));
-  const meta = `Nota ${review.rating} · similaridade ${formatSimilarity(review.similarity)} · avaliação ${review.review_id}`;
-  card.appendChild(element("span", "review-meta", meta));
-  card.appendChild(element("span", "review-text", review.original_text));
+  card.tabIndex = -1;
+
+  const head = element("div", "review-head");
+  head.appendChild(element("span", "review-number", String(review.number)));
+  head.appendChild(stars(review.rating));
+  const category = categoryLabel(review.category);
+  if (category) head.appendChild(element("span", "chip", category));
+  const delivery = deliveryLabel(review.delivery);
+  if (delivery) head.appendChild(element("span", `chip chip-${delivery.tone}`, delivery.text));
+  card.appendChild(head);
+
+  card.appendChild(element("p", "review-text", review.original_text));
+
+  const foot = element("div", "review-foot");
+  const date = formatDate(review.review_date);
+  if (date) foot.appendChild(element("span", null, `Avaliação de ${date}`));
+  const similarity = element("span", null, `Similaridade ${formatSimilarity(review.similarity)}`);
+  similarity.title =
+    "Proximidade entre o comentário e o tema da pergunta, de 0 a 1. Quanto maior, mais próximo.";
+  foot.appendChild(similarity);
+  const id = element("span", "review-id", `ID ${shortId(review.review_id)}`);
+  id.title = `review_id ${review.review_id}`;
+  foot.appendChild(id);
+  card.appendChild(foot);
   return card;
 }
 
@@ -92,7 +171,7 @@ function renderReviews(result, messageId) {
   if (!result.cited.length && !result.uncited.length) return null;
   const section = element("section", "reviews");
   if (result.cited.length) {
-    section.appendChild(element("h3", null, `Avaliações usadas (${result.cited.length})`));
+    section.appendChild(element("h3", null, `Avaliações citadas (${result.cited.length})`));
     for (const review of result.cited) section.appendChild(reviewCard(review, messageId, true));
   }
   if (result.uncited.length) {
@@ -108,18 +187,20 @@ function renderReviews(result, messageId) {
 
 function renderAnswer(container, result, messageId) {
   container.replaceChildren();
+  container.removeAttribute("aria-busy");
   const notice = statusNotice(result.status);
   if (notice) {
     const box = element("div", `notice notice-${notice.kind}`);
     box.appendChild(element("strong", null, notice.title));
-    box.appendChild(document.createTextNode(notice.text));
+    box.appendChild(element("span", null, notice.text));
     container.appendChild(box);
   }
+  const answer = element("div", "answer");
   for (const block of parseAnswerBlocks(result.answer)) {
     if (block.type === "paragraph") {
       const paragraph = element("p");
       appendWithCitations(paragraph, block.text, messageId);
-      container.appendChild(paragraph);
+      answer.appendChild(paragraph);
     } else {
       const list = element("ul");
       for (const item of block.items) {
@@ -127,110 +208,192 @@ function renderAnswer(container, result, messageId) {
         appendWithCitations(li, item, messageId);
         list.appendChild(li);
       }
-      container.appendChild(list);
+      answer.appendChild(list);
     }
   }
+  container.appendChild(answer);
   const reviews = renderReviews(result, messageId);
   if (reviews) container.appendChild(reviews);
 }
 
-function renderError(container, error) {
+function renderError(container, error, question) {
   container.replaceChildren();
-  const box = element("div", "notice notice-error", error.message);
-  container.appendChild(box);
-  if (error.kind === "key") {
-    keyInput.classList.add("invalid");
-    keyInput.focus();
+  container.removeAttribute("aria-busy");
+  const box = element("div", "notice notice-error");
+  box.appendChild(element("span", null, error.message));
+  if (canRetry(error.kind)) {
+    const retry = element("button", "retry-button", "Tentar de novo");
+    retry.type = "button";
+    retry.addEventListener("click", () => send(question, container));
+    box.appendChild(retry);
   }
+  container.appendChild(box);
+  if (error.kind === "key") showKeyError("Chave de acesso inválida. Confira e tente de novo.");
+  if (error.kind === "offline") checkApi();
 }
 
-async function ask(question) {
-  const key = keyInput.value.trim();
-  if (!key) {
-    keyInput.classList.add("invalid");
-    keyInput.focus();
-    return;
-  }
-  saveKey(key);
-  keyInput.classList.remove("invalid");
+function renderLoading(container) {
+  container.replaceChildren();
+  container.setAttribute("aria-busy", "true");
+  const loading = element("div", "loading");
+  const dots = element("span", "dots");
+  dots.setAttribute("aria-hidden", "true");
+  for (let i = 0; i < 3; i += 1) dots.appendChild(element("span"));
+  loading.appendChild(dots);
+  loading.appendChild(element("span", null, "Buscando nas avaliações e escrevendo a resposta..."));
+  container.appendChild(loading);
+}
 
-  messageCount += 1;
-  const messageId = `m${messageCount}`;
-  conversation.appendChild(element("div", "message-user", question));
-  const reply = element("div", "message-bot");
-  reply.appendChild(element("p", "loading", "Buscando nas avaliações..."));
-  conversation.appendChild(reply);
-  scrollToEnd();
-
-  sendButton.disabled = true;
-  let status = 0;
-  let body = null;
+async function callApi(question, key) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
     const response = await fetch("/api/ask", {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-Access-Key": key },
       body: JSON.stringify({ question, history: [] }),
+      signal: controller.signal,
     });
-    status = response.status;
-    body = await response.json().catch(() => null);
-  } catch {
-    status = 0;
+    const body = await response.json().catch(() => null);
+    return { status: response.status, body };
+  } catch (error) {
+    return { status: error.name === "AbortError" ? TIMEOUT_STATUS : 0, body: null };
   } finally {
-    sendButton.disabled = false;
+    clearTimeout(timer);
   }
-
-  if (status === 200 && body) renderAnswer(reply, body, messageId);
-  else renderError(reply, errorMessage(status, body));
-  reply.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-function updateCounter() {
-  counter.textContent = `${questionInput.value.length}/${MAX_CHARS}`;
+// Envia a pergunta e escreve o resultado no balão da resposta. A nova
+// tentativa usa o mesmo balão, sem repetir a pergunta na conversa.
+async function send(question, reply) {
+  if (busy) return;
+  const key = keyInput.value.trim();
+  if (!key) {
+    showKeyError("Digite a chave de acesso para perguntar.");
+    return;
+  }
+  saveKey(key);
+  clearKeyError();
+
+  setBusy(true);
+  renderLoading(reply);
+  const { status, body } = await callApi(question, key);
+  setBusy(false);
+
+  const messageId = reply.dataset.messageId;
+  if (status === 200 && body) {
+    renderAnswer(reply, body, messageId);
+    announce("Resposta pronta.");
+  } else {
+    const error = errorMessage(status, body);
+    renderError(reply, error, question);
+    announce(error.message);
+  }
+  // Rola até a pergunta, para a resposta ser lida desde o começo
+  reply.parentElement.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function startQuestion(question) {
+  if (busy) return false;
+  if (!keyInput.value.trim()) {
+    showKeyError("Digite a chave de acesso para perguntar.");
+    return false;
+  }
+  welcome.hidden = true;
+  newChatButton.hidden = false;
+
+  messageCount += 1;
+  const turn = element("div", "turn");
+  turn.appendChild(element("div", "message-user", question));
+  const reply = element("div", "message-bot");
+  reply.dataset.messageId = `m${messageCount}`;
+  turn.appendChild(reply);
+  conversation.appendChild(turn);
+  send(question, reply);
+  return true;
+}
+
+function updateComposer() {
+  const length = questionInput.value.length;
+  counter.textContent = `${length}/${MAX_CHARS}`;
+  counter.dataset.state = counterState(length);
+  // O campo cresce com o texto até o limite definido no CSS
+  questionInput.style.height = "auto";
+  questionInput.style.height = `${questionInput.scrollHeight}px`;
 }
 
 form.addEventListener("submit", (event) => {
   event.preventDefault();
   const question = questionInput.value.trim();
-  if (!question || sendButton.disabled) return;
-  questionInput.value = "";
-  updateCounter();
-  ask(question);
+  if (!question) return;
+  // A pergunta só sai do campo depois de enviada
+  if (startQuestion(question)) {
+    questionInput.value = "";
+    updateComposer();
+  }
 });
 
 // Enter envia; Shift+Enter quebra a linha
 questionInput.addEventListener("keydown", (event) => {
-  if (event.key === "Enter" && !event.shiftKey) {
+  if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
     event.preventDefault();
     form.requestSubmit();
   }
 });
 
-questionInput.addEventListener("input", updateCounter);
+questionInput.addEventListener("input", updateComposer);
 
-document.getElementById("key-form").addEventListener("submit", (event) => event.preventDefault());
-keyInput.addEventListener("input", () => keyInput.classList.remove("invalid"));
+document.getElementById("key-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  questionInput.focus();
+});
+keyInput.addEventListener("input", clearKeyError);
 
-for (const button of document.querySelectorAll("#examples button")) {
+toggleKey.addEventListener("click", () => {
+  const show = keyInput.type === "password";
+  keyInput.type = show ? "text" : "password";
+  toggleKey.textContent = show ? "Ocultar" : "Mostrar";
+  toggleKey.setAttribute("aria-label", show ? "Ocultar a chave" : "Mostrar a chave");
+  toggleKey.setAttribute("aria-pressed", String(show));
+});
+
+for (const button of exampleButtons) {
   button.addEventListener("click", () => {
-    if (sendButton.disabled) return;
-    ask(button.textContent.trim());
+    const question = button.querySelector(".example-question").textContent.trim();
+    startQuestion(question);
   });
 }
 
+newChatButton.addEventListener("click", () => {
+  if (busy) return;
+  conversation.replaceChildren();
+  welcome.hidden = false;
+  newChatButton.hidden = true;
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  questionInput.focus();
+});
+
+let healthTimer = null;
+
 async function checkApi() {
+  clearTimeout(healthTimer);
+  let online = false;
   try {
     const response = await fetch("/api/health");
     const data = await response.json().catch(() => null);
     if (response.ok && data) {
-      apiStatus.textContent = `No ar, com ${data.documents.toLocaleString("pt-BR")} avaliações na base.`;
+      online = true;
+      apiStatusText.textContent = `No ar, com ${data.documents.toLocaleString("pt-BR")} avaliações`;
     } else {
-      apiStatus.textContent = errorMessage(response.status, data).message;
+      apiStatusText.textContent = errorMessage(response.status, data).message;
     }
   } catch {
-    apiStatus.textContent = errorMessage(0, null).message;
+    apiStatusText.textContent = errorMessage(0, null).message;
   }
+  apiStatus.dataset.state = online ? "online" : "offline";
+  if (!online) healthTimer = setTimeout(checkApi, HEALTH_RETRY_MS);
 }
 
 keyInput.value = loadKey();
-updateCounter();
+updateComposer();
 checkApi();

@@ -3,9 +3,15 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import {
+  canRetry,
+  categoryLabel,
+  counterState,
+  deliveryLabel,
   errorMessage,
+  formatDate,
   formatSimilarity,
   parseAnswerBlocks,
+  shortId,
   splitCitations,
   statusNotice,
 } from "../../frontend/logic.js";
@@ -58,4 +64,53 @@ test("errorMessage escolhe a mensagem pelo tipo de erro", () => {
 
 test("formatSimilarity usa vírgula e duas casas", () => {
   assert.equal(formatSimilarity(0.7136), "0,71");
+});
+
+test("parseAnswerBlocks mostra um item solto como parágrafo", () => {
+  assert.deepEqual(parseAnswerBlocks("- Entre as avaliações, atrasos [1]."), [
+    { type: "paragraph", text: "Entre as avaliações, atrasos [1]." },
+  ]);
+});
+
+test("errorMessage trata o tempo limite como erro passageiro", () => {
+  assert.equal(errorMessage(-1, null).kind, "timeout");
+});
+
+test("canRetry só oferece nova tentativa quando ela pode dar certo", () => {
+  for (const kind of ["retry", "timeout", "offline", "unexpected", "key"]) {
+    assert.equal(canRetry(kind), true, kind);
+  }
+  assert.equal(canRetry("quota"), false);
+  assert.equal(canRetry("invalid"), false);
+});
+
+test("deliveryLabel descreve a entrega e omite a desconhecida", () => {
+  assert.deepEqual(deliveryLabel("no_prazo"), { text: "Entregue no prazo", tone: "ok" });
+  assert.deepEqual(deliveryLabel("atrasada"), { text: "Entregue com atraso", tone: "warn" });
+  assert.deepEqual(deliveryLabel("nao_entregue"), { text: "Não entregue", tone: "bad" });
+  assert.equal(deliveryLabel("desconhecido"), null);
+  assert.equal(deliveryLabel(undefined), null);
+});
+
+test("categoryLabel deixa a categoria legível", () => {
+  assert.equal(categoryLabel("moveis_decoracao"), "Moveis decoracao");
+  assert.equal(categoryLabel("mista"), "Várias categorias");
+  assert.equal(categoryLabel("desconhecido"), null);
+  assert.equal(categoryLabel(""), null);
+});
+
+test("formatDate usa o formato brasileiro", () => {
+  assert.equal(formatDate("2018-03-10"), "10/03/2018");
+  assert.equal(formatDate("2018-03-10 00:00:00"), "10/03/2018");
+  assert.equal(formatDate("desconhecido"), null);
+});
+
+test("shortId abrevia o identificador da avaliação", () => {
+  assert.equal(shortId("f242ce44a1b2c3d4e5f6a7b8c9d0e1f2"), "f242ce44");
+});
+
+test("counterState avisa perto do limite de caracteres", () => {
+  assert.equal(counterState(10), "ok");
+  assert.equal(counterState(450), "near");
+  assert.equal(counterState(500), "full");
 });
