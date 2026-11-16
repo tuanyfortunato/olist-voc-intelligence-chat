@@ -337,10 +337,6 @@ textarea {
   max-width: 64ch;
 }
 
-.cite-sample {
-  cursor: default;
-}
-
 /* Como funciona: três passos do RAG, em linha no computador */
 .how {
   display: grid;
@@ -688,29 +684,6 @@ textarea {
   border-color: var(--accent);
 }
 
-/* Citação [n] no texto da resposta */
-.cite {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 1.6em;
-  height: 1.45em;
-  font-size: 0.78em;
-  font-weight: 700;
-  color: var(--accent);
-  background: var(--accent-soft);
-  border: 1px solid transparent;
-  border-radius: 6px;
-  padding: 0 5px;
-  margin: 0 2px;
-  vertical-align: 0.15em;
-  line-height: 1;
-}
-
-.cite:hover {
-  border-color: var(--accent);
-}
-
 /* Avaliações */
 
 .reviews {
@@ -1019,11 +992,6 @@ textarea {
     flex: 1;
   }
 
-  /* Alvo de toque maior para as citações */
-  .cite {
-    min-width: 2em;
-    height: 1.7em;
-  }
 }
 
 /* Filtros da busca, acima do campo de pergunta */
@@ -1425,31 +1393,6 @@ textarea:disabled {
   color: var(--muted);
 }
 
-/* Cartão da avaliação aberto pela citação */
-
-.cite-preview {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  max-width: 340px;
-}
-
-.cite-preview .review {
-  margin: 0;
-}
-
-.cite-preview-link {
-  align-self: flex-start;
-  min-height: 36px;
-  padding: 0 4px;
-  font-size: 0.88rem;
-  color: var(--accent);
-  background: transparent;
-  border: none;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
 /* Aviso com "Desfazer" depois de apagar a conversa */
 
 .undo-toast {
@@ -1481,11 +1424,6 @@ textarea:disabled {
 }
 
 @media (max-width: 640px) {
-  .cite-preview {
-    max-width: none;
-  }
-
-  .cite-preview-link,
   .undo-toast button {
     min-height: 44px;
   }
@@ -1708,5 +1646,89 @@ textarea:disabled {
 
   .top-actions .github-link {
     display: none;
+  }
+}
+
+/* Frases da resposta, cada uma com os trechos das avaliações logo abaixo */
+.answer .claims {
+  margin: 0 0 12px;
+  padding-left: 22px;
+}
+
+.answer .claim {
+  margin-bottom: 16px;
+}
+
+.answer .claim:last-child {
+  margin-bottom: 0;
+}
+
+.answer > .claim {
+  margin-bottom: 14px;
+}
+
+.answer .quotes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.answer .quote {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 12px;
+  margin: 0;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  background: var(--surface-2);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 8px 8px 0;
+}
+
+.quote-text {
+  flex: 1 1 260px;
+  min-width: 0;
+  font-style: italic;
+  overflow-wrap: anywhere;
+}
+
+.quote-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  font-size: 0.8rem;
+}
+
+.quote-meta .stars {
+  font-size: 0.85rem;
+}
+
+.quote-link,
+.more-quotes {
+  min-height: 28px;
+  padding: 0 2px;
+  font-size: 0.8rem;
+  color: var(--accent);
+  background: transparent;
+  border: none;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.more-quotes {
+  margin-top: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .quote-link,
+  .more-quotes {
+    min-height: 40px;
   }
 }

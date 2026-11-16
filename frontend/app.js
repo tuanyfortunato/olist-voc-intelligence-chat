@@ -24,7 +24,10 @@ import {
   remainingSuggestions,
   restrictionNotice,
   similarityLabel,
-  splitCitations,
+  citedNumbers,
+  quotePreview,
+  splitQuotes,
+  stripCitations,
   SUGGESTIONS,
   statusNotice,
   TIMEOUT_STATUS,
@@ -42,6 +45,8 @@ const HEALTH_RETRY_MS = 120000;
 const UNDO_MS = 6000;
 // Momento em que o texto de carregando passa da busca para a escrita
 const LOADING_STEP_MS = 1200;
+// Trechos de avaliação mostrados embaixo de cada frase antes do "+N avaliações"
+const QUOTES_PER_CLAIM = 2;
 
 const form = document.getElementById("ask-form");
 const questionInput = document.getElementById("question");
@@ -166,47 +171,47 @@ function setBusy(value) {
   applyLocks();
 }
 
-// Texto com as citações [n] transformadas em botões que levam à avaliação
-function appendWithCitations(parent, text, messageId) {
-  for (const part of splitCitations(text)) {
-    if (part.type === "text") {
-      parent.appendChild(document.createTextNode(part.value));
-      continue;
-    }
-    for (const number of part.numbers) {
-      const button = element("button", "cite", String(number));
-      button.type = "button";
-      button.setAttribute("aria-label", `Ver a avaliação ${number}`);
-      button.title = `Ver a avaliação ${number}`;
-      button.setAttribute("aria-haspopup", "dialog");
-      button.addEventListener("click", () => previewReview(button, messageId, number));
-      parent.appendChild(button);
-    }
-  }
+// Cada frase da resposta aparece sem os números [n] e, logo abaixo, com os
+// trechos das avaliações que a sustentam. Até QUOTES_PER_CLAIM ficam à
+// mostra; as outras abrem pelo botão "+N avaliações".
+function appendClaim(parent, text, reviews, messageId) {
+  parent.appendChild(element("span", "claim-text", stripCitations(text)));
+  const numbers = citedNumbers(text).filter((number) => reviews.has(number));
+  if (!numbers.length) return;
+  const { shown, hidden } = splitQuotes(numbers, QUOTES_PER_CLAIM);
+  const list = element("ul", "quotes");
+  list.setAttribute("aria-label", "Avaliações que sustentam esta frase");
+  for (const number of shown) list.appendChild(quote(reviews.get(number).review, messageId));
+  parent.appendChild(list);
+  if (!hidden.length) return;
+  const more = element(
+    "button",
+    "more-quotes",
+    `+${hidden.length} ${hidden.length === 1 ? "avaliação" : "avaliações"}`,
+  );
+  more.type = "button";
+  more.addEventListener("click", () => {
+    for (const number of hidden) list.appendChild(quote(reviews.get(number).review, messageId));
+    more.remove();
+    list.children[shown.length].querySelector("button").focus();
+  });
+  parent.appendChild(more);
 }
 
-// Mostra a avaliação citada ao lado da citação, sem tirar a resposta da tela
-let openPreview = null;
-
-function previewReview(button, messageId, number) {
-  if (openPreview && openPreview.button === button && openPreview.handle.isOpen) {
-    openPreview.handle.close();
-    return;
-  }
-  const reply = conversation.querySelector(`[data-message-id="${messageId}"]`);
-  const entry = reply && reply.reviews ? reply.reviews.get(number) : null;
-  if (!entry) return;
-  const content = element("div", "cite-preview");
-  content.appendChild(reviewCard(entry.review, messageId, entry.cited, { preview: true }));
-  const link = element("button", "cite-preview-link", "Ver na lista");
+// Trecho de uma avaliação: o comentário entre aspas, a nota e o número, que
+// leva ao cartão completo na lista de baixo
+function quote(review, messageId) {
+  const item = element("li", "quote");
+  item.appendChild(element("q", "quote-text", quotePreview(review.original_text)));
+  const meta = element("span", "quote-meta");
+  meta.appendChild(stars(review.rating));
+  const link = element("button", "quote-link", `Avaliação ${review.number}`);
   link.type = "button";
-  link.addEventListener("click", () => {
-    handle.close({ restoreFocus: false });
-    showReview(messageId, number);
-  });
-  content.appendChild(link);
-  const handle = openOverlay({ anchor: button, title: `Avaliação ${number}`, content });
-  openPreview = { button, handle };
+  link.setAttribute("aria-label", `Ver a avaliação ${review.number} completa`);
+  link.addEventListener("click", () => showReview(messageId, review.number));
+  meta.appendChild(link);
+  item.appendChild(meta);
+  return item;
 }
 
 function showReview(messageId, number) {
@@ -282,10 +287,9 @@ function reviewCard(review, messageId, cited, { preview = false } = {}) {
 }
 
 // Bloco de avaliações. As não citadas abrem pelo título ou por uma citação [n].
-// As citadas começam abertas: são a evidência da resposta.
+// Os trechos já aparecem embaixo de cada frase; a lista completa começa recolhida.
 function reviewGroup(className, title, reviews, messageId, cited) {
   const details = element("details", `review-group ${className}`);
-  details.open = cited;
   details.appendChild(element("summary", null, `${title} (${reviews.length})`));
   for (const review of reviews) details.appendChild(reviewCard(review, messageId, cited));
   return details;
@@ -299,7 +303,9 @@ function renderReviews(result, messageId) {
     section.appendChild(
       reviewGroup(
         "cited-group",
-        result.cited.length === 1 ? "Avaliação usada na resposta" : "Avaliações usadas na resposta",
+        result.cited.length === 1
+          ? "Ver a avaliação usada, com nota, categoria e entrega"
+          : "Ver as avaliações usadas, com nota, categoria e entrega",
         result.cited,
         messageId,
         true,
@@ -406,17 +412,20 @@ function renderAnswer(container, result, messageId) {
   const chosenRatings = container.filters && container.filters.ratings;
   const inferred = chosenRatings ? null : describeInferredRatings(result.inferred_ratings);
   if (inferred) container.appendChild(element("p", "inferred-filter", inferred));
+  const reviews = new Map();
+  for (const review of result.cited) reviews.set(review.number, { review, cited: true });
+  for (const review of result.uncited) reviews.set(review.number, { review, cited: false });
   const answer = element("div", "answer");
   for (const block of parseAnswerBlocks(result.answer)) {
     if (block.type === "paragraph") {
-      const paragraph = element("p");
-      appendWithCitations(paragraph, block.text, messageId);
+      const paragraph = element("div", "claim");
+      appendClaim(paragraph, block.text, reviews, messageId);
       answer.appendChild(paragraph);
     } else {
-      const list = element("ul");
+      const list = element("ul", "claims");
       for (const item of block.items) {
-        const li = element("li");
-        appendWithCitations(li, item, messageId);
+        const li = element("li", "claim");
+        appendClaim(li, item, reviews, messageId);
         list.appendChild(li);
       }
       answer.appendChild(list);
@@ -426,12 +435,8 @@ function renderAnswer(container, result, messageId) {
   const evidence = evidenceLine(result.cited.length, result.uncited.length);
   if (evidence) container.appendChild(element("p", "evidence-line", evidence));
   if (!container.example) container.appendChild(copyButton(result));
-  // As avaliações ficam no balão, para o cartão aberto por uma citação
-  container.reviews = new Map();
-  for (const review of result.cited) container.reviews.set(review.number, { review, cited: true });
-  for (const review of result.uncited) container.reviews.set(review.number, { review, cited: false });
-  const reviews = renderReviews(result, messageId);
-  if (reviews) container.appendChild(reviews);
+  const reviewList = renderReviews(result, messageId);
+  if (reviewList) container.appendChild(reviewList);
 }
 
 function renderError(container, error, question) {
