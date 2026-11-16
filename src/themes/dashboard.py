@@ -66,6 +66,17 @@ def summarize(rows: Sequence[ReviewRow]) -> dict:
         for theme in THEMES
     }
 
+    # Avaliações com pelo menos um tema do setor, contadas uma vez só
+    sectors = {}
+    for sector in SECTORS:
+        own = set(themes_of_sector(sector.id))
+        subset = [row.rating for row in rows if own.intersection(row.themes)]
+        sectors[sector.id] = {
+            "count": len(subset),
+            "avg_rating": _average(sum(subset), len(subset)),
+            "low": sum(rating <= 2 for rating in subset),
+        }
+
     months: dict[str, list[ReviewRow]] = defaultdict(list)
     for row in rows:
         months[row.review_date[:7]].append(row)
@@ -74,6 +85,7 @@ def summarize(rows: Sequence[ReviewRow]) -> dict:
             "month": month,
             "total": len(items),
             "low": sum(item.rating <= 2 for item in items),
+            "high": sum(item.rating >= 4 for item in items),
             "late": sum(item.delivery in LATE for item in items),
         }
         for month, items in sorted(months.items())
@@ -90,6 +102,7 @@ def summarize(rows: Sequence[ReviewRow]) -> dict:
         "ratings": {str(rating): ratings.get(rating, 0) for rating in range(1, 6)},
         "delivery": delivery,
         "themes": themes,
+        "sectors": sectors,
         "monthly": monthly,
         "categories": [
             {
