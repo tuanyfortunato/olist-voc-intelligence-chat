@@ -402,7 +402,7 @@ export const SUGGESTION_AREAS = [
     ],
   },
   {
-    area: "Vendedores",
+    area: "Vendedor e atendimento",
     questions: [
       "Quais reclamações indicam falha do vendedor, e não da transportadora?",
       "O que os clientes dizem quando não conseguem contato com a loja ou o vendedor?",
@@ -412,7 +412,7 @@ export const SUGGESTION_AREAS = [
     ],
   },
   {
-    area: "Retenção",
+    area: "Retenção e reputação",
     questions: [
       "O que faz um cliente dizer que não volta a comprar?",
       "Quais problemas mais deixam os clientes insatisfeitos a ponto de darem nota 1?",

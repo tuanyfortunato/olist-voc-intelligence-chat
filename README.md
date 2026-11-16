@@ -1,10 +1,10 @@
-# Voz do Cliente: chat sobre as avaliações da Olist
+# Voz do Cliente: painel e chat sobre as avaliações da Olist
 
-Um chat em que um gestor faz perguntas sobre a experiência dos clientes da Olist e recebe uma resposta baseada nas avaliações reais que esses clientes escreveram. Cada frase da resposta aponta para os comentários que a sustentam, e a pessoa pode abrir cada um deles para conferir.
+Um painel por setor com os temas que mais aparecem nas avaliações dos clientes da Olist, e um chat ao lado em que o gestor faz perguntas e recebe uma resposta baseada nas avaliações reais que esses clientes escreveram. Cada frase da resposta aponta para os comentários que a sustentam, e a pessoa pode abrir cada um deles para conferir.
 
 Fiz este projeto para o Tech Challenge da Fase 4 da pós-graduação AI Scientist da POSTECH (FIAP). O tema proposto era Voice of Customer Intelligence: transformar o que os clientes escrevem em informação útil para quem toma decisões, usando RAG (Retrieval-Augmented Generation) sobre a base pública de e-commerce da Olist.
 
-O chat está publicado em **https://olist-chat.tuanyfortunato.com.br**. Ele é aberto, sem cadastro, e funciona das 9h às 22h, no horário de Brasília. Para proteger os créditos da AWS, há um limite de perguntas por hora, que explico mais abaixo.
+O projeto está publicado em **https://olist-chat.tuanyfortunato.com.br**. A entrada tem um login de demonstração: qualquer e-mail e senha entram, e a própria tela mostra um acesso de exemplo. O painel funciona a qualquer hora. O chat funciona das 9h às 22h, no horário de Brasília, e tem um limite de perguntas por hora para proteger os créditos da AWS, que explico mais abaixo.
 
 ## Sumário
 
@@ -15,7 +15,8 @@ O chat está publicado em **https://olist-chat.tuanyfortunato.com.br**. Ele é a
 - [O caminho de uma pergunta](#o-caminho-de-uma-pergunta)
 - [Quando não há evidência suficiente](#quando-não-há-evidência-suficiente)
 - [Filtros por nota, categoria e entrega](#filtros-por-nota-categoria-e-entrega)
-- [A página do chat](#a-página-do-chat)
+- [Painel por setor](#painel-por-setor)
+- [A página](#a-página)
 - [Arquitetura na AWS](#arquitetura-na-aws)
 - [Segurança e custo](#segurança-e-custo)
 - [Como avaliei o chat](#como-avaliei-o-chat)
@@ -163,19 +164,36 @@ O filtro é aplicado dentro do banco, antes do score mínimo e do MMR. Para prov
 
 A nota também pode vir da própria pergunta. "Notas baixas" e "notas altas" não aparecem no texto dos comentários, então buscar por essas palavras não adianta. A análise da pergunta identifica as notas mencionadas e o sistema as aplica como filtro, a menos que o gestor tenha marcado outra coisa na página, que sempre vale mais.
 
-## A página do chat
+## Painel por setor
+
+O chat sozinho não resolvia a dor por inteiro. A dor é o gestor descobrir **rápido** quais são os principais problemas e elogios, e um chat exige que ele já saiba o que perguntar. Além disso, cada resposta usa no máximo 15 comentários, o que mostra o porquê mas não mostra o quanto. Por isso a página abre num painel, e o chat fica ao lado para aprofundar.
+
+Depois do login de demonstração, a pessoa escolhe o setor: Logística, Produto e anúncio, Vendedor e atendimento, Retenção e reputação, Pontos fortes ou Diretoria geral, que vê tudo. O painel do setor mostra:
+
+- **quatro indicadores** do setor, como a parte das entregas atrasadas e a nota média com e sem atraso, na Logística;
+- **os temas mais frequentes**, com quantas avaliações tratam de cada um, a fatia da base e a nota média;
+- **comentários reais** do tema escolhido;
+- **a evolução mês a mês**, com os picos marcados. Os picos de dezembro de 2017 e de março de 2018 aparecem juntos nas notas baixas e nas entregas fora do prazo.
+
+Clicar num tema filtra o chat por ele. A resposta passa a dizer onde a busca foi feita, como "Busca feita em 3.300 avaliações do tema Produto não recebido. A resposta usa as 15 mais parecidas com a pergunta."
+
+Os temas vêm de uma classificação em lote. O Nova Micro lê cada uma das 40.521 avaliações, em lotes de 20, e marca até três temas de uma lista fechada de 23. A classificação roda uma vez, pelo workflow `Classify themes`, com custo estimado abaixo de US$ 0,50, e grava os números num `dashboard.json` estático. Assim o painel não chama a API, abre na hora, funciona fora do horário do chat e não gasta perguntas. Os indicadores de nota e de entrega não dependem do modelo, porque vêm dos metadados das avaliações. Uma amostra de 150 avaliações fica em `evaluation/temas/amostra_revisao.csv` para conferir a classificação à mão. Os detalhes estão em [`docs/07-decisoes-tecnicas.md`](docs/07-decisoes-tecnicas.md).
+
+O login é só de demonstração. Nenhuma senha é conferida e nada sai do navegador, e uma faixa no topo de todas as telas avisa isso. Ele existe para mostrar como o produto seria usado por setores diferentes, e não para proteger dados, que já são públicos.
+
+## A página
 
 A página é feita em HTML, CSS e JavaScript, sem framework. Escolhi assim porque ela é pequena, carrega rápido e não precisa de servidor próprio: fica num bucket do S3, no mesmo endereço da API.
 
-O que ela oferece:
+O que o chat oferece:
 
-- **Citações clicáveis.** Clicar em `[3]` abre o comentário num cartão ao lado do número, sem perder a frase que estava sendo lida.
+- **Trechos embaixo de cada frase.** Cada afirmação da resposta vem seguida dos trechos dos comentários que a sustentam, e cada trecho leva ao comentário completo.
 - **Comentários citados e não citados**, cada grupo num bloco recolhido, para conferir também o que a resposta deixou de fora.
 - **Uma linha no fim de cada resposta** dizendo em quantas avaliações ela se baseia, como "Baseada em 10 avaliações citadas, de 15 recuperadas para esta pergunta. Não mede a frequência na base inteira."
-- **Faixa de filtros** sempre visível acima do campo de pergunta, com uma frase que diz onde a busca está olhando.
-- **Sugestões de novas perguntas** ao fim de cada resposta, sorteadas de uma lista de 41 perguntas sobre temas que de fato aparecem nos comentários.
+- **Faixa de filtros** acima do campo de pergunta, com uma frase que diz onde a busca está olhando, além do setor e do tema escolhidos no painel.
+- **Sugestões de perguntas** do setor e do tema, e novas sugestões ao fim de cada resposta.
 - **Conversa com contexto**, guardada só no navegador. "Nova conversa" apaga tudo, e um aviso com "Desfazer" devolve a conversa apagada por engano.
-- **Tema claro e escuro**, versão para celular e atalhos de teclado.
+- **Tema claro e escuro e versão para celular**, em que o chat abre em tela cheia por um botão e o voltar do celular fecha o chat e depois volta à escolha de setor.
 
 Todo texto que vem da API entra na página como texto, nunca como HTML. Os comentários são escritos por terceiros, e um comentário com `<script>` precisa aparecer escrito, não executado. O CI recusa qualquer uso de `innerHTML` e funções parecidas no código da página.
 
@@ -250,16 +268,17 @@ Cada pergunta leva de 1,5 a 2 segundos do começo ao fim. A geração dos embedd
 │   ├── rag/              # análise da pergunta, busca, prompts, geração e citações
 │   ├── api/              # rotas, limites de perguntas e formato das mensagens
 │   ├── aws/              # acesso ao Bedrock
+│   ├── themes/           # temas das avaliações, classificação em lote e números do painel
 │   ├── vector_db.py      # conexão e consultas ao PostgreSQL com pgvector
 │   └── config.py         # todos os parâmetros, com valor padrão e variável de ambiente
-├── scripts/              # tarefas dos workflows: indexação, carga, calibração e avaliação
-├── frontend/             # página do chat
+├── scripts/              # tarefas dos workflows: indexação, carga, calibração, avaliação e temas
+├── frontend/             # página: login de demonstração, painel por setor e chat
 ├── infra/                # Terraform da aplicação; infra/bootstrap cria o acesso do GitHub à AWS
 ├── evaluation/           # perguntas de teste, calibração e resultados
 ├── notebooks/            # exploração da base
 ├── tests/                # testes em Python e da lógica da página
 ├── docs/                 # decisões técnicas, infraestrutura e especificação da página
-└── .github/workflows/    # CI, Terraform, publicação, indexação, carga, calibração e avaliação
+└── .github/workflows/    # CI, Terraform, publicação, indexação, carga, calibração, avaliação e temas
 ```
 
 ## Como rodar
@@ -309,12 +328,14 @@ A publicação inteira roda pelo GitHub Actions. A ordem, a partir de uma conta 
 3. **Build index**, manual: baixa a base, prepara os documentos, gera os embeddings e envia o arquivo para o S3.
 4. **Load vectors**, manual: carrega os embeddings no PostgreSQL, cria o índice HNSW e liga a API pela primeira vez.
 5. **Deploy**, a cada merge na `main`: constrói a imagem, publica a nova versão da API e copia a página para o S3.
+6. **Classify themes**, manual: classifica as avaliações nos temas do painel e grava o `frontend/dashboard.json` e a amostra de revisão num commit na branch escolhida. Só classifica o que ainda falta, e o modo `numeros` só recalcula o painel.
 
 Os workflows `Calibrate retrieval` e `Evaluate` rodam as perguntas de teste numa tarefa avulsa do ECS, dentro da mesma rede do banco. O `Publish frontend` publica só a página, em cerca de um minuto.
 
 ## Limitações conhecidas
 
-- **As respostas descrevem os comentários recuperados, e não a base inteira.** O chat mostra padrões entre 15 comentários, não mede frequência. Uma pergunta como "quantos por cento reclamam de atraso?" precisa de uma consulta numérica, não de RAG. Por isso a página repete esse aviso em cada resposta.
+- **As respostas descrevem os comentários recuperados, e não a base inteira.** O chat mostra padrões entre 15 comentários, não mede frequência. Quem mostra frequência é o painel, com a contagem dos temas. Por isso a página repete esse aviso em cada resposta e diz em quantas avaliações a busca foi feita.
+- **A contagem dos temas depende da classificação do modelo.** Um comentário pode ter tema a mais ou a menos. A amostra de revisão manual mede o tamanho desse erro, e o período do painel não filtra o chat, que sempre busca nas avaliações de 2016 a 2018.
 - **A folga do score mínimo é pequena** na pergunta sem evidência. Uma variação na reescrita do tema pode deixar passar comentários de assunto vizinho. A regra do prompt contra assuntos não mencionados é a segunda proteção.
 - **O Nova Micro às vezes força a ligação** entre a frase e o comentário, como citar um comentário sobre a loja numa frase sobre o aplicativo. A revisão manual mede isso, e a troca planejada, se a fidelidade ficar baixa, é passar a resposta para o Nova Lite.
 - **O trecho entre o CloudFront e o ALB é HTTP**, porque o ALB não tem nome próprio nem certificado. O ALB só aceita tráfego vindo do CloudFront.

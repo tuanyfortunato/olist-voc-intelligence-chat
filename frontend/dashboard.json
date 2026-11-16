@@ -1,0 +1,1811 @@
+{
+ "generated_at": "2026-11-16T22:31:12+00:00",
+ "model_id": "previa-palavras-chave",
+ "total": 40521,
+ "classified": 18861,
+ "sectors": [
+  {
+   "id": "logistica",
+   "label": "Logística",
+   "summary": "Prazo, extravio, avaria e rastreio dos pedidos",
+   "themes": [
+    "atraso",
+    "nao_recebido",
+    "incompleto",
+    "avaria",
+    "rastreio"
+   ]
+  },
+  {
+   "id": "produto",
+   "label": "Produto e anúncio",
+   "summary": "Defeitos, medidas e diferença entre anúncio e produto",
+   "themes": [
+    "defeito",
+    "diferente_anuncio",
+    "tamanho",
+    "qualidade_baixa",
+    "falsificado"
+   ]
+  },
+  {
+   "id": "vendedor",
+   "label": "Vendedor e atendimento",
+   "summary": "Contato com a loja, trocas, devoluções e reembolso",
+   "themes": [
+    "sem_resposta",
+    "troca_devolucao",
+    "reembolso",
+    "cancelamento"
+   ]
+  },
+  {
+   "id": "retencao",
+   "label": "Retenção e reputação",
+   "summary": "O que faz o cliente voltar, recomendar ou desistir",
+   "themes": [
+    "nao_volta",
+    "reclamacao_formal",
+    "recompra"
+   ]
+  },
+  {
+   "id": "fortes",
+   "label": "Pontos fortes",
+   "summary": "O que os clientes mais elogiam",
+   "themes": [
+    "entrega_rapida",
+    "produto_bom",
+    "conforme_anuncio",
+    "bem_embalado",
+    "bom_atendimento",
+    "bom_preco"
+   ]
+  }
+ ],
+ "themes": [
+  {
+   "id": "atraso",
+   "label": "Atraso na entrega",
+   "sector": "logistica",
+   "polarity": "reclamacao"
+  },
+  {
+   "id": "nao_recebido",
+   "label": "Produto não recebido",
+   "sector": "logistica",
+   "polarity": "reclamacao"
+  },
+  {
+   "id": "incompleto",
+   "label": "Pedido incompleto",
+   "sector": "logistica",
+   "polarity": "reclamacao"
+  },
+  {
+   "id": "avaria",
+   "label": "Chegou danificado",
+   "sector": "logistica",
+   "polarity": "reclamacao"
+  },
+  {
+   "id": "rastreio",
+   "label": "Rastreio e falta de informação",
+   "sector": "logistica",
+   "polarity": "reclamacao"
+  },
+  {
+   "id": "defeito",
+   "label": "Defeito",
+   "sector": "produto",
+   "polarity": "reclamacao"
+  },
+  {
+   "id": "diferente_anuncio",
+   "label": "Diferente do anúncio",
+   "sector": "produto",
+   "polarity": "reclamacao"
+  },
+  {
+   "id": "tamanho",
+   "label": "Tamanho e medidas",
+   "sector": "produto",
+   "polarity": "reclamacao"
+  },
+  {
+   "id": "qualidade_baixa",
+   "label": "Qualidade abaixo do esperado",
+   "sector": "produto",
+   "polarity": "reclamacao"
+  },
+  {
+   "id": "falsificado",
+   "label": "Falsificado ou não original",
+   "sector": "produto",
+   "polarity": "reclamacao"
+  },
+  {
+   "id": "sem_resposta",
+   "label": "Loja não responde",
+   "sector": "vendedor",
+   "polarity": "reclamacao"
+  },
+  {
+   "id": "troca_devolucao",
+   "label": "Troca e devolução",
+   "sector": "vendedor",
+   "polarity": "reclamacao"
+  },
+  {
+   "id": "reembolso",
+   "label": "Estorno e reembolso",
+   "sector": "vendedor",
+   "polarity": "reclamacao"
+  },
+  {
+   "id": "cancelamento",
+   "label": "Cancelamento",
+   "sector": "vendedor",
+   "polarity": "reclamacao"
+  },
+  {
+   "id": "nao_volta",
+   "label": "Não volta a comprar",
+   "sector": "retencao",
+   "polarity": "reclamacao"
+  },
+  {
+   "id": "reclamacao_formal",
+   "label": "Procon ou reclamação pública",
+   "sector": "retencao",
+   "polarity": "reclamacao"
+  },
+  {
+   "id": "recompra",
+   "label": "Volta a comprar ou recomenda",
+   "sector": "retencao",
+   "polarity": "elogio"
+  },
+  {
+   "id": "entrega_rapida",
+   "label": "Entrega rápida",
+   "sector": "fortes",
+   "polarity": "elogio"
+  },
+  {
+   "id": "produto_bom",
+   "label": "Produto de boa qualidade",
+   "sector": "fortes",
+   "polarity": "elogio"
+  },
+  {
+   "id": "conforme_anuncio",
+   "label": "Igual ao anúncio",
+   "sector": "fortes",
+   "polarity": "elogio"
+  },
+  {
+   "id": "bem_embalado",
+   "label": "Bem embalado",
+   "sector": "fortes",
+   "polarity": "elogio"
+  },
+  {
+   "id": "bom_atendimento",
+   "label": "Bom atendimento",
+   "sector": "fortes",
+   "polarity": "elogio"
+  },
+  {
+   "id": "bom_preco",
+   "label": "Bom custo-benefício",
+   "sector": "fortes",
+   "polarity": "elogio"
+  }
+ ],
+ "periods": {
+  "todos": {
+   "label": "Todo o período",
+   "total": 40521,
+   "avg_rating": 3.67,
+   "ratings": {
+    "1": 8634,
+    "2": 2115,
+    "3": 3519,
+    "4": 5902,
+    "5": 20351
+   },
+   "delivery": {
+    "no_prazo": {
+     "count": 34399,
+     "avg_rating": 3.98
+    },
+    "atrasada": {
+     "count": 4214,
+     "avg_rating": 2.12
+    },
+    "nao_entregue": {
+     "count": 1819,
+     "avg_rating": 1.5
+    }
+   },
+   "themes": {
+    "atraso": {
+     "count": 1057,
+     "avg_rating": 2.44,
+     "low": 577
+    },
+    "nao_recebido": {
+     "count": 3300,
+     "avg_rating": 1.45,
+     "low": 2847
+    },
+    "incompleto": {
+     "count": 1172,
+     "avg_rating": 1.9,
+     "low": 824
+    },
+    "avaria": {
+     "count": 556,
+     "avg_rating": 2.22,
+     "low": 328
+    },
+    "rastreio": {
+     "count": 260,
+     "avg_rating": 2.19,
+     "low": 165
+    },
+    "defeito": {
+     "count": 601,
+     "avg_rating": 2.1,
+     "low": 405
+    },
+    "diferente_anuncio": {
+     "count": 613,
+     "avg_rating": 1.84,
+     "low": 451
+    },
+    "tamanho": {
+     "count": 350,
+     "avg_rating": 3.19,
+     "low": 114
+    },
+    "qualidade_baixa": {
+     "count": 174,
+     "avg_rating": 2.61,
+     "low": 85
+    },
+    "falsificado": {
+     "count": 161,
+     "avg_rating": 1.5,
+     "low": 134
+    },
+    "sem_resposta": {
+     "count": 182,
+     "avg_rating": 1.24,
+     "low": 168
+    },
+    "troca_devolucao": {
+     "count": 1229,
+     "avg_rating": 1.88,
+     "low": 890
+    },
+    "reembolso": {
+     "count": 365,
+     "avg_rating": 1.33,
+     "low": 327
+    },
+    "cancelamento": {
+     "count": 534,
+     "avg_rating": 1.48,
+     "low": 458
+    },
+    "nao_volta": {
+     "count": 593,
+     "avg_rating": 1.34,
+     "low": 544
+    },
+    "reclamacao_formal": {
+     "count": 167,
+     "avg_rating": 2.57,
+     "low": 97
+    },
+    "recompra": {
+     "count": 215,
+     "avg_rating": 4.2,
+     "low": 35
+    },
+    "entrega_rapida": {
+     "count": 6262,
+     "avg_rating": 4.76,
+     "low": 104
+    },
+    "produto_bom": {
+     "count": 3609,
+     "avg_rating": 4.72,
+     "low": 50
+    },
+    "conforme_anuncio": {
+     "count": 479,
+     "avg_rating": 4.45,
+     "low": 34
+    },
+    "bem_embalado": {
+     "count": 746,
+     "avg_rating": 4.77,
+     "low": 9
+    },
+    "bom_atendimento": {
+     "count": 348,
+     "avg_rating": 4.68,
+     "low": 9
+    },
+    "bom_preco": {
+     "count": 330,
+     "avg_rating": 4.37,
+     "low": 26
+    }
+   },
+   "sectors": {
+    "logistica": {
+     "count": 5881,
+     "avg_rating": 1.81,
+     "low": 4366
+    },
+    "produto": {
+     "count": 1834,
+     "avg_rating": 2.23,
+     "low": 1131
+    },
+    "vendedor": {
+     "count": 2085,
+     "avg_rating": 1.67,
+     "low": 1647
+    },
+    "retencao": {
+     "count": 956,
+     "avg_rating": 2.19,
+     "low": 662
+    },
+    "fortes": {
+     "count": 10070,
+     "avg_rating": 4.7,
+     "low": 227
+    }
+   },
+   "monthly": [
+    {
+     "month": "2016-10",
+     "total": 121,
+     "low": 26,
+     "high": 84,
+     "late": 5
+    },
+    {
+     "month": "2016-11",
+     "total": 79,
+     "low": 35,
+     "high": 38,
+     "late": 18
+    },
+    {
+     "month": "2016-12",
+     "total": 35,
+     "low": 27,
+     "high": 7,
+     "late": 26
+    },
+    {
+     "month": "2017-01",
+     "total": 118,
+     "low": 16,
+     "high": 89,
+     "late": 1
+    },
+    {
+     "month": "2017-02",
+     "total": 584,
+     "low": 105,
+     "high": 428,
+     "late": 11
+    },
+    {
+     "month": "2017-03",
+     "total": 1080,
+     "low": 283,
+     "high": 716,
+     "late": 165
+    },
+    {
+     "month": "2017-04",
+     "total": 886,
+     "low": 234,
+     "high": 567,
+     "late": 136
+    },
+    {
+     "month": "2017-05",
+     "total": 1518,
+     "low": 349,
+     "high": 1029,
+     "late": 191
+    },
+    {
+     "month": "2017-06",
+     "total": 1405,
+     "low": 333,
+     "high": 937,
+     "late": 156
+    },
+    {
+     "month": "2017-07",
+     "total": 1487,
+     "low": 302,
+     "high": 1048,
+     "late": 136
+    },
+    {
+     "month": "2017-08",
+     "total": 1849,
+     "low": 380,
+     "high": 1322,
+     "late": 146
+    },
+    {
+     "month": "2017-09",
+     "total": 1698,
+     "low": 383,
+     "high": 1201,
+     "late": 183
+    },
+    {
+     "month": "2017-10",
+     "total": 1816,
+     "low": 403,
+     "high": 1272,
+     "late": 185
+    },
+    {
+     "month": "2017-11",
+     "total": 1930,
+     "low": 474,
+     "high": 1275,
+     "late": 221
+    },
+    {
+     "month": "2017-12",
+     "total": 3221,
+     "low": 1067,
+     "high": 1878,
+     "late": 747
+    },
+    {
+     "month": "2018-01",
+     "total": 2542,
+     "low": 686,
+     "high": 1619,
+     "late": 314
+    },
+    {
+     "month": "2018-02",
+     "total": 2526,
+     "low": 744,
+     "high": 1523,
+     "late": 393
+    },
+    {
+     "month": "2018-03",
+     "total": 3317,
+     "low": 1314,
+     "high": 1694,
+     "late": 1022
+    },
+    {
+     "month": "2018-04",
+     "total": 3043,
+     "low": 1002,
+     "high": 1775,
+     "late": 720
+    },
+    {
+     "month": "2018-05",
+     "total": 2952,
+     "low": 694,
+     "high": 2024,
+     "late": 289
+    },
+    {
+     "month": "2018-06",
+     "total": 2664,
+     "low": 633,
+     "high": 1792,
+     "late": 294
+    },
+    {
+     "month": "2018-07",
+     "total": 2186,
+     "low": 450,
+     "high": 1566,
+     "late": 114
+    },
+    {
+     "month": "2018-08",
+     "total": 3464,
+     "low": 809,
+     "high": 2369,
+     "late": 560
+    }
+   ],
+   "categories": [
+    {
+     "category": "cama_mesa_banho",
+     "count": 4105,
+     "avg_rating": 3.64,
+     "low": 1095
+    },
+    {
+     "category": "beleza_saude",
+     "count": 3290,
+     "avg_rating": 3.77,
+     "low": 792
+    },
+    {
+     "category": "esporte_lazer",
+     "count": 2883,
+     "avg_rating": 3.75,
+     "low": 721
+    },
+    {
+     "category": "informatica_acessorios",
+     "count": 2662,
+     "avg_rating": 3.53,
+     "low": 802
+    },
+    {
+     "category": "relogios_presentes",
+     "count": 2454,
+     "avg_rating": 3.69,
+     "low": 630
+    },
+    {
+     "category": "moveis_decoracao",
+     "count": 2422,
+     "avg_rating": 3.58,
+     "low": 692
+    },
+    {
+     "category": "utilidades_domesticas",
+     "count": 2286,
+     "avg_rating": 3.75,
+     "low": 548
+    },
+    {
+     "category": "telefonia",
+     "count": 1826,
+     "avg_rating": 3.65,
+     "low": 476
+    },
+    {
+     "category": "automotivo",
+     "count": 1654,
+     "avg_rating": 3.73,
+     "low": 421
+    },
+    {
+     "category": "ferramentas_jardim",
+     "count": 1523,
+     "avg_rating": 3.87,
+     "low": 330
+    }
+   ]
+  },
+  "2018": {
+   "label": "2018",
+   "total": 22694,
+   "avg_rating": 3.62,
+   "ratings": {
+    "1": 5119,
+    "2": 1213,
+    "3": 2000,
+    "4": 3224,
+    "5": 11138
+   },
+   "delivery": {
+    "no_prazo": {
+     "count": 18930,
+     "avg_rating": 3.95
+    },
+    "atrasada": {
+     "count": 2873,
+     "avg_rating": 2.09
+    },
+    "nao_entregue": {
+     "count": 833,
+     "avg_rating": 1.47
+    }
+   },
+   "themes": {
+    "atraso": {
+     "count": 693,
+     "avg_rating": 2.33,
+     "low": 399
+    },
+    "nao_recebido": {
+     "count": 2050,
+     "avg_rating": 1.46,
+     "low": 1765
+    },
+    "incompleto": {
+     "count": 707,
+     "avg_rating": 1.85,
+     "low": 509
+    },
+    "avaria": {
+     "count": 311,
+     "avg_rating": 2.23,
+     "low": 182
+    },
+    "rastreio": {
+     "count": 170,
+     "avg_rating": 2.15,
+     "low": 109
+    },
+    "defeito": {
+     "count": 357,
+     "avg_rating": 2.05,
+     "low": 246
+    },
+    "diferente_anuncio": {
+     "count": 394,
+     "avg_rating": 1.79,
+     "low": 296
+    },
+    "tamanho": {
+     "count": 209,
+     "avg_rating": 3.23,
+     "low": 68
+    },
+    "qualidade_baixa": {
+     "count": 110,
+     "avg_rating": 2.55,
+     "low": 55
+    },
+    "falsificado": {
+     "count": 113,
+     "avg_rating": 1.45,
+     "low": 97
+    },
+    "sem_resposta": {
+     "count": 110,
+     "avg_rating": 1.24,
+     "low": 101
+    },
+    "troca_devolucao": {
+     "count": 725,
+     "avg_rating": 1.81,
+     "low": 542
+    },
+    "reembolso": {
+     "count": 204,
+     "avg_rating": 1.34,
+     "low": 181
+    },
+    "cancelamento": {
+     "count": 282,
+     "avg_rating": 1.53,
+     "low": 239
+    },
+    "nao_volta": {
+     "count": 404,
+     "avg_rating": 1.34,
+     "low": 370
+    },
+    "reclamacao_formal": {
+     "count": 84,
+     "avg_rating": 2.65,
+     "low": 47
+    },
+    "recompra": {
+     "count": 108,
+     "avg_rating": 4.27,
+     "low": 16
+    },
+    "entrega_rapida": {
+     "count": 3495,
+     "avg_rating": 4.77,
+     "low": 46
+    },
+    "produto_bom": {
+     "count": 2076,
+     "avg_rating": 4.73,
+     "low": 23
+    },
+    "conforme_anuncio": {
+     "count": 298,
+     "avg_rating": 4.41,
+     "low": 24
+    },
+    "bem_embalado": {
+     "count": 425,
+     "avg_rating": 4.8,
+     "low": 3
+    },
+    "bom_atendimento": {
+     "count": 203,
+     "avg_rating": 4.7,
+     "low": 5
+    },
+    "bom_preco": {
+     "count": 209,
+     "avg_rating": 4.4,
+     "low": 14
+    }
+   },
+   "sectors": {
+    "logistica": {
+     "count": 3619,
+     "avg_rating": 1.79,
+     "low": 2709
+    },
+    "produto": {
+     "count": 1137,
+     "avg_rating": 2.19,
+     "low": 720
+    },
+    "vendedor": {
+     "count": 1198,
+     "avg_rating": 1.65,
+     "low": 957
+    },
+    "retencao": {
+     "count": 584,
+     "avg_rating": 2.06,
+     "low": 424
+    },
+    "fortes": {
+     "count": 5722,
+     "avg_rating": 4.71,
+     "low": 113
+    }
+   },
+   "monthly": [
+    {
+     "month": "2018-01",
+     "total": 2542,
+     "low": 686,
+     "high": 1619,
+     "late": 314
+    },
+    {
+     "month": "2018-02",
+     "total": 2526,
+     "low": 744,
+     "high": 1523,
+     "late": 393
+    },
+    {
+     "month": "2018-03",
+     "total": 3317,
+     "low": 1314,
+     "high": 1694,
+     "late": 1022
+    },
+    {
+     "month": "2018-04",
+     "total": 3043,
+     "low": 1002,
+     "high": 1775,
+     "late": 720
+    },
+    {
+     "month": "2018-05",
+     "total": 2952,
+     "low": 694,
+     "high": 2024,
+     "late": 289
+    },
+    {
+     "month": "2018-06",
+     "total": 2664,
+     "low": 633,
+     "high": 1792,
+     "late": 294
+    },
+    {
+     "month": "2018-07",
+     "total": 2186,
+     "low": 450,
+     "high": 1566,
+     "late": 114
+    },
+    {
+     "month": "2018-08",
+     "total": 3464,
+     "low": 809,
+     "high": 2369,
+     "late": 560
+    }
+   ],
+   "categories": [
+    {
+     "category": "cama_mesa_banho",
+     "count": 2233,
+     "avg_rating": 3.58,
+     "low": 638
+    },
+    {
+     "category": "beleza_saude",
+     "count": 1978,
+     "avg_rating": 3.73,
+     "low": 495
+    },
+    {
+     "category": "informatica_acessorios",
+     "count": 1641,
+     "avg_rating": 3.4,
+     "low": 545
+    },
+    {
+     "category": "esporte_lazer",
+     "count": 1628,
+     "avg_rating": 3.67,
+     "low": 441
+    },
+    {
+     "category": "relogios_presentes",
+     "count": 1595,
+     "avg_rating": 3.59,
+     "low": 446
+    },
+    {
+     "category": "utilidades_domesticas",
+     "count": 1351,
+     "avg_rating": 3.73,
+     "low": 335
+    },
+    {
+     "category": "moveis_decoracao",
+     "count": 1197,
+     "avg_rating": 3.58,
+     "low": 339
+    },
+    {
+     "category": "automotivo",
+     "count": 1068,
+     "avg_rating": 3.72,
+     "low": 275
+    },
+    {
+     "category": "telefonia",
+     "count": 986,
+     "avg_rating": 3.58,
+     "low": 273
+    },
+    {
+     "category": "eletronicos",
+     "count": 719,
+     "avg_rating": 3.71,
+     "low": 184
+    }
+   ]
+  },
+  "2017": {
+   "label": "2017",
+   "total": 17592,
+   "avg_rating": 3.75,
+   "ratings": {
+    "1": 3433,
+    "2": 896,
+    "3": 1501,
+    "4": 2644,
+    "5": 9118
+   },
+   "delivery": {
+    "no_prazo": {
+     "count": 15283,
+     "avg_rating": 4.02
+    },
+    "atrasada": {
+     "count": 1338,
+     "avg_rating": 2.19
+    },
+    "nao_entregue": {
+     "count": 940,
+     "avg_rating": 1.54
+    }
+   },
+   "themes": {
+    "atraso": {
+     "count": 351,
+     "avg_rating": 2.65,
+     "low": 173
+    },
+    "nao_recebido": {
+     "count": 1226,
+     "avg_rating": 1.45,
+     "low": 1058
+    },
+    "incompleto": {
+     "count": 460,
+     "avg_rating": 1.97,
+     "low": 312
+    },
+    "avaria": {
+     "count": 243,
+     "avg_rating": 2.22,
+     "low": 144
+    },
+    "rastreio": {
+     "count": 89,
+     "avg_rating": 2.22,
+     "low": 56
+    },
+    "defeito": {
+     "count": 241,
+     "avg_rating": 2.17,
+     "low": 157
+    },
+    "diferente_anuncio": {
+     "count": 216,
+     "avg_rating": 1.94,
+     "low": 152
+    },
+    "tamanho": {
+     "count": 139,
+     "avg_rating": 3.15,
+     "low": 44
+    },
+    "qualidade_baixa": {
+     "count": 64,
+     "avg_rating": 2.7,
+     "low": 30
+    },
+    "falsificado": {
+     "count": 47,
+     "avg_rating": 1.57,
+     "low": 37
+    },
+    "sem_resposta": {
+     "count": 70,
+     "avg_rating": 1.24,
+     "low": 65
+    },
+    "troca_devolucao": {
+     "count": 496,
+     "avg_rating": 1.99,
+     "low": 340
+    },
+    "reembolso": {
+     "count": 159,
+     "avg_rating": 1.33,
+     "low": 144
+    },
+    "cancelamento": {
+     "count": 246,
+     "avg_rating": 1.41,
+     "low": 214
+    },
+    "nao_volta": {
+     "count": 178,
+     "avg_rating": 1.31,
+     "low": 165
+    },
+    "reclamacao_formal": {
+     "count": 80,
+     "avg_rating": 2.55,
+     "low": 47
+    },
+    "recompra": {
+     "count": 104,
+     "avg_rating": 4.15,
+     "low": 18
+    },
+    "entrega_rapida": {
+     "count": 2731,
+     "avg_rating": 4.74,
+     "low": 58
+    },
+    "produto_bom": {
+     "count": 1514,
+     "avg_rating": 4.72,
+     "low": 27
+    },
+    "conforme_anuncio": {
+     "count": 181,
+     "avg_rating": 4.52,
+     "low": 10
+    },
+    "bem_embalado": {
+     "count": 316,
+     "avg_rating": 4.74,
+     "low": 6
+    },
+    "bom_atendimento": {
+     "count": 144,
+     "avg_rating": 4.64,
+     "low": 4
+    },
+    "bom_preco": {
+     "count": 120,
+     "avg_rating": 4.33,
+     "low": 11
+    }
+   },
+   "sectors": {
+    "logistica": {
+     "count": 2218,
+     "avg_rating": 1.85,
+     "low": 1624
+    },
+    "produto": {
+     "count": 688,
+     "avg_rating": 2.32,
+     "low": 404
+    },
+    "vendedor": {
+     "count": 870,
+     "avg_rating": 1.71,
+     "low": 674
+    },
+    "retencao": {
+     "count": 355,
+     "avg_rating": 2.41,
+     "low": 225
+    },
+    "fortes": {
+     "count": 4294,
+     "avg_rating": 4.69,
+     "low": 113
+    }
+   },
+   "monthly": [
+    {
+     "month": "2017-01",
+     "total": 118,
+     "low": 16,
+     "high": 89,
+     "late": 1
+    },
+    {
+     "month": "2017-02",
+     "total": 584,
+     "low": 105,
+     "high": 428,
+     "late": 11
+    },
+    {
+     "month": "2017-03",
+     "total": 1080,
+     "low": 283,
+     "high": 716,
+     "late": 165
+    },
+    {
+     "month": "2017-04",
+     "total": 886,
+     "low": 234,
+     "high": 567,
+     "late": 136
+    },
+    {
+     "month": "2017-05",
+     "total": 1518,
+     "low": 349,
+     "high": 1029,
+     "late": 191
+    },
+    {
+     "month": "2017-06",
+     "total": 1405,
+     "low": 333,
+     "high": 937,
+     "late": 156
+    },
+    {
+     "month": "2017-07",
+     "total": 1487,
+     "low": 302,
+     "high": 1048,
+     "late": 136
+    },
+    {
+     "month": "2017-08",
+     "total": 1849,
+     "low": 380,
+     "high": 1322,
+     "late": 146
+    },
+    {
+     "month": "2017-09",
+     "total": 1698,
+     "low": 383,
+     "high": 1201,
+     "late": 183
+    },
+    {
+     "month": "2017-10",
+     "total": 1816,
+     "low": 403,
+     "high": 1272,
+     "late": 185
+    },
+    {
+     "month": "2017-11",
+     "total": 1930,
+     "low": 474,
+     "high": 1275,
+     "late": 221
+    },
+    {
+     "month": "2017-12",
+     "total": 3221,
+     "low": 1067,
+     "high": 1878,
+     "late": 747
+    }
+   ],
+   "categories": [
+    {
+     "category": "cama_mesa_banho",
+     "count": 1870,
+     "avg_rating": 3.72,
+     "low": 457
+    },
+    {
+     "category": "beleza_saude",
+     "count": 1280,
+     "avg_rating": 3.86,
+     "low": 284
+    },
+    {
+     "category": "esporte_lazer",
+     "count": 1242,
+     "avg_rating": 3.86,
+     "low": 277
+    },
+    {
+     "category": "moveis_decoracao",
+     "count": 1190,
+     "avg_rating": 3.58,
+     "low": 343
+    },
+    {
+     "category": "informatica_acessorios",
+     "count": 1005,
+     "avg_rating": 3.75,
+     "low": 250
+    },
+    {
+     "category": "utilidades_domesticas",
+     "count": 931,
+     "avg_rating": 3.8,
+     "low": 210
+    },
+    {
+     "category": "cool_stuff",
+     "count": 861,
+     "avg_rating": 4.04,
+     "low": 150
+    },
+    {
+     "category": "relogios_presentes",
+     "count": 856,
+     "avg_rating": 3.87,
+     "low": 183
+    },
+    {
+     "category": "telefonia",
+     "count": 836,
+     "avg_rating": 3.73,
+     "low": 200
+    },
+    {
+     "category": "ferramentas_jardim",
+     "count": 814,
+     "avg_rating": 3.86,
+     "low": 175
+    }
+   ]
+  }
+ },
+ "examples": {
+  "atraso": [
+   {
+    "review_id": "72d2265ae82777f585f2a2ccb58c3a69",
+    "rating": 1,
+    "delivery": "atrasada",
+    "category": "ferramentas_jardim",
+    "review_date": "2017-04-28",
+    "text": "atrasou 13 dias minha entrega suporte 0%"
+   },
+   {
+    "review_id": "0985210ad6123c6554ec19639a43cea2",
+    "rating": 1,
+    "delivery": "atrasada",
+    "category": "pet_shop",
+    "review_date": "2017-11-12",
+    "text": "mercadoria não entregue. Mercadoria em atraso. xxxxxxxxxxxxx"
+   },
+   {
+    "review_id": "9c25bc809497cf83de501d3237297153",
+    "rating": 1,
+    "delivery": "no_prazo",
+    "category": "automotivo",
+    "review_date": "2017-08-24",
+    "text": "Meu produto Está sem no fiscal vou atrás dos meus direitos"
+   }
+  ],
+  "nao_recebido": [
+   {
+    "review_id": "bcde24d172b345f4fa4221a36eedf669",
+    "rating": 1,
+    "delivery": "no_prazo",
+    "category": "cama_mesa_banho",
+    "review_date": "2018-08-03",
+    "text": "Produto não entregue. Não chegou o produto poderiam enviar algum e-mail explicando"
+   },
+   {
+    "review_id": "0ae122e3a72e3512518b15abbcc6dbe8",
+    "rating": 1,
+    "delivery": "atrasada",
+    "category": "cama_mesa_banho",
+    "review_date": "2018-03-18",
+    "text": "NÃO RECEBI MEU PRODUTO, E A LOJA NÃO SABE NEM ONDE SE ENCONTRA O PRODUTO. PÉSSIMO ATENDIMENTO TAMBÉM NO SAC DA lannister."
+   },
+   {
+    "review_id": "bf5cebfa349e16a594a498352bad2b70",
+    "rating": 1,
+    "delivery": "nao_entregue",
+    "category": "desconhecido",
+    "review_date": "2017-03-16",
+    "text": "ja se passou o prazo de entrega e nao recebi o produto estou no aguardo e ja ate paguei uma parcela"
+   }
+  ],
+  "incompleto": [
+   {
+    "review_id": "126b501326841153900ebe946d8854c5",
+    "rating": 2,
+    "delivery": "no_prazo",
+    "category": "mista",
+    "review_date": "2018-04-01",
+    "text": "Boa tarde recebi o pedido incompleto veio faltando a luminária grande de 50 cm preto brilhante estou aguardando o produto .espero o mais rápido possível. obrigado"
+   },
+   {
+    "review_id": "4a0099475ab9519736f1aef9afe906eb",
+    "rating": 1,
+    "delivery": "no_prazo",
+    "category": "mista",
+    "review_date": "2018-06-10",
+    "text": "Entrega parcial. Recebi apenas a Cadeira secretária giratória crepe verde bandeira. As Capas Para Colchão Casal Impermeáveis ainda não chegaram."
+   },
+   {
+    "review_id": "61c382d33ead4560e772c646f9f6e90d",
+    "rating": 2,
+    "delivery": "no_prazo",
+    "category": "moveis_decoracao",
+    "review_date": "2017-12-20",
+    "text": "Veio apenas um produto, porém foi cobrado 2 produtos, já fiz a reclamação e até o momento não obtive resposta."
+   }
+  ],
+  "avaria": [
+   {
+    "review_id": "9b7f186bdb84e90acc8ac7af8a67016c",
+    "rating": 2,
+    "delivery": "no_prazo",
+    "category": "perfumaria",
+    "review_date": "2017-08-05",
+    "text": "produto chegou no prazo porem veio quebrado"
+   },
+   {
+    "review_id": "7c2bfdc27c016b8ce15f3b1e37d830a2",
+    "rating": 1,
+    "delivery": "no_prazo",
+    "category": "ferramentas_jardim",
+    "review_date": "2017-08-17",
+    "text": "maleta do produto de péssima qualidade, e veio quebrada"
+   },
+   {
+    "review_id": "c9f543608a4108449515312665fe03c5",
+    "rating": 1,
+    "delivery": "no_prazo",
+    "category": "malas_acessorios",
+    "review_date": "2017-11-30",
+    "text": "O produto veio mal embalado, podendo ser facilmente avariado. Aliás foi, pois chegou com umas das rodinhas quebradas, que foi edentificado assim que foi aberto"
+   }
+  ],
+  "rastreio": [
+   {
+    "review_id": "aff70a45616ebd5816cce7bfce86c256",
+    "rating": 1,
+    "delivery": "atrasada",
+    "category": "perfumaria",
+    "review_date": "2018-02-24",
+    "text": "Comprei dois produtos distintos da targaryen pelo stark. Em ambos houve dificuldade na entrega e rastreamento não atualiza há semanas."
+   },
+   {
+    "review_id": "459c31689bdf1768e7275ebf12ffa4ae",
+    "rating": 1,
+    "delivery": "atrasada",
+    "category": "cama_mesa_banho",
+    "review_date": "2018-03-16",
+    "text": "Ola tem como wu rastrear ou verificar quem recebeu?"
+   },
+   {
+    "review_id": "d61a683c6401494f7311af37b45ff720",
+    "rating": 1,
+    "delivery": "nao_entregue",
+    "category": "desconhecido",
+    "review_date": "2017-12-17",
+    "text": "Produto não entregue no prazo, ainda aguardando sem conseguir rastrear localização exata do produto, muito ruim o retorno ao cliente"
+   }
+  ],
+  "defeito": [
+   {
+    "review_id": "4d29b3543bba4fc55883567a575fe025",
+    "rating": 1,
+    "delivery": "no_prazo",
+    "category": "cama_mesa_banho",
+    "review_date": "2018-04-14",
+    "text": "Péssima pois a colcha não é um cobre leito e o tecido é de lançou fino e ainda veio com defeito nas capas das almofadas,estão descusturadas"
+   },
+   {
+    "review_id": "83963224a4ebff3af10c5f9d094cd3e6",
+    "rating": 2,
+    "delivery": "no_prazo",
+    "category": "informatica_acessorios",
+    "review_date": "2018-04-22",
+    "text": "Comprei para adaptar um aspirador de pó veicular 12v em uma tomada elétrica 110v mas o aspirador não funciona."
+   },
+   {
+    "review_id": "038e065415fb159cc302f06417fbba8f",
+    "rating": 1,
+    "delivery": "no_prazo",
+    "category": "informatica_acessorios",
+    "review_date": "2018-06-03",
+    "text": "PESSIMA. Esta com defeito danificou todas as imagem salvas e eu perdi 182 fotos."
+   }
+  ],
+  "diferente_anuncio": [
+   {
+    "review_id": "a6495beb7a36ab999b6400db0590dfe5",
+    "rating": 2,
+    "delivery": "no_prazo",
+    "category": "bebes",
+    "review_date": "2018-05-01",
+    "text": "Produto errado. Boa tarde, , único problema é que o produto comprado e faturado em NF era um elefante de pelúcia CINZA de 65 cm e veio um elefante ROSA, Confiram por favor."
+   },
+   {
+    "review_id": "38e7ab914245e2f84080e349f5e6810d",
+    "rating": 1,
+    "delivery": "atrasada",
+    "category": "relogios_presentes",
+    "review_date": "2018-04-26",
+    "text": "Produto diferente do que. Comprei um modelo de relógio e acabei de receber outro produto"
+   },
+   {
+    "review_id": "0d6a1a1b9c0f6654927cd770ad20c462",
+    "rating": 1,
+    "delivery": "no_prazo",
+    "category": "eletronicos",
+    "review_date": "2018-07-04",
+    "text": "Relógio errado. Comprei um produto,me mandaram um outro produto que não tem nada a ver com o qual foi pago."
+   }
+  ],
+  "tamanho": [
+   {
+    "review_id": "eeedf1e8a64808850860aface48783bf",
+    "rating": 1,
+    "delivery": "no_prazo",
+    "category": "pet_shop",
+    "review_date": "2018-07-25",
+    "text": "muito boa. Recebi o produto,porém o tamanho não foi o adequado."
+   },
+   {
+    "review_id": "75679fc9406a0bc32999807e7c526e3e",
+    "rating": 2,
+    "delivery": "no_prazo",
+    "category": "moveis_decoracao",
+    "review_date": "2018-08-04",
+    "text": "Quadros entregues errado. Kit quadros vieram com medidas erradas Comprei com medidas 52x33 Vieram com mefidas: 32x24"
+   },
+   {
+    "review_id": "7fcb5b409e2847bea96733ffe4757af5",
+    "rating": 2,
+    "delivery": "no_prazo",
+    "category": "papelaria",
+    "review_date": "2018-01-16",
+    "text": "Não tinha as medidas da mochila no site, acabei comprando uma pequena demais. Sugiro colocar as medidas estampadas."
+   }
+  ],
+  "qualidade_baixa": [
+   {
+    "review_id": "44f7482ffa6b98bc55f68fd6452cb308",
+    "rating": 1,
+    "delivery": "no_prazo",
+    "category": "brinquedos",
+    "review_date": "2018-07-01",
+    "text": "FABRICAÇÃO. Origem do produto china, qualidade ruim, na hora da compra não ficou claro que se tratava de um produto de origem (pirata) cuja a qualidade é ruim."
+   },
+   {
+    "review_id": "fddadbf97b7b0bed29cc25cc6363fbd9",
+    "rating": 2,
+    "delivery": "no_prazo",
+    "category": "utilidades_domesticas",
+    "review_date": "2017-07-07",
+    "text": "o produto nao e o que esperava fragil e super caro."
+   },
+   {
+    "review_id": "0dd7e277fa93293ee07973a2161c87a9",
+    "rating": 2,
+    "delivery": "no_prazo",
+    "category": "bebes",
+    "review_date": "2018-05-11",
+    "text": "Produto Frágil. Lindas peças, porém muito frágeis."
+   }
+  ],
+  "falsificado": [
+   {
+    "review_id": "e467091377faa27a1f99213b98cd9c73",
+    "rating": 2,
+    "delivery": "no_prazo",
+    "category": "informatica_acessorios",
+    "review_date": "2017-06-21",
+    "text": "O produto chegou no prazo, mas veio com o lacre rompido em uma embalagem não original, dando a impressão de ser um produto usado. Testei e está funcionando. Não inspirou confiança."
+   },
+   {
+    "review_id": "7ddf2bd6ae66812c990b266d28e4e794",
+    "rating": 1,
+    "delivery": "no_prazo",
+    "category": "informatica_acessorios",
+    "review_date": "2018-03-10",
+    "text": "Me senti enganado furtado o produto não é Original HP a embalagem é plastica estou indignado com a qualidade do produto comprei gato por lebre!"
+   },
+   {
+    "review_id": "852118414cff80900457523d7bcc8f5f",
+    "rating": 1,
+    "delivery": "no_prazo",
+    "category": "desconhecido",
+    "review_date": "2018-01-27",
+    "text": "Recebi um produto falsificado e estou esperando o retorno do email que eu mandei."
+   }
+  ],
+  "sem_resposta": [
+   {
+    "review_id": "18ca5afc465bc6bbaa3693e1a9c108f8",
+    "rating": 1,
+    "delivery": "nao_entregue",
+    "category": "utilidades_domesticas",
+    "review_date": "2018-08-23",
+    "text": "Pessimamente atendido. Até o momento não te hoje informação do produto e TB sem resposta dos e-mails que passri"
+   },
+   {
+    "review_id": "0077bd924a9e436de9b1bce12ef1da89",
+    "rating": 1,
+    "delivery": "no_prazo",
+    "category": "beleza_saude",
+    "review_date": "2017-05-27",
+    "text": "mandei por e-mail a informação de que recebi a voltagem errada e NINGUÉM ME DEU RETORNO. Inclusive enviei um numero de celular mas infelizmente a empresa não retornou."
+   },
+   {
+    "review_id": "65e9ee99e18f7c79cf4e10f294259e38",
+    "rating": 2,
+    "delivery": "atrasada",
+    "category": "livros_tecnicos",
+    "review_date": "2018-06-07",
+    "text": "Nao consigo contato para. Nao consigo contato para pedir de volta meu produto uma vez que falaram q estaria disponível ate o dia 5 nos correio o qual voltou dia 2"
+   }
+  ],
+  "troca_devolucao": [
+   {
+    "review_id": "6c3146f8d876a5c067693c07efb04925",
+    "rating": 1,
+    "delivery": "no_prazo",
+    "category": "informatica_acessorios",
+    "review_date": "2018-05-04",
+    "text": "Produto entregue errado. Foi entregue um cartucho colorido 901 no lugar do Preto 901 XL. Solicito orientação para a troca do produto."
+   },
+   {
+    "review_id": "b8a3593730a77115e4df7c72b0f5e845",
+    "rating": 1,
+    "delivery": "no_prazo",
+    "category": "papelaria",
+    "review_date": "2017-08-08",
+    "text": "Verdadeiro desrespeiro com o consumidor. É inaceitavel empresas agirem desta forma. Só não devolverei devido a burocracia deste lamental país."
+   },
+   {
+    "review_id": "dfe9b87eb34f2b54b85660e934b902a5",
+    "rating": 2,
+    "delivery": "no_prazo",
+    "category": "moveis_escritorio",
+    "review_date": "2017-07-04",
+    "text": "PRODUTO ENTREGUE COM AVARIA, SOLICITADO TROCA."
+   }
+  ],
+  "reembolso": [
+   {
+    "review_id": "1f3b2abc10c150806a54ddb7ad99f8de",
+    "rating": 1,
+    "delivery": "no_prazo",
+    "category": "fashion_bolsas_e_acessorios",
+    "review_date": "2017-12-01",
+    "text": "Disseram que entregaram meu pedido em 30///2017 e não entregaram, quero meu dinheiro de volta."
+   },
+   {
+    "review_id": "bad89ab166a2a98c91fbc1e42bd54648",
+    "rating": 1,
+    "delivery": "nao_entregue",
+    "category": "desconhecido",
+    "review_date": "2017-11-23",
+    "text": "Não cumpre o que anuncia. Não entregou o produto. Quero meu dinheiro de volta. Desonestidade."
+   },
+   {
+    "review_id": "ee40ec76a6566abad15cb95596544d9e",
+    "rating": 1,
+    "delivery": "desconhecido",
+    "category": "cama_mesa_banho",
+    "review_date": "2017-09-23",
+    "text": "Além de não entregarem.não fui avisada nem reembolsada."
+   }
+  ],
+  "cancelamento": [
+   {
+    "review_id": "4d3c61768eb47216ecf732bbbd8bef3c",
+    "rating": 1,
+    "delivery": "nao_entregue",
+    "category": "desconhecido",
+    "review_date": "2018-01-05",
+    "text": "Absurdo! Venderam o produto, paguei e, sem nenhuma explicação cancelaram a compra!!! Fiquei extremamente frustrado. Não volto a comprar nessa loja!!!"
+   },
+   {
+    "review_id": "4a15380556c3c4a8fb8661bac03ad27d",
+    "rating": 1,
+    "delivery": "nao_entregue",
+    "category": "desconhecido",
+    "review_date": "2018-04-08",
+    "text": "Preciso saber se existe um prazo para receber meu produto ou se meu pedido será cancelado?"
+   },
+   {
+    "review_id": "d10bf915c8041a1d95cdce3db9b7e322",
+    "rating": 1,
+    "delivery": "nao_entregue",
+    "category": "desconhecido",
+    "review_date": "2017-10-07",
+    "text": "Ficaram com o produto em falta e cancelaram a entrega"
+   }
+  ],
+  "nao_volta": [
+   {
+    "review_id": "47c6d2a348f1f16dfceaf569313853cd",
+    "rating": 1,
+    "delivery": "nao_entregue",
+    "category": "moveis_decoracao",
+    "review_date": "2018-04-20",
+    "text": "O prazo para entrega do produto não foi cumprida, e não estou tendo nenhum suporte da Loja. Não recomendo!"
+   },
+   {
+    "review_id": "7ef01879c991e1c76b4a0331c06704c0",
+    "rating": 1,
+    "delivery": "no_prazo",
+    "category": "bebes",
+    "review_date": "2018-05-16",
+    "text": "Loja boa, produto ruim. Protetor de baixa qualidade... faz barulho e esquenta... não recomendo!"
+   },
+   {
+    "review_id": "0edf4a7e5a01cd378c390fc012ee9b98",
+    "rating": 2,
+    "delivery": "no_prazo",
+    "category": "moveis_decoracao",
+    "review_date": "2018-01-23",
+    "text": "lannister ótima mais o produto é péssimo! Descartável. Quebrou no dia que foi montado. Não recomendo a ninguém."
+   }
+  ],
+  "reclamacao_formal": [
+   {
+    "review_id": "b9326e8616bfd6040691de0f511a919e",
+    "rating": 1,
+    "delivery": "atrasada",
+    "category": "pet_shop",
+    "review_date": "2017-12-22",
+    "text": "A entrega até o presente não ocorreu e já abri chamado no reclame aqui e ninguém me retorna ao meu ver uma grande falta de respeito com o cliente . Aguardo retorno urgente"
+   },
+   {
+    "review_id": "f378e67bfa5f051d4066c80396107422",
+    "rating": 2,
+    "delivery": "no_prazo",
+    "category": "moveis_decoracao",
+    "review_date": "2018-04-21",
+    "text": "eu fiz o pedido de 3 cone pagando 150,00 reais e so me entregaram 1.quero saber se vao me entregar caso contrario recorrerei a justiça."
+   },
+   {
+    "review_id": "915385577eaf9b7f239992efcb1bdb62",
+    "rating": 2,
+    "delivery": "no_prazo",
+    "category": "moveis_escritorio",
+    "review_date": "2017-02-08",
+    "text": "O processo ocorreu direito, mas durante todo o período da compra aparecia uma valor de frete promocional de 18,00 reais e quando eu fechei a compra o valor subiu para 56,00."
+   }
+  ],
+  "recompra": [
+   {
+    "review_id": "b0d0dc1600fed4d126eacc5a04440177",
+    "rating": 5,
+    "delivery": "no_prazo",
+    "category": "utilidades_domesticas",
+    "review_date": "2018-06-05",
+    "text": "Excelente. Além de entregar rápido...estava sem um arranhão e o entregador veio de moto...muito educado. Recomendo a loja e comprarei mais desta loja."
+   },
+   {
+    "review_id": "7d8c62d8beed5c3b3fc52331e832315a",
+    "rating": 4,
+    "delivery": "no_prazo",
+    "category": "cama_mesa_banho",
+    "review_date": "2018-08-04",
+    "text": "Cortina. Recebi no prazo. Infelizmente a americana não me permiti comprar mais, pois não aprovou meu cartão de compras da loja, sendo que sempre compro no site."
+   },
+   {
+    "review_id": "d2560a80280d29f148a5796cb94c584f",
+    "rating": 5,
+    "delivery": "no_prazo",
+    "category": "beleza_saude",
+    "review_date": "2018-08-28",
+    "text": "Otimo. Sempre compro aqui aqui por que tenho certeza que chegará de acordo com o combinado"
+   }
+  ],
+  "entrega_rapida": [
+   {
+    "review_id": "54e3c02158330e39788bcabcbb268031",
+    "rating": 5,
+    "delivery": "no_prazo",
+    "category": "eletronicos",
+    "review_date": "2017-12-29",
+    "text": "Mais uma vez comprando nas lannister e muito satisfeita com o produto e a rapidez da entrega. 100%satisfeita!!!!"
+   },
+   {
+    "review_id": "ae9a6292e8d0c28dd78e1186df0c9f6b",
+    "rating": 5,
+    "delivery": "no_prazo",
+    "category": "informatica_acessorios",
+    "review_date": "2018-05-15",
+    "text": "Super recomendado. Site confiável. O produto foi entregue antes do prazo previsto."
+   },
+   {
+    "review_id": "57cef98ab665803d91c1cfd9ef4d7a89",
+    "rating": 5,
+    "delivery": "no_prazo",
+    "category": "bebes",
+    "review_date": "2018-08-03",
+    "text": "Ótima compra. O produto chegou antes do prazo, em perfeitas condições e totalmente de acordo com a descrição no site. Excelente compra. Fiquei muito satisfeita."
+   }
+  ],
+  "produto_bom": [
+   {
+    "review_id": "3f4d6a8d3256e3984eb2eaa5bf166b9b",
+    "rating": 5,
+    "delivery": "no_prazo",
+    "category": "instrumentos_musicais",
+    "review_date": "2017-10-28",
+    "text": "Lojas lannister está de parabéns... Produto excelente..entrega dentro do prazo.. Arrasou Super recomendo!"
+   },
+   {
+    "review_id": "6a64611c05ca1b15291a686a2b3044c7",
+    "rating": 5,
+    "delivery": "no_prazo",
+    "category": "esporte_lazer",
+    "review_date": "2017-03-28",
+    "text": "Produto muito bom e chegou dentro do prazo!"
+   },
+   {
+    "review_id": "e6af49b7c09ea62bf07c8590cec5c603",
+    "rating": 5,
+    "delivery": "no_prazo",
+    "category": "brinquedos",
+    "review_date": "2017-12-01",
+    "text": "Bom produto , chegou dentro do prazo, eu recomendo!"
+   }
+  ],
+  "conforme_anuncio": [
+   {
+    "review_id": "97784f9b8b324aaf69a19483ec5d29e8",
+    "rating": 5,
+    "delivery": "no_prazo",
+    "category": "esporte_lazer",
+    "review_date": "2018-06-20",
+    "text": "Recomendo a todos. Produto conforme anunciado, é entregue dentro do prazo recomendo a todos a loja e o produto!"
+   },
+   {
+    "review_id": "835377822c2f024df8ef8364caf9d08f",
+    "rating": 5,
+    "delivery": "no_prazo",
+    "category": "ferramentas_jardim",
+    "review_date": "2017-06-09",
+    "text": "Haste conforme anunciado, preço abaixo do mercado!"
+   },
+   {
+    "review_id": "52904c55231d8fcd78353a9000b84ddc",
+    "rating": 5,
+    "delivery": "no_prazo",
+    "category": "eletronicos",
+    "review_date": "2018-01-10",
+    "text": "Recebi o produto conforme o descrito e antes do tempo empresa Boa e séria"
+   }
+  ],
+  "bem_embalado": [
+   {
+    "review_id": "e0ea41105f3bbe321c55c2029964c8c0",
+    "rating": 5,
+    "delivery": "no_prazo",
+    "category": "livros_interesse_geral",
+    "review_date": "2018-05-04",
+    "text": "Super recomendo. Muito bom! recebi antes do combinado, bem embalado e perfeito estado."
+   },
+   {
+    "review_id": "b7b89f7d333509e26e9492d79f9d3719",
+    "rating": 5,
+    "delivery": "no_prazo",
+    "category": "beleza_saude",
+    "review_date": "2018-04-04",
+    "text": "A entrega foi dentro do prazo, bem embalada e a empresa comunicou todos os passos da compra e entrega do produto"
+   },
+   {
+    "review_id": "38bd9fdcd2f7bf05c83aca673edf476a",
+    "rating": 5,
+    "delivery": "no_prazo",
+    "category": "informatica_acessorios",
+    "review_date": "2018-03-01",
+    "text": "O produto é original, chegou no prazo é muito bem embalado! Recomendo!!!"
+   }
+  ],
+  "bom_atendimento": [
+   {
+    "review_id": "1d68929ae5643197192c54530711a488",
+    "rating": 5,
+    "delivery": "no_prazo",
+    "category": "cama_mesa_banho",
+    "review_date": "2017-12-30",
+    "text": "Excelente atendimento e produtos.Espero q continue sempre assim."
+   },
+   {
+    "review_id": "f0ce8948c0a92a2b82c096abef2bcdc8",
+    "rating": 4,
+    "delivery": "no_prazo",
+    "category": "cama_mesa_banho",
+    "review_date": "2018-03-15",
+    "text": "Muito bom atendimento e dentro do prazo de entrega"
+   },
+   {
+    "review_id": "54632c74b47370b0a17337a109c2c0e3",
+    "rating": 5,
+    "delivery": "no_prazo",
+    "category": "telefonia",
+    "review_date": "2018-01-18",
+    "text": "Parabens pela qualidade e o otimo atendimento"
+   }
+  ],
+  "bom_preco": [
+   {
+    "review_id": "ca6cc3e5014a5895ad2d867ace8db3fe",
+    "rating": 5,
+    "delivery": "no_prazo",
+    "category": "beleza_saude",
+    "review_date": "2017-06-10",
+    "text": "Entregue antes da data. A máscara banho de verniz é ótima. Ótimo custo benefício."
+   },
+   {
+    "review_id": "afdb3e7917cf0c8fdac2c66ed9f68ed1",
+    "rating": 5,
+    "delivery": "no_prazo",
+    "category": "moveis_decoracao",
+    "review_date": "2017-09-01",
+    "text": "Lindo,fácil de limpar, ótimo custo benefício."
+   },
+   {
+    "review_id": "8c2530791b2510a4b8f474cc52f49847",
+    "rating": 4,
+    "delivery": "no_prazo",
+    "category": "cama_mesa_banho",
+    "review_date": "2018-05-18",
+    "text": "Gostei do produto. Produto bom e barato, não fiquem esperando milagre do produto de menos de 20 reais. Porém muito bom mesmo !!"
+   }
+  ]
+ }
+}

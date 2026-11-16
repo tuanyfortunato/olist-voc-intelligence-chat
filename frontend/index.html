@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Perguntas sobre a experiência dos clientes da Olist, respondidas a partir dos comentários das avaliações, com cada afirmação ligada às avaliações que a sustentam.">
+  <meta name="description" content="Painel por setor com os temas mais citados nas avaliações dos clientes da Olist e um chat que responde a partir dos comentários, mostrando as avaliações que sustentam cada afirmação.">
   <meta name="theme-color" content="#1f5fae">
-  <title>Voz do Cliente | Avaliações da Olist</title>
+  <title>Voz do Cliente | Avaliações de clientes da Olist</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%231f5fae'/%3E%3Cpath d='M10 12.5a2.5 2.5 0 0 1 2.5-2.5h15a2.5 2.5 0 0 1 2.5 2.5v10a2.5 2.5 0 0 1-2.5 2.5H18l-5.5 4.5V25a2.5 2.5 0 0 1-2.5-2.5z' fill='none' stroke='%23fff' stroke-width='2' stroke-linejoin='round'/%3E%3Crect x='14.5' y='18' width='2.6' height='4' rx='1' fill='%23fff'/%3E%3Crect x='18.7' y='15' width='2.6' height='7' rx='1' fill='%23fff'/%3E%3Crect x='22.9' y='13' width='2.6' height='9' rx='1' fill='%23fff'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,8 +14,13 @@
   <script src="theme.js"></script>
 </head>
 <body>
-  <a class="skip-link" href="#question">Ir para a pergunta</a>
-  <header class="topbar">
+  <a class="skip-link" href="#main-content">Ir para o conteúdo</a>
+  <p class="demo-strip" role="note">
+    <strong>Ambiente de demonstração.</strong> O login é fictício: nenhuma senha é conferida e
+    nada é guardado. Projeto acadêmico da pós-graduação AI Scientist da FIAP, não é um site
+    oficial da Olist.
+  </p>
+  <header class="topbar" id="topbar">
     <div class="brand">
       <svg class="brand-mark" viewBox="0 0 40 40" aria-hidden="true">
         <rect class="brand-bg" width="40" height="40" rx="10"></rect>
@@ -26,18 +31,23 @@
       </svg>
       <div class="brand-text">
         <h1>Voz do Cliente</h1>
-        <p class="brand-sub">Análise das avaliações da Olist</p>
+        <p class="brand-sub">Avaliações de clientes da Olist</p>
       </div>
+      <span class="company-badge">Empresa analisada: <strong>Olist</strong>, plataforma brasileira de e-commerce</span>
     </div>
     <div class="top-actions">
-      <p id="api-status" class="api-status" data-state="checking" role="status">
-        <span class="status-dot" aria-hidden="true"></span>
-        <span id="api-status-text">Verificando</span>
-      </p>
-      <button id="new-chat" class="ghost-button icon-button" type="button" aria-label="Nova conversa" title="Nova conversa" hidden>
-        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
-        <span class="wide-only">Nova conversa</span>
-      </button>
+      <label id="sector-switch" class="sector-switch" hidden>
+        <span class="wide-only">Setor</span>
+        <select id="sector-select" aria-label="Trocar de setor"></select>
+      </label>
+      <span id="user-chip" class="user-chip" hidden>
+        <span id="user-avatar" class="avatar" aria-hidden="true"></span>
+        <span class="user-text">
+          <span id="user-name" class="user-name"></span>
+          <span id="user-email" class="user-email"></span>
+        </span>
+      </span>
+      <button id="logout" class="ghost-button" type="button" hidden>Sair</button>
       <button id="about-button" class="ghost-button icon-button" type="button" aria-haspopup="dialog" aria-label="Sobre o projeto e os dados" title="Sobre o projeto e os dados">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v6M12 7.5v.01"></path></svg>
         <span class="wide-only">Sobre</span>
@@ -54,8 +64,130 @@
     </div>
   </header>
 
-  <main class="layout">
-    <div id="offline-banner" class="offline-banner" role="status" hidden>
+  <main id="login-view" class="login-view" hidden>
+    <section class="login-side" aria-labelledby="login-pitch">
+      <p class="login-kicker">Olist · e-commerce brasileiro</p>
+      <h2 id="login-pitch">O que os clientes da Olist estão dizendo, por setor, com prova.</h2>
+      <p class="login-lead">
+        A Olist ajuda pequenas lojas de todo o Brasil a vender nos grandes marketplaces. Este é
+        um painel com os temas que mais aparecem nas avaliações dos clientes e um chat que
+        responde a partir dos comentários reais, mostrando cada trecho usado.
+      </p>
+      <ol class="login-points">
+        <li><span aria-hidden="true">1</span>Escolha o seu setor, ou a diretoria geral para ver tudo.</li>
+        <li><span aria-hidden="true">2</span>Veja quantas avaliações tratam de cada problema e de cada elogio.</li>
+        <li><span aria-hidden="true">3</span>Pergunte ao chat e confira os comentários que sustentam a resposta.</li>
+      </ol>
+      <p class="login-foot">
+        Base pública que a própria Olist publicou no Kaggle, com pedidos feitos na Olist Store de
+        2016 a 2018. A nota e o comentário vêm da pesquisa de satisfação que o cliente recebe por
+        e-mail depois da entrega.
+      </p>
+    </section>
+    <section class="login-main">
+      <form id="login-form" class="login-card" novalidate>
+        <h2>Entrar</h2>
+        <p class="login-card-sub">Painel de avaliações dos clientes da Olist.</p>
+        <label class="field" for="login-email">E-mail</label>
+        <input id="login-email" type="email" autocomplete="username" placeholder="voce@empresa.com.br" required>
+        <label class="field" for="login-password">Senha</label>
+        <input id="login-password" type="password" autocomplete="current-password" placeholder="Qualquer senha" required>
+        <p id="login-error" class="login-error" role="alert" hidden>Preencha o e-mail e a senha. Qualquer senha serve.</p>
+        <button class="primary-button" type="submit">Entrar</button>
+        <div class="demo-credentials">
+          <strong>Login de demonstração</strong>
+          <span>Este acesso é fictício e qualquer senha funciona. Para testar, use:</span>
+          <div class="demo-credentials-row">
+            <span><code>gestor@demo.com.br</code> <code>demo1234</code></span>
+            <button id="fill-demo" type="button">Preencher</button>
+          </div>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <main id="sector-view" class="sector-view" hidden>
+    <p class="eyebrow" id="sector-greeting"></p>
+    <h2>Qual é o seu setor?</h2>
+    <p class="sector-lead">
+      Os dados são das avaliações dos clientes da Olist. O painel e o chat abrem com os temas e
+      os filtros do setor escolhido. Dá para trocar depois, no topo da página.
+    </p>
+    <div id="sector-cards" class="sector-cards"></div>
+  </main>
+
+  <div id="painel-view" class="painel" hidden>
+    <main id="main-content" class="dashboard" aria-labelledby="dash-title" tabindex="-1">
+      <div class="dash-head">
+        <div>
+          <h2 id="dash-title"></h2>
+          <p id="dash-sub" class="dash-sub"></p>
+        </div>
+        <div id="period-tabs" class="period-tabs" role="group" aria-label="Período"></div>
+      </div>
+      <p id="preview-note" class="preview-note" role="note" hidden>
+        Números de prévia: os temas foram contados por palavras-chave. A contagem final vem da
+        classificação em lote pelo modelo.
+      </p>
+      <div id="dash-error" class="notice notice-error" role="alert" hidden></div>
+      <div id="kpis" class="kpis"></div>
+      <div class="dash-grid">
+        <section class="dash-card" aria-labelledby="complaints-title">
+          <h3 id="complaints-title"></h3>
+          <p class="dash-card-sub">Avaliações que citam cada tema. Clique num tema para ver exemplos e perguntar ao chat.</p>
+          <div id="complaints" class="theme-list"></div>
+        </section>
+        <section class="dash-card" aria-labelledby="side-title">
+          <h3 id="side-title"></h3>
+          <p id="side-sub" class="dash-card-sub"></p>
+          <div id="side-body"></div>
+        </section>
+      </div>
+      <section class="dash-card chart-card" aria-labelledby="chart-title">
+        <h3 id="chart-title"></h3>
+        <p id="chart-sub" class="dash-card-sub"></p>
+        <div id="chart" class="chart"></div>
+      </section>
+      <div id="sector-summary" class="sector-summary" hidden></div>
+      <p class="dash-foot">
+        Os temas de cada avaliação foram marcados uma vez, em lote, por um modelo de linguagem.
+        Uma avaliação pode ter mais de um tema. As contagens não usam o chat e não gastam perguntas.
+        <span id="dash-generated"></span>
+      </p>
+      <p class="credit">
+        Projeto acadêmico do Tech Challenge da pós-graduação AI Scientist da FIAP, feito por
+        Tuany Fortunato. Não é um site oficial da Olist.
+        <a href="https://github.com/tuanyfortunato/olist-voc-intelligence-chat" target="_blank" rel="noopener">Ver o código no GitHub</a>
+      </p>
+    </main>
+
+    <aside id="chat-panel" class="chat-panel" aria-labelledby="chat-title">
+      <div class="chat-head">
+        <button id="close-chat" class="ghost-button close-chat" type="button">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg>
+          Painel
+        </button>
+        <div class="chat-head-row">
+          <div>
+            <h2 id="chat-title" class="chat-title">Chat do setor</h2>
+            <p class="chat-sub">Respostas a partir dos comentários dos clientes da Olist</p>
+          </div>
+          <div class="chat-head-actions">
+            <p id="api-status" class="api-status" data-state="checking" role="status">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span id="api-status-text">Verificando</span>
+      </p>
+            <button id="new-chat" class="ghost-button icon-button" type="button" aria-label="Nova conversa" title="Nova conversa" hidden>
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+        
+      </button>
+          </div>
+        </div>
+        <div id="scope-chips" class="scope-chips" aria-label="Recorte da busca"></div>
+      </div>
+      <div id="chat-scroll" class="chat-scroll">
+        <div class="layout">
+          <div id="offline-banner" class="offline-banner" role="status" hidden>
       <svg class="icon notice-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
       <div class="offline-text">
         <strong>O chat está fora do ar agora</strong>
@@ -64,71 +196,30 @@
       <button id="example-button" class="retry-button" type="button">Ver uma resposta de exemplo</button>
     </div>
 
-    <section id="welcome" class="welcome" hidden>
-      <p class="eyebrow">Avaliações de pedidos feitos entre 2016 e 2018</p>
-      <h2>O que você quer saber sobre os clientes?</h2>
-      <p class="welcome-lead">
-        As respostas são escritas a partir dos comentários das avaliações. Embaixo de cada
-        afirmação aparecem os trechos dos comentários que a sustentam, para você conferir.
-      </p>
-      <ol class="how" aria-label="Como funciona">
-        <li><span class="how-step" aria-hidden="true">1</span><span><strong>Você pergunta</strong> sobre entrega, defeitos, atendimento ou elogios.</span></li>
-        <li><span class="how-step" aria-hidden="true">2</span><span><strong>A busca encontra</strong> os comentários mais parecidos com a pergunta.</span></li>
-        <li><span class="how-step" aria-hidden="true">3</span><span><strong>A resposta cita</strong> cada avaliação usada, para você conferir.</span></li>
-      </ol>
-      <h3 class="areas-title" id="areas-title">Escolha uma área para ver as perguntas sugeridas</h3>
-      <div class="examples" id="examples" role="group" aria-labelledby="areas-title">
-        <button type="button" class="example example-overview" data-area="Visão geral" aria-expanded="false" aria-controls="area-panel">
-          <span class="example-topic">Visão geral</span>
-          <span class="example-summary">Reclamações e elogios em geral</span>
-        </button>
-        <button type="button" class="example" data-area="Logística" aria-expanded="false" aria-controls="area-panel">
-          <span class="example-topic">Logística</span>
-          <span class="example-summary">Prazo, extravio, avaria e rastreio</span>
-        </button>
-        <button type="button" class="example" data-area="Produto e anúncio" aria-expanded="false" aria-controls="area-panel">
-          <span class="example-topic">Produto e anúncio</span>
-          <span class="example-summary">Defeitos, medidas e diferença do anúncio</span>
-        </button>
-        <button type="button" class="example" data-area="Vendedores" aria-expanded="false" aria-controls="area-panel">
-          <span class="example-topic">Vendedores</span>
-          <span class="example-summary">Contato com a loja, trocas e reembolso</span>
-        </button>
-        <button type="button" class="example" data-area="Retenção" aria-expanded="false" aria-controls="area-panel">
-          <span class="example-topic">Retenção</span>
-          <span class="example-summary">O que faz o cliente voltar ou desistir</span>
-        </button>
-        <button type="button" class="example" data-area="Pontos fortes" aria-expanded="false" aria-controls="area-panel">
-          <span class="example-topic">Pontos fortes</span>
-          <span class="example-summary">O que os clientes mais elogiam</span>
-        </button>
-      </div>
-      <div id="area-panel" class="area-panel" role="region" aria-labelledby="area-panel-title" hidden>
-        <div class="area-panel-head">
-          <h3 id="area-panel-title" class="area-panel-title" tabindex="-1"></h3>
-          <button id="area-close" class="area-close" type="button" aria-label="Fechar as perguntas da área" title="Fechar">
-            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
-          </button>
+          <section id="welcome" class="welcome" hidden>
+            <p id="welcome-lead" class="welcome-lead"></p>
+            <div id="area-panel" class="area-panel" role="region" aria-labelledby="area-panel-title">
+              <h3 id="area-panel-title" class="area-panel-title" tabindex="-1"></h3>
+              <div id="area-questions" class="suggestion-list area-questions"></div>
+            </div>
+            <p class="fixed-note">
+              As respostas descrevem as avaliações recuperadas para cada pergunta, e não todas as
+              do recorte. Dá para continuar com perguntas curtas, como "E nas notas altas?".
+            </p>
+          </section>
+
+          <section id="conversation" class="conversation" aria-label="Conversa"></section>
+          <div id="conversation-end"></div>
         </div>
-        <p class="area-panel-hint">Clique numa pergunta para enviar, ou escreva a sua no campo abaixo.</p>
-        <div id="area-questions" class="suggestion-list area-questions"></div>
       </div>
-      <p class="fixed-note">
-        As respostas descrevem as avaliações recuperadas para cada pergunta, e não a base
-        inteira. Dá para continuar a conversa com perguntas curtas, como "E nas notas altas?".
-      </p>
-    </section>
-
-    <section id="conversation" class="conversation" aria-label="Conversa"></section>
-    <div id="conversation-end"></div>
-    <p class="credit">
-      Projeto acadêmico do Tech Challenge da pós-graduação AI Scientist da FIAP, feito por
-      Tuany Fortunato. Não é um site oficial da Olist.
-      <a href="https://github.com/tuanyfortunato/olist-voc-intelligence-chat" target="_blank" rel="noopener">Ver o código no GitHub</a>
-    </p>
-  </main>
-
-  <div class="composer">
+      <button id="to-end" class="to-end" type="button" aria-label="Ir para o fim da conversa" title="Ir para o fim da conversa" hidden>
+    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"></path></svg>
+  </button>
+      <div id="undo-toast" class="undo-toast" role="status" hidden>
+    <span>Conversa apagada</span>
+    <button id="undo-button" type="button">Desfazer</button>
+  </div>
+      <div class="composer">
     <form id="ask-form" class="ask-form">
       <div id="filter-bar" class="filter-bar" aria-label="Filtros da busca"></div>
       <label for="question" class="visually-hidden">Pergunta</label>
@@ -144,10 +235,13 @@
       </div>
     </form>
   </div>
+    </aside>
 
-  <button id="to-end" class="to-end" type="button" aria-label="Ir para o fim da conversa" title="Ir para o fim da conversa" hidden>
-    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"></path></svg>
-  </button>
+    <button id="open-chat" class="open-chat" type="button">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"></path></svg>
+      <span id="open-chat-label">Perguntar ao chat do setor</span>
+    </button>
+  </div>
 
   <template id="about-template">
     <div class="about">
@@ -156,11 +250,15 @@
         2016 e 2018. <span class="about-count"></span>
       </p>
       <p>
+        O painel mostra quantas avaliações tratam de cada tema. Os temas foram marcados uma
+        vez, em lote, por um modelo de linguagem que leu cada comentário.
+      </p>
+      <p>
         O chat resume o que os clientes relatam e mostra as avaliações que sustentam cada
         afirmação. Os nomes de lojas que aparecem nos comentários são fictícios.
       </p>
       <p>
-        Ele não mede com que frequência cada problema acontece e não responde a perguntas de
+        O chat não mede frequência, isso é papel do painel, e não responde a perguntas de
         faturamento ou de outros números da operação.
       </p>
       <p>
@@ -174,11 +272,6 @@
       </p>
     </div>
   </template>
-
-  <div id="undo-toast" class="undo-toast" role="status" hidden>
-    <span>Conversa apagada</span>
-    <button id="undo-button" type="button">Desfazer</button>
-  </div>
 
   <p id="announcer" class="visually-hidden" aria-live="polite"></p>
 
