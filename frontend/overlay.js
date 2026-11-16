@@ -105,7 +105,11 @@ export function openOverlay({ anchor, title, content, onClose }) {
     handle.close({ restoreFocus: false });
   }
 
+  // No celular, o teclado virtual muda só a altura da tela; fechar nesse caso
+  // fecharia a folha de categorias quando a pessoa toca no campo de busca
+  const startWidth = window.innerWidth;
   function onViewportChange() {
+    if (sheet && window.innerWidth === startWidth) return;
     handle.close({ restoreFocus: false });
   }
 
