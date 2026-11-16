@@ -6,7 +6,7 @@ from src.rag.schemas import AskResult, RetrievedReview
 
 
 class FakePipeline:
-    def ask(self, question, history=None):
+    def ask(self, question, history=None, filters=None):
         cited = [
             RetrievedReview("r1", 1, "bebes", "no_prazo", "2018-03-10", "Veio quebrado", 0.71, 1)
         ]
@@ -36,7 +36,7 @@ class RecordingPipeline:
     def __init__(self):
         self.calls = []
 
-    def ask(self, question, history=None):
+    def ask(self, question, history=None, filters=None):
         self.calls.append((question, history or []))
         return AskResult("answered", f"Resposta para {question} [1].", [], [], question, "tema")
 
@@ -70,3 +70,27 @@ def test_follow_up_question_runs_each_turn_with_history_from_earlier_question():
     assert history[0].answer == "Resposta para Quais reclamações sobre entrega? [1]."
     for column in MANUAL_COLUMNS:
         assert rows[0][column] == ""
+
+
+class FilterRecordingPipeline:
+    def __init__(self):
+        self.filters = []
+
+    def ask(self, question, history=None, filters=None):
+        self.filters.append(filters)
+        return AskResult("answered", "A [1].", [], [], question, "tema")
+
+
+def test_questions_with_filters_pass_them_and_can_run_without():
+    from src.rag.schemas import SearchFilters
+
+    questions = [
+        TestQuestion(
+            13, "Problemas nas notas baixas?", "with_filter", "x", filters={"ratings": [1, 2]}
+        )
+    ]
+    pipeline = FilterRecordingPipeline()
+    rows = evaluation_rows(questions, pipeline, compare_without_filters=True)
+
+    assert pipeline.filters == [SearchFilters(ratings=[1, 2]), None]
+    assert [row["filters"] for row in rows] == ['{"ratings": [1, 2]}', "sem filtro"]

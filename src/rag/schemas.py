@@ -12,6 +12,15 @@ class ConversationTurn:
 
 
 @dataclass(frozen=True)
+class SearchFilters:
+    """Filtros escolhidos na página: notas, categoria e situação da entrega."""
+
+    ratings: list[int] | None = None
+    category: str | None = None
+    delivery: str | None = None
+
+
+@dataclass(frozen=True)
 class RetrievedReview:
     """Um comentário recuperado pela busca, com a similaridade com o tema da pergunta."""
 

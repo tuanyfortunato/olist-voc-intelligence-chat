@@ -26,7 +26,7 @@ from scripts.questions import TestQuestion, load_questions
 from src.config import get_settings
 from src.logging_config import setup_logging
 from src.rag.pipeline import build_pipeline
-from src.rag.schemas import ConversationTurn
+from src.rag.schemas import ConversationTurn, SearchFilters
 
 logger = logging.getLogger(__name__)
 
@@ -47,25 +47,37 @@ def parse_ids(raw: str) -> list[int] | None:
     return [int(part) for part in raw.split(",")] if raw else None
 
 
-def evaluation_rows(questions: list[TestQuestion], pipeline) -> list[dict]:
+def evaluation_rows(
+    questions: list[TestQuestion], pipeline, compare_without_filters: bool = False
+) -> list[dict]:
+    """Uma linha por mensagem. Com compare_without_filters, as perguntas com filtro
+    rodam também sem ele, na linha seguinte, para a comparação."""
     rows = []
     answers: dict[int, tuple[str, str]] = {}
     for question in questions:
         turns = question.turns or [question.question]
+        filters = SearchFilters(**question.filters) if question.filters else None
         for turn_number, text in enumerate(turns, start=1):
             history = []
             if turn_number > 1 and question.history_from in answers:
                 history = [ConversationTurn(*answers[question.history_from])]
-            rows.append(_run_turn(question, text, turn_number, history, pipeline))
+            rows.append(_run_turn(question, text, turn_number, history, filters, pipeline))
+            if filters and compare_without_filters:
+                rows.append(_run_turn(question, text, turn_number, history, None, pipeline))
         answers[question.id] = (question.question, rows[-1]["answer"])
     return rows
 
 
 def _run_turn(
-    question: TestQuestion, text: str, turn: int, history: list[ConversationTurn], pipeline
+    question: TestQuestion,
+    text: str,
+    turn: int,
+    history: list[ConversationTurn],
+    filters: SearchFilters | None,
+    pipeline,
 ) -> dict:
     start = time.monotonic()
-    result = pipeline.ask(text, history)
+    result = pipeline.ask(text, history, filters)
     latency_ms = (time.monotonic() - start) * 1000
     cited_numbers = {review.number for review in result.cited}
     retrieved = sorted(result.cited + result.uncited, key=lambda review: review.number)
@@ -82,6 +94,7 @@ def _run_turn(
         "question_id": question.id,
         "turn": turn,
         "question": text,
+        "filters": json.dumps(question.filters) if filters else "sem filtro",
         "type": question.type,
         "expected": question.expected,
         "status": result.status,
@@ -113,12 +126,17 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument(
         "--ids", default="", help="perguntas separadas por vírgula; vazio roda todas"
     )
+    parser.add_argument(
+        "--without-filters",
+        action="store_true",
+        help="roda também sem filtro as perguntas que têm filtro, para comparar",
+    )
     args = parser.parse_args(argv)
 
     settings = get_settings()
     setup_logging(settings.log_level)
     questions = load_questions(ids=parse_ids(args.ids))
-    rows = evaluation_rows(questions, build_pipeline(settings))
+    rows = evaluation_rows(questions, build_pipeline(settings), args.without_filters)
 
     path = Path("/tmp/avaliacao.csv")
     with open(path, "w", newline="", encoding="utf-8") as file:

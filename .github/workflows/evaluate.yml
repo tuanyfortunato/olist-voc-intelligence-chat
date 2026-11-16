@@ -10,6 +10,10 @@ on:
         description: "Perguntas separadas por vírgula, como 1,2,3,7; vazio roda todas"
         type: string
         default: ""
+      without_filters:
+        description: "Rodar também sem filtro as perguntas que têm filtro (13 a 15)"
+        type: boolean
+        default: false
       answer_model_id:
         description: "Modelo que escreve a resposta"
         type: choice
@@ -64,6 +68,7 @@ jobs:
           scripts/run_ecs_task.sh "$ECR_REPOSITORY_URL:${{ github.sha }}"
           env LOG_LEVEL=${{ inputs.log_level }} ANSWER_MODEL_ID=${{ inputs.answer_model_id }}
           python -m scripts.run_evaluation --ids "${{ inputs.question_ids }}"
+          ${{ inputs.without_filters && '--without-filters' || '' }}
 
       - name: Baixar o CSV
         run: |
