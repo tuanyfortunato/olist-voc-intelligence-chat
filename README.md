@@ -2,7 +2,7 @@
 
 Um chat em que um gestor faz perguntas sobre a experiência dos clientes da Olist e recebe uma resposta baseada nas avaliações reais que esses clientes escreveram. Cada frase da resposta aponta para os comentários que a sustentam, e a pessoa pode abrir cada um deles para conferir.
 
-Fiz este projeto para o Tech Challenge da Fase 4 da pós-graduação da POSTECH (FIAP). O tema proposto era Voice of Customer Intelligence: transformar o que os clientes escrevem em informação útil para quem toma decisões, usando RAG (Retrieval-Augmented Generation) sobre a base pública de e-commerce da Olist.
+Fiz este projeto para o Tech Challenge da Fase 4 da pós-graduação AI Scientist da POSTECH (FIAP). O tema proposto era Voice of Customer Intelligence: transformar o que os clientes escrevem em informação útil para quem toma decisões, usando RAG (Retrieval-Augmented Generation) sobre a base pública de e-commerce da Olist.
 
 O chat está publicado em **https://olist-chat.tuanyfortunato.com.br**. Ele é aberto, sem cadastro, e funciona das 9h às 22h, no horário de Brasília. Para proteger os créditos da AWS, há um limite de perguntas por hora, que explico mais abaixo.
 
@@ -329,4 +329,4 @@ Os workflows `Calibrate retrieval` e `Evaluate` rodam as perguntas de teste numa
 
 ---
 
-Projeto de Tuany Fortunato para o Tech Challenge da Fase 4 da POSTECH (FIAP).
+Projeto de Tuany Fortunato para o Tech Challenge da Fase 4 da pós-graduação AI Scientist da POSTECH (FIAP).
