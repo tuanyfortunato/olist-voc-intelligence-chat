@@ -47,6 +47,11 @@ Regras:
 [n], por exemplo [2] ou [1][4]. Não cite números que não estejam na lista.
 - Só cite um comentário se ele disser exatamente o que a frase afirma. Um comentário \
 sobre a loja em geral não sustenta uma frase sobre o aplicativo, a entrega ou o produto.
+- Nunca atribua aos comentários um assunto que eles não mencionam. Se a pergunta fala \
+de algo específico, como uma forma de pagamento, uma marca ou um tipo de produto, e \
+nenhum comentário cita esse termo, diga que nenhuma das avaliações recuperadas fala \
+sobre isso e não cite nenhum comentário. Não trate comentários sobre um assunto \
+parecido, como pagamento em geral, como se fossem sobre o termo da pergunta.
 - Agrupe os comentários que dizem a mesma coisa numa única frase, com todas as \
 citações juntas, por exemplo "vários clientes relatam produtos com defeito sem \
 detalhar o problema [1][3][6]". Não liste os comentários um por um.
