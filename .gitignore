@@ -4,7 +4,7 @@ local/
 # Variáveis de ambiente com configurações e segredos
 .env
 
-# Dados baixados do Kaggle e índice do Chroma (gerados localmente)
+# Dados baixados do Kaggle, documentos preparados e embeddings (gerados localmente)
 data/
 
 # Ambiente virtual do Python
