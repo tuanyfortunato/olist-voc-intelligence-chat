@@ -99,3 +99,17 @@ def test_summary_by_type_and_total():
     assert summary["with_evidence"]["situacao_esperada"] == "2 de 2"
     assert summary["out_of_scope"]["situacao_esperada"] == "0 de 1"
     assert summary["total"]["linhas"] == 3 and summary["total"]["avaliadas_ragas"] == 3
+
+
+def test_markdown_report_lists_scores_and_answers():
+    from scripts.run_ragas import markdown_report
+
+    source = [make_row()]
+    rows = ragas_rows(
+        source,
+        lambda samples: [{"faithfulness": 1.0, "answer_relevancy": 0.8, "context_precision": 0.6}],
+    )
+    answers = {(r["question_id"], r["turn"], r["filters"]): r["answer"] for r in source}
+    report = markdown_report(rows, summary_rows(rows), answers)
+    assert "| with_evidence | 1 | 1 | 1 de 1 | 1.000 | 0.800 | 0.600 |" in report
+    assert "Atrasos [1][2] e extravios [3]." in report

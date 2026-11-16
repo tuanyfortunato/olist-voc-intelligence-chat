@@ -107,6 +107,7 @@ def score_samples(samples: list[dict]) -> list[dict]:
     Os imports ficam aqui dentro porque o RAGAS só é instalado no workflow de
     avaliação, e não na imagem da API nem no CI.
     """
+    from botocore.config import Config
     from langchain_aws import BedrockEmbeddings, ChatBedrockConverse
     from ragas import EvaluationDataset, evaluate
     from ragas.cost import TokenUsage
@@ -132,9 +133,16 @@ def score_samples(samples: list[dict]) -> list[dict]:
                     )
         return usage
 
+    # O modo adaptive segura o ritmo do lado do cliente quando o Bedrock devolve
+    # ThrottlingException; na primeira rodada, quatro amostras ficaram sem nota por isso
+    retries = Config(retries={"mode": "adaptive", "max_attempts": 10}, read_timeout=120)
     judge = LangchainLLMWrapper(
         ChatBedrockConverse(
-            model=JUDGE_MODEL_ID, region_name="us-east-1", temperature=0, max_tokens=4096
+            model=JUDGE_MODEL_ID,
+            region_name="us-east-1",
+            temperature=0,
+            max_tokens=4096,
+            config=retries,
         )
     )
     embeddings = LangchainEmbeddingsWrapper(
@@ -146,7 +154,7 @@ def score_samples(samples: list[dict]) -> list[dict]:
         LLMContextPrecisionWithoutReference(name="context_precision"),
     ]
     # Poucas chamadas em paralelo, para não bater na cota do Bedrock
-    run_config = RunConfig(max_workers=4, timeout=300, max_retries=10, max_wait=60)
+    run_config = RunConfig(max_workers=2, timeout=300, max_retries=10, max_wait=60)
     result = evaluate(
         EvaluationDataset.from_list(samples),
         metrics=metrics,
@@ -228,6 +236,39 @@ def summary_rows(rows: list[dict]) -> list[dict]:
     return summary
 
 
+def markdown_report(rows: list[dict], summary: list[dict], answers: dict) -> str:
+    """Resumo em Markdown para a página da execução no GitHub Actions."""
+    lines = [
+        "## Notas do RAGAS",
+        "",
+        "| Tipo | Linhas | Avaliadas | Situação esperada | Faithfulness | Relevancy | Precision |",
+        "|---|---:|---:|---|---:|---:|---:|",
+    ]
+    for item in summary:
+        lines.append(
+            f"| {item['tipo']} | {item['linhas']} | {item['avaliadas_ragas']} | "
+            f"{item['situacao_esperada']} | {item['faithfulness']} | "
+            f"{item['answer_relevancy']} | {item['context_precision']} |"
+        )
+    lines += [
+        "",
+        "| Pergunta | Msg | Filtros | Situação | Esperada | Faithfulness | Relevancy | Precision |",
+        "|---|---:|---|---|---|---:|---:|---:|",
+    ]
+    for row in rows:
+        lines.append(
+            f"| {row['question_id']} | {row['turn']} | {row['filters']} | {row['status']} | "
+            f"{row['situacao_esperada']} | {row['faithfulness']} | "
+            f"{row['answer_relevancy']} | {row['context_precision']} |"
+        )
+    lines += ["", "<details><summary>Respostas</summary>", ""]
+    for row in rows:
+        answer = answers[(row["question_id"], row["turn"], row["filters"])]
+        lines += [f"**{row['question_id']}.{row['turn']}** {row['question']}", "", answer, ""]
+    lines.append("</details>")
+    return "\n".join(lines) + "\n"
+
+
 def write_csv(path: Path, rows: list[dict]) -> None:
     with open(path, "w", newline="", encoding="utf-8") as file:
         writer = csv.DictWriter(file, fieldnames=list(rows[0]))
@@ -242,10 +283,16 @@ def main(argv: list[str] | None = None) -> None:
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s %(message)s")
 
-    rows = ragas_rows(read_rows(args.csv))
+    source = read_rows(args.csv)
+    rows = ragas_rows(source)
+    summary = summary_rows(rows)
+    answers = {(row["question_id"], row["turn"], row["filters"]): row["answer"] for row in source}
     args.out_dir.mkdir(parents=True, exist_ok=True)
     write_csv(args.out_dir / "ragas.csv", rows)
-    write_csv(args.out_dir / "ragas_resumo.csv", summary_rows(rows))
+    write_csv(args.out_dir / "ragas_resumo.csv", summary)
+    (args.out_dir / "ragas.md").write_text(
+        markdown_report(rows, summary, answers), encoding="utf-8"
+    )
 
 
 if __name__ == "__main__":

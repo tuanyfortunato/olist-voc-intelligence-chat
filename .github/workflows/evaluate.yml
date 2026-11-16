@@ -95,6 +95,7 @@ jobs:
         run: |
           pip install -r requirements-ragas.txt
           python -m scripts.run_ragas avaliacao/avaliacao.csv --out-dir avaliacao
+          cat avaliacao/ragas.md | tee -a "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v4
         with:
