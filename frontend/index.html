@@ -3,52 +3,89 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Olist VoC Intelligence Chat</title>
+  <meta name="description" content="Perguntas sobre a experiência dos clientes da Olist, respondidas a partir dos comentários das avaliações, com cada afirmação ligada às avaliações que a sustentam.">
+  <meta name="theme-color" content="#1f5fae">
+  <title>Olist Intelligence Chat</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231f5fae'/%3E%3Cpath d='M9 10h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-8l-5 4v-4H9a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2z' fill='%23fff'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header class="topbar">
     <div class="brand">
-      <h1>Olist VoC Intelligence Chat</h1>
-      <p id="api-status" class="api-status">Verificando a API...</p>
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+        <rect width="32" height="32" rx="8"></rect>
+        <path d="M9 10h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-8l-5 4v-4H9a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2z"></path>
+      </svg>
+      <div>
+        <h1>Olist Intelligence Chat</h1>
+        <p id="api-status" class="api-status" data-state="checking">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span id="api-status-text">Verificando a API...</span>
+        </p>
+      </div>
     </div>
-    <form id="key-form" class="key-form" autocomplete="off">
-      <label for="access-key">Chave de acesso</label>
-      <input id="access-key" type="password" placeholder="Digite a chave" spellcheck="false">
-    </form>
+    <div class="top-actions">
+      <button id="new-chat" class="ghost-button" type="button" hidden>Nova conversa</button>
+      <form id="key-form" class="key-form" autocomplete="off">
+        <label for="access-key">Chave de acesso</label>
+        <div class="key-field">
+          <input id="access-key" type="password" placeholder="Digite a chave" spellcheck="false" aria-describedby="key-error">
+          <button id="toggle-key" class="key-toggle" type="button" aria-label="Mostrar a chave" aria-pressed="false">Mostrar</button>
+        </div>
+        <p id="key-error" class="key-error" hidden></p>
+      </form>
+    </div>
   </header>
 
   <main class="layout">
-    <section class="intro">
+    <section id="welcome" class="welcome">
+      <h2>O que você quer saber sobre os clientes?</h2>
       <p>
-        Pergunte sobre a experiência dos clientes da Olist. As respostas são escritas a partir
-        dos comentários das avaliações, e cada afirmação cita as avaliações que a sustentam.
+        As respostas são escritas a partir dos comentários das avaliações da Olist, e cada
+        afirmação cita as avaliações que a sustentam. Clique num número entre colchetes para
+        ler o comentário original.
       </p>
+      <div class="examples" id="examples" aria-label="Perguntas de exemplo">
+        <button type="button" class="example">
+          <span class="example-topic">Entrega</span>
+          <span class="example-question">Quais reclamações sobre entrega aparecem com mais frequência?</span>
+        </button>
+        <button type="button" class="example">
+          <span class="example-topic">Qualidade</span>
+          <span class="example-question">O que os clientes relatam sobre produtos que chegaram com defeito?</span>
+        </button>
+        <button type="button" class="example">
+          <span class="example-topic">Aplicativo</span>
+          <span class="example-question">O que os clientes acham do aplicativo da loja?</span>
+        </button>
+        <button type="button" class="example">
+          <span class="example-topic">Pagamento</span>
+          <span class="example-question">O que os clientes falam sobre pagar com Pix?</span>
+        </button>
+      </div>
       <p class="fixed-note">
         As respostas descrevem as avaliações recuperadas para cada pergunta, e não a base
-        inteira. Elas mostram relatos dos clientes, mas não medem com que frequência cada
-        problema acontece.
+        inteira: mostram relatos dos clientes, mas não medem com que frequência cada problema
+        acontece. Faça perguntas completas, porque cada uma é respondida sozinha.
       </p>
-      <p class="hint">Faça perguntas completas: cada pergunta é respondida sozinha.</p>
-      <div class="examples" id="examples" aria-label="Perguntas de exemplo">
-        <button type="button">Quais reclamações sobre entrega aparecem com mais frequência?</button>
-        <button type="button">O que os clientes relatam sobre produtos que chegaram com defeito?</button>
-        <button type="button">O que os clientes acham do aplicativo da loja?</button>
-        <button type="button">O que os clientes falam sobre pagar com Pix?</button>
-      </div>
     </section>
 
-    <section id="conversation" class="conversation" aria-live="polite"></section>
+    <section id="conversation" class="conversation" aria-label="Conversa"></section>
   </main>
 
-  <form id="ask-form" class="ask-form">
-    <label for="question" class="visually-hidden">Pergunta</label>
-    <textarea id="question" rows="2" maxlength="500" placeholder="Escreva a sua pergunta"></textarea>
-    <div class="ask-actions">
-      <span id="counter" class="counter">0/500</span>
-      <button id="send" type="submit">Perguntar</button>
-    </div>
-  </form>
+  <div class="composer">
+    <form id="ask-form" class="ask-form">
+      <label for="question" class="visually-hidden">Pergunta</label>
+      <textarea id="question" rows="1" maxlength="500" placeholder="Escreva a sua pergunta sobre as avaliações" aria-describedby="composer-hint"></textarea>
+      <div class="ask-footer">
+        <span id="composer-hint" class="composer-hint">Enter envia, Shift+Enter quebra a linha</span>
+        <span id="counter" class="counter" data-state="ok">0/500</span>
+        <button id="send" type="submit">Perguntar</button>
+      </div>
+    </form>
+  </div>
+
+  <p id="announcer" class="visually-hidden" aria-live="polite"></p>
 
   <script type="module" src="app.js"></script>
 </body>
