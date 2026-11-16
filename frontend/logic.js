@@ -1,5 +1,6 @@
 // Lógica da página que não depende do navegador, testada com o Node em
 // tests/frontend/. A montagem da tela fica em app.js.
+import { CATEGORY_NAMES } from "./categories.js";
 
 // [3], [1,3] e [1, 3]; colchetes com texto, como [Lannister], ficam como texto
 const CITATION = /\[\s*(\d+(?:\s*,\s*\d+)*)\s*\]/g;
@@ -122,10 +123,12 @@ export function deliveryLabel(delivery) {
   return DELIVERY[delivery] || null;
 }
 
-// Categoria do produto como a Olist a nomeia, sem os sublinhados
+// Categoria do produto com o nome acentuado; fora da tabela, o nome da base
+// sem os sublinhados
 export function categoryLabel(category) {
   if (!category || category === "desconhecido") return null;
   if (category === "mista") return "Várias categorias";
+  if (CATEGORY_NAMES[category]) return CATEGORY_NAMES[category];
   const text = category.replaceAll("_", " ");
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
@@ -390,4 +393,21 @@ export function evidenceLine(citedCount, uncitedCount) {
 
 export function similarityLabel(value) {
   return `Proximidade com a pergunta: ${formatSimilarity(value)}`;
+}
+
+// Texto da resposta para copiar: as citações como [n] e, abaixo, as avaliações
+// citadas com o identificador, para a evidência viajar junto
+export function answerAsText(result) {
+  const lines = result.answer
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+  if (!result.cited.length) return lines.join("\n");
+  lines.push("", "Avaliações citadas:");
+  for (const review of result.cited) {
+    lines.push(
+      `[${review.number}] nota ${review.rating}, review_id ${review.review_id}: ${review.original_text}`,
+    );
+  }
+  return lines.join("\n");
 }

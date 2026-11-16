@@ -2,6 +2,7 @@
 // clientes, entra na tela com textContent, nunca como HTML: um comentário com
 // "<script>" aparece escrito, sem ser executado.
 import {
+  answerAsText,
   canRetry,
   currentTheme,
   categoryLabel,
@@ -59,6 +60,9 @@ const changeKeyButton = document.getElementById("change-key");
 const offlineBanner = document.getElementById("offline-banner");
 const undoToast = document.getElementById("undo-toast");
 const undoButton = document.getElementById("undo-button");
+const aboutButton = document.getElementById("about-button");
+const toEndButton = document.getElementById("to-end");
+const conversationEnd = document.getElementById("conversation-end");
 
 // O campo da pergunta fica fixo no rodapé e muda de altura com o texto e com
 // a faixa de filtros. A página reserva no fim o espaço que ele ocupa, para
@@ -77,6 +81,8 @@ let busy = false;
 let accessKey = "";
 // Fica falso quando o /api/health não responde, fora do horário de funcionamento
 let online = true;
+// Número de comentários na base, vindo do /api/health
+let documentCount = null;
 const SUGGESTIONS_PER_ROUND = 3;
 // Perguntas já sugeridas ou feitas nesta conversa, que não voltam a aparecer.
 // Os exemplos da tela inicial contam como já sugeridos.
@@ -402,6 +408,27 @@ function renderSuggestions(container) {
   container.after(box);
 }
 
+// Copia a resposta com as avaliações citadas, para levar a um e-mail ou relatório
+function copyButton(result) {
+  const button = element("button", "copy-button", "Copiar");
+  button.type = "button";
+  button.setAttribute("aria-label", "Copiar a resposta com as avaliações citadas");
+  button.addEventListener("click", async () => {
+    let label = "Copiado";
+    try {
+      await navigator.clipboard.writeText(answerAsText(result));
+    } catch {
+      label = "Não foi possível copiar";
+    }
+    button.textContent = label;
+    announce(label);
+    setTimeout(() => {
+      button.textContent = "Copiar";
+    }, 2000);
+  });
+  return button;
+}
+
 function renderAnswer(container, result, messageId) {
   container.replaceChildren();
   container.removeAttribute("aria-busy");
@@ -447,6 +474,7 @@ function renderAnswer(container, result, messageId) {
   container.appendChild(answer);
   const evidence = evidenceLine(result.cited.length, result.uncited.length);
   if (evidence) container.appendChild(element("p", "evidence-line", evidence));
+  container.appendChild(copyButton(result));
   // As avaliações ficam no balão, para o cartão aberto por uma citação
   container.reviews = new Map();
   for (const review of result.cited) container.reviews.set(review.number, { review, cited: true });
@@ -549,6 +577,8 @@ function startQuestion(question, options = {}) {
   messageCount += 1;
   const filters = options.filters !== undefined ? options.filters : filterBar.current();
   const turn = element("div", "turn");
+  // Título oculto, para quem navega pelos títulos com leitor de tela
+  turn.appendChild(element("h2", "visually-hidden", `Pergunta: ${question}`));
   const userMessage = element("div", "message-user", question);
   if (filters) userMessage.appendChild(element("span", "message-filters", `Filtros: ${describeFilters(filters)}`));
   turn.appendChild(userMessage);
@@ -704,6 +734,7 @@ async function checkApi() {
     const data = await response.json().catch(() => null);
     if (response.ok && data) {
       online = true;
+      documentCount = data.documents;
       apiStatusText.textContent = `No ar, com ${data.documents.toLocaleString("pt-BR")} avaliações`;
     } else {
       apiStatusText.textContent = errorMessage(response.status, data).message;
@@ -715,6 +746,29 @@ async function checkApi() {
   applyLocks();
   if (!online) healthTimer = setTimeout(checkApi, HEALTH_RETRY_MS);
 }
+
+aboutButton.addEventListener("click", () => {
+  const content = document.getElementById("about-template").content.cloneNode(true);
+  const count = content.querySelector(".about-count");
+  if (documentCount) {
+    count.textContent = `O chat busca em ${documentCount.toLocaleString("pt-BR")} comentários de clientes.`;
+  }
+  const wrapper = element("div");
+  wrapper.appendChild(content);
+  openOverlay({ anchor: aboutButton, title: "Sobre os dados", content: wrapper });
+});
+
+// "Ir para o fim" aparece quando falta bastante conversa abaixo do que está na tela
+const TO_END_DISTANCE = 400;
+function updateToEnd() {
+  const below = document.documentElement.scrollHeight - (window.scrollY + window.innerHeight);
+  toEndButton.hidden = conversation.childElementCount === 0 || below < TO_END_DISTANCE;
+}
+window.addEventListener("scroll", updateToEnd, { passive: true });
+new ResizeObserver(updateToEnd).observe(conversation);
+toEndButton.addEventListener("click", () => {
+  conversationEnd.scrollIntoView({ behavior: "smooth", block: "end" });
+});
 
 const filterBar = createFilterBar({
   container: document.getElementById("filter-bar"),

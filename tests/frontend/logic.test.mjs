@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import {
+  answerAsText,
   evidenceLine,
   keyCheckResult,
   similarityLabel,
@@ -32,6 +33,7 @@ import {
   statusNotice,
   SUGGESTIONS,
 } from "../../frontend/logic.js";
+import { CATEGORY_NAMES } from "../../frontend/categories.js";
 
 test("splitCitations separa texto e citações", () => {
   assert.deepEqual(splitCitations("Atrasos [1][4] e defeitos [2, 5]."), [
@@ -110,7 +112,7 @@ test("deliveryLabel descreve a entrega e omite a desconhecida", () => {
 });
 
 test("categoryLabel deixa a categoria legível", () => {
-  assert.equal(categoryLabel("moveis_decoracao"), "Moveis decoracao");
+  assert.equal(categoryLabel("moveis_decoracao"), "Móveis e decoração");
   assert.equal(categoryLabel("mista"), "Várias categorias");
   assert.equal(categoryLabel("desconhecido"), null);
   assert.equal(categoryLabel(""), null);
@@ -150,7 +152,7 @@ test("describeFilters resume os filtros em português", () => {
   assert.equal(describeFilters(null), "");
   assert.equal(
     describeFilters({ ratings: [1, 2], category: "cama_mesa_banho", delivery: "com_problema" }),
-    "notas 1 e 2 · Cama mesa banho · entregas com problema",
+    "notas 1 e 2 · Cama, mesa e banho · entregas com problema",
   );
   assert.equal(describeFilters({ ratings: [5] }), "nota 5");
   assert.equal(describeFilters({ delivery: "atrasada" }), "entregas atrasadas");
@@ -227,7 +229,7 @@ test("searchScopeText diz onde a busca está olhando", () => {
   );
   assert.equal(
     searchScopeText({ ratings: [1], category: "cama_mesa_banho", delivery: "atrasada" }),
-    "Buscando só em avaliações com nota 1, Cama mesa banho e entregas atrasadas",
+    "Buscando só em avaliações com nota 1, Cama, mesa e banho e entregas atrasadas",
   );
 });
 
@@ -236,7 +238,7 @@ test("chipLabel mostra o valor escolhido", () => {
   assert.equal(chipLabel("category", {}), "Categoria");
   assert.equal(chipLabel("delivery", { ratings: [1] }), "Entrega");
   assert.equal(chipLabel("ratings", { ratings: [1, 2] }), "Nota: 1 e 2");
-  assert.equal(chipLabel("category", { category: "cama_mesa_banho" }), "Categoria: Cama mesa banho");
+  assert.equal(chipLabel("category", { category: "cama_mesa_banho" }), "Categoria: Cama, mesa e banho");
   assert.equal(chipLabel("delivery", { delivery: "com_problema" }), "Entrega: com problema");
 });
 
@@ -263,7 +265,7 @@ test("restrictionNotice só aparece sem evidência e com filtros", () => {
   const filters = { ratings: [1], category: "cama_mesa_banho" };
   assert.equal(
     restrictionNotice("no_evidence", filters),
-    "A busca estava restrita a nota 1 e Cama mesa banho",
+    "A busca estava restrita a nota 1 e Cama, mesa e banho",
   );
   assert.ok(restrictionNotice("weak_evidence", filters));
   assert.equal(restrictionNotice("answered", filters), null);
@@ -298,4 +300,41 @@ test("evidenceLine resume a evidência da resposta", () => {
 
 test("similarityLabel troca o jargão por uma frase", () => {
   assert.equal(similarityLabel(0.7136), "Proximidade com a pergunta: 0,71");
+});
+
+test("categoryLabel usa o nome com acentos e cai na regra antiga fora da tabela", () => {
+  assert.equal(categoryLabel("moveis_decoracao"), "Móveis e decoração");
+  assert.equal(categoryLabel("cama_mesa_banho"), "Cama, mesa e banho");
+  assert.equal(categoryLabel("categoria_nova"), "Categoria nova");
+  assert.equal(Object.keys(CATEGORY_NAMES).length, 73);
+  for (const [key, name] of Object.entries(CATEGORY_NAMES)) assert.ok(name.trim(), key);
+});
+
+test("filterCategories encontra pelo nome com acento e pelo nome original", () => {
+  const options = [{ value: "moveis_decoracao", label: "Móveis e decoração" }];
+  assert.equal(filterCategories(options, "moveis deco").length, 1);
+  assert.equal(filterCategories(options, "decoração").length, 1);
+});
+
+test("answerAsText leva a resposta e as avaliações citadas", () => {
+  const result = {
+    answer: "Os clientes relatam atraso [1] e produto errado [2].\n- Sem resposta da loja [1]",
+    cited: [
+      { number: 1, rating: 1, review_id: "abc123", original_text: "Demorou um mês." },
+      { number: 2, rating: 2, review_id: "def456", original_text: "Veio outro produto." },
+    ],
+    uncited: [{ number: 3, rating: 5, review_id: "ghi789", original_text: "Ótimo." }],
+  };
+  assert.equal(
+    answerAsText(result),
+    [
+      "Os clientes relatam atraso [1] e produto errado [2].",
+      "- Sem resposta da loja [1]",
+      "",
+      "Avaliações citadas:",
+      "[1] nota 1, review_id abc123: Demorou um mês.",
+      "[2] nota 2, review_id def456: Veio outro produto.",
+    ].join("\n"),
+  );
+  assert.equal(answerAsText({ answer: "Olá!", cited: [], uncited: [] }), "Olá!");
 });

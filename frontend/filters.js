@@ -50,6 +50,8 @@ export function createFilterBar({ container, getKey, focusKey, announce }) {
   for (const { kind, noun } of KINDS) {
     const chip = node("span", "filter-chip");
     const main = button("filter-chip-main");
+    const text = node("span", "filter-chip-text");
+    main.appendChild(text);
     main.setAttribute("aria-haspopup", "dialog");
     main.setAttribute("aria-expanded", "false");
     main.addEventListener("click", () => toggleMenu(kind));
@@ -61,7 +63,7 @@ export function createFilterBar({ container, getKey, focusKey, announce }) {
     });
     chip.append(main, remove);
     chipRow.appendChild(chip);
-    chips[kind] = { chip, main, remove, noun };
+    chips[kind] = { chip, main, text, remove, noun };
   }
   const clearAll = button("filter-clear", "Limpar tudo");
   clearAll.addEventListener("click", () => {
@@ -79,10 +81,10 @@ export function createFilterBar({ container, getKey, focusKey, announce }) {
   function renderBar() {
     const filters = current();
     for (const { kind } of KINDS) {
-      const { chip, main, remove, noun } = chips[kind];
+      const { chip, main, text, remove, noun } = chips[kind];
       const label = chipLabel(kind, filters);
       const active = label.includes(":");
-      main.textContent = label;
+      text.textContent = label;
       main.setAttribute(
         "aria-label",
         active ? `Filtrar por ${noun}, ${label}` : `Filtrar por ${noun}, nenhum selecionado`,

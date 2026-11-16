@@ -11,6 +11,7 @@
   <script src="theme.js"></script>
 </head>
 <body>
+  <a class="skip-link" href="#question">Ir para a pergunta</a>
   <header class="topbar">
     <div class="brand">
       <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
@@ -27,7 +28,8 @@
     </div>
     <div class="top-actions">
       <button id="new-chat" class="ghost-button" type="button" hidden>Nova conversa</button>
-      <button id="change-key" class="ghost-button" type="button" hidden>Trocar a chave</button>
+      <button id="about-button" class="ghost-button" type="button" aria-haspopup="dialog" aria-label="Sobre os dados">Sobre<span class="wide-only"> os dados</span></button>
+      <button id="change-key" class="ghost-button" type="button" aria-label="Trocar a chave" hidden><span class="wide-only">Trocar a </span><span class="key-word">chave</span></button>
       <button id="theme-toggle" class="ghost-button theme-toggle" type="button">
         <span class="theme-icon" aria-hidden="true"></span>
         <span id="theme-label" class="visually-hidden">Tema escuro</span>
@@ -89,6 +91,7 @@
     </section>
 
     <section id="conversation" class="conversation" aria-label="Conversa"></section>
+    <div id="conversation-end"></div>
   </main>
 
   <div class="composer">
@@ -103,6 +106,25 @@
       </div>
     </form>
   </div>
+
+  <button id="to-end" class="to-end" type="button" hidden>Ir para o fim</button>
+
+  <template id="about-template">
+    <div class="about">
+      <p>
+        Os comentários vêm da base pública de avaliações da Olist, com pedidos feitos entre
+        2016 e 2018. <span class="about-count"></span>
+      </p>
+      <p>
+        O chat resume o que os clientes relatam e mostra as avaliações que sustentam cada
+        afirmação. Os nomes de lojas que aparecem nos comentários são fictícios.
+      </p>
+      <p>
+        Ele não mede com que frequência cada problema acontece e não responde a perguntas de
+        faturamento ou de outros números da operação.
+      </p>
+    </div>
+  </template>
 
   <div id="undo-toast" class="undo-toast" role="status" hidden>
     <span>Conversa apagada</span>
