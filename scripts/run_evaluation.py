@@ -107,6 +107,8 @@ def _run_turn(
                     "number": review.number,
                     "review_id": review.review_id,
                     "rating": review.rating,
+                    "category": review.category,
+                    "delivery": review.delivery,
                     "similarity": round(review.similarity, 4),
                     "cited": review.number in cited_numbers,
                     "original_text": review.original_text,

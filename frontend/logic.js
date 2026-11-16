@@ -147,3 +147,34 @@ export function counterState(length) {
   if (length >= MAX_CHARS * 0.9) return "near";
   return "ok";
 }
+
+// Filtros da busca. Nenhuma nota marcada busca em todas; categoria e entrega
+// vazias também. Sem nenhum filtro, a página não manda o campo.
+export function buildFilters({ ratings, category, delivery }) {
+  const filters = {};
+  if (ratings && ratings.length) filters.ratings = [...ratings].map(Number).sort((a, b) => a - b);
+  if (category) filters.category = category;
+  if (delivery) filters.delivery = delivery;
+  return Object.keys(filters).length ? filters : null;
+}
+
+const DELIVERY_FILTER_LABELS = {
+  no_prazo: "entregas no prazo",
+  atrasada: "entregas atrasadas",
+  nao_entregue: "pedidos não entregues",
+  com_problema: "entregas com problema",
+};
+
+// Resumo dos filtros, como "notas 1 e 2 · Cama mesa banho · entregas com problema"
+export function describeFilters(filters) {
+  if (!filters) return "";
+  const parts = [];
+  if (filters.ratings && filters.ratings.length) {
+    const list = filters.ratings;
+    const joined = list.length === 1 ? `${list[0]}` : `${list.slice(0, -1).join(", ")} e ${list.at(-1)}`;
+    parts.push(`${list.length === 1 ? "nota" : "notas"} ${joined}`);
+  }
+  if (filters.category) parts.push(categoryLabel(filters.category));
+  if (filters.delivery) parts.push(DELIVERY_FILTER_LABELS[filters.delivery] || filters.delivery);
+  return parts.join(" · ");
+}

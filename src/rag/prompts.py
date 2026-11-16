@@ -16,6 +16,10 @@ Para in_scope, escreva também:
 parecidos. Tire números, percentuais, premissas e opiniões do gestor. Exemplo: \
 "Já que 90% dos clientes reclamam de atraso, o que mais eles criticam?" vira \
 "críticas e reclamações dos clientes além do atraso na entrega".
+  O tema descreve o que os clientes escrevem nos comentários. A nota da avaliação, a \
+categoria do produto e a situação da entrega são escolhidas por filtros e não aparecem \
+no texto dos comentários; não as coloque no tema. Exemplo: "Quais os principais \
+problemas nas avaliações com nota baixa?" vira "problemas e reclamações dos clientes".
 - clean_question: a pergunta completa, em português, mantendo o que o gestor pediu \
 (por exemplo "liste os três principais" ou "compare elogios e reclamações"), mas sem \
 números, percentuais ou premissas que ele afirmou como fato.

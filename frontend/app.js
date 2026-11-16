@@ -4,8 +4,10 @@
 import {
   canRetry,
   categoryLabel,
+  buildFilters,
   counterState,
   deliveryLabel,
+  describeFilters,
   errorMessage,
   formatDate,
   formatSimilarity,
@@ -37,6 +39,12 @@ const apiStatus = document.getElementById("api-status");
 const apiStatusText = document.getElementById("api-status-text");
 const announcer = document.getElementById("announcer");
 const exampleButtons = document.querySelectorAll("#examples button");
+const filtersPanel = document.getElementById("filters");
+const filtersSummary = document.getElementById("filters-summary");
+const ratingInputs = document.querySelectorAll('input[name="rating"]');
+const categorySelect = document.getElementById("filter-category");
+const deliverySelect = document.getElementById("filter-delivery");
+const clearFiltersButton = document.getElementById("clear-filters");
 
 let messageCount = 0;
 let busy = false;
@@ -244,14 +252,14 @@ function renderLoading(container) {
   container.appendChild(loading);
 }
 
-async function callApi(question, key) {
+async function callApi(question, key, filters) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
     const response = await fetch("/api/ask", {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-Access-Key": key },
-      body: JSON.stringify({ question, history: [] }),
+      body: JSON.stringify(filters ? { question, history: [], filters } : { question, history: [] }),
       signal: controller.signal,
     });
     const body = await response.json().catch(() => null);
@@ -277,7 +285,8 @@ async function send(question, reply) {
 
   setBusy(true);
   renderLoading(reply);
-  const { status, body } = await callApi(question, key);
+  // Os filtros ficam no balão: a nova tentativa usa os mesmos da pergunta original
+  const { status, body } = await callApi(question, key, reply.filters || null);
   setBusy(false);
 
   const messageId = reply.dataset.messageId;
@@ -303,10 +312,14 @@ function startQuestion(question) {
   newChatButton.hidden = false;
 
   messageCount += 1;
+  const filters = currentFilters();
   const turn = element("div", "turn");
-  turn.appendChild(element("div", "message-user", question));
+  const userMessage = element("div", "message-user", question);
+  if (filters) userMessage.appendChild(element("span", "message-filters", `Filtros: ${describeFilters(filters)}`));
+  turn.appendChild(userMessage);
   const reply = element("div", "message-bot");
   reply.dataset.messageId = `m${messageCount}`;
+  reply.filters = filters;
   turn.appendChild(reply);
   conversation.appendChild(turn);
   send(question, reply);
@@ -394,6 +407,62 @@ async function checkApi() {
   if (!online) healthTimer = setTimeout(checkApi, HEALTH_RETRY_MS);
 }
 
+function currentFilters() {
+  return buildFilters({
+    ratings: [...ratingInputs].filter((input) => input.checked).map((input) => input.value),
+    category: categorySelect.value,
+    delivery: deliverySelect.value,
+  });
+}
+
+function updateFiltersSummary() {
+  const filters = currentFilters();
+  filtersSummary.textContent = filters ? describeFilters(filters) : "nenhum";
+  filtersPanel.dataset.active = String(Boolean(filters));
+}
+
+// As categorias vêm da API, que exige a chave; sem chave, o filtro fica só com "Todas"
+let categoriesLoaded = false;
+
+async function loadCategories() {
+  const key = keyInput.value.trim();
+  if (categoriesLoaded || !key) return;
+  try {
+    const response = await fetch("/api/categories", { headers: { "X-Access-Key": key } });
+    if (!response.ok) return;
+    const data = await response.json();
+    const options = data.categories
+      .map((category) => ({ value: category, label: categoryLabel(category) }))
+      .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
+    for (const option of options) {
+      const node = element("option", null, option.label);
+      node.value = option.value;
+      categorySelect.appendChild(node);
+    }
+    categoriesLoaded = true;
+  } catch {
+    // sem as categorias, o filtro de categoria fica só com "Todas"
+  }
+}
+
+for (const input of [...ratingInputs, categorySelect, deliverySelect]) {
+  input.addEventListener("change", updateFiltersSummary);
+}
+
+clearFiltersButton.addEventListener("click", () => {
+  for (const input of ratingInputs) input.checked = false;
+  categorySelect.value = "";
+  deliverySelect.value = "";
+  updateFiltersSummary();
+});
+
+filtersPanel.addEventListener("toggle", () => {
+  if (filtersPanel.open) loadCategories();
+});
+keyInput.addEventListener("change", loadCategories);
+
 keyInput.value = loadKey();
 updateComposer();
+updateFiltersSummary();
 checkApi();
+loadCategories();
