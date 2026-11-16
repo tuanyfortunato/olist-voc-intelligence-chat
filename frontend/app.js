@@ -342,6 +342,7 @@ form.addEventListener("submit", (event) => {
   // A pergunta só sai do campo depois de enviada
   if (startQuestion(question)) {
     questionInput.value = "";
+    filtersPanel.open = false;
     updateComposer();
   }
 });
@@ -421,12 +422,22 @@ function updateFiltersSummary() {
   filtersPanel.dataset.active = String(Boolean(filters));
 }
 
-// As categorias vêm da API, que exige a chave; sem chave, o filtro fica só com "Todas"
+// As categorias vêm da API, que exige a chave; sem chave, o filtro fica só com "Todas".
+// A carga em andamento é reaproveitada: a chave e a abertura do painel podem
+// pedir a lista ao mesmo tempo, e sem isso as categorias apareceriam duas vezes.
 let categoriesLoaded = false;
+let categoriesRequest = null;
 
-async function loadCategories() {
+function loadCategories() {
+  if (categoriesLoaded || categoriesRequest || !keyInput.value.trim()) return categoriesRequest;
+  categoriesRequest = fetchCategories().finally(() => {
+    categoriesRequest = null;
+  });
+  return categoriesRequest;
+}
+
+async function fetchCategories() {
   const key = keyInput.value.trim();
-  if (categoriesLoaded || !key) return;
   try {
     const response = await fetch("/api/categories", { headers: { "X-Access-Key": key } });
     if (!response.ok) return;
