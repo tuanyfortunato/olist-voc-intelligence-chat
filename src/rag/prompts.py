@@ -20,9 +20,11 @@ parecidos. Tire números, percentuais, premissas e opiniões do gestor. Exemplo:
 (por exemplo "liste os três principais" ou "compare elogios e reclamações"), mas sem \
 números, percentuais ou premissas que ele afirmou como fato.
 
-- removed_premise: true se a pergunta afirmava como fato um número, um percentual ou \
-uma afirmação sobre os clientes que você retirou do tema e da pergunta limpa; false se \
-não havia nada assim.
+- removed_premise: true só se a pergunta afirmava como fato um número, um percentual ou \
+uma afirmação sobre os clientes, e você a retirou. Exemplo de true: "Já que 90% dos \
+clientes reclamam de atraso, o que mais eles criticam?". Pedir uma ordem ou uma \
+frequência não é premissa: "Quais reclamações aparecem com mais frequência?" e "Quais \
+os principais elogios?" são false.
 
 Para greeting e out_of_scope, deixe search_topic e clean_question vazios e \
 removed_premise como false.

@@ -183,3 +183,16 @@ def test_no_note_without_removed_premise():
 
     pipe = fake_pipeline([review("r1"), review("r2"), review("r3")], "A [1][2][3].")
     assert PREMISE_NOTE not in pipe.ask("x").answer
+
+
+def test_no_note_when_model_flags_premise_but_question_is_unchanged():
+    from src.rag.prompts import PREMISE_NOTE
+
+    question = "Quais reclamações sobre entrega aparecem com mais frequência?"
+    pipe = fake_pipeline(
+        [review("r1"), review("r2"), review("r3")],
+        "A [1][2][3].",
+        question=question,
+        removed_premise=True,
+    )
+    assert PREMISE_NOTE not in pipe.ask(question).answer

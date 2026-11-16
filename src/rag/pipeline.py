@@ -121,7 +121,12 @@ class RagPipeline:
         status = decide_status(
             len(reviews), len(cited), top_similarity, self.settings.strong_similarity
         )
-        if analysis.removed_premise and status != "no_evidence":
+        # O modelo às vezes marca uma premissa sem ter tirado nada da pergunta;
+        # o aviso só entra quando a pergunta limpa de fato mudou
+        premise_removed = (
+            analysis.removed_premise and analysis.clean_question.strip() != question.strip()
+        )
+        if premise_removed and status != "no_evidence":
             answer = f"{answer}\n\n{PREMISE_NOTE}"
         logger.info(
             "etapa=pergunta original=%r tema=%r situacao=%s recuperados=%d citados=%d %s",
