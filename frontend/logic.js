@@ -78,11 +78,13 @@ export function errorMessage(httpStatus, body) {
       message: "A resposta demorou mais do que o esperado. Tente de novo.",
     };
   }
-  if (httpStatus === 401) {
-    return { kind: "key", message: "Chave de acesso inválida. Confira a chave e tente de novo." };
-  }
+  // O 429 vem com a mensagem da API, que diz qual limite foi atingido e
+  // quando dá para voltar a perguntar
   if (httpStatus === 429) {
-    return { kind: "quota", message: detail || "Limite diário de perguntas atingido." };
+    return {
+      kind: "quota",
+      message: detail || "Você chegou ao limite de perguntas por agora. Tente de novo mais tarde.",
+    };
   }
   if (httpStatus === 422) {
     return {
@@ -102,7 +104,7 @@ export function errorMessage(httpStatus, body) {
   return { kind: "unexpected", message: detail || "Não foi possível responder. Tente de novo." };
 }
 
-// Nova tentativa com a mesma pergunta. No limite diário ou numa pergunta
+// Nova tentativa com a mesma pergunta. No limite de perguntas ou numa pergunta
 // inválida, repetir não muda nada.
 export function canRetry(kind) {
   return kind !== "quota" && kind !== "invalid";
@@ -366,15 +368,6 @@ export function pickSuggestions(pool, used, count, random = Math.random) {
 
 export function remainingSuggestions(pool, used) {
   return available(pool, used).length;
-}
-
-// Resultado da conferência da chave, feita na rota das categorias, que exige
-// a chave e não consome a cota diária
-export function keyCheckResult(httpStatus) {
-  if (httpStatus === 200) return "ok";
-  if (httpStatus === 401) return "invalid";
-  if ([0, 502, 503, 504].includes(httpStatus)) return "offline";
-  return "error";
 }
 
 // Linha no pé de cada resposta: o tamanho da evidência e o limite da leitura

@@ -59,8 +59,12 @@ class Settings:
     max_question_chars: int = 500
     history_turns: int = 3
     history_answer_chars: int = 1500
-    daily_question_limit: int = 300
-    access_key: str = ""
+    # O chat é aberto: cada IP faz até 100 perguntas por hora, e o chat todo,
+    # até 1.000 por dia, o teto de custo (docs/07)
+    hourly_question_limit_per_ip: int = 100
+    daily_question_limit: int = 1000
+    # Proxies que acrescentam um endereço no X-Forwarded-For: CloudFront e ALB
+    proxy_hops: int = 2
 
     log_level: str = "INFO"
 

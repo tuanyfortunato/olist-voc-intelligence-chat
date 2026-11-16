@@ -41,7 +41,6 @@ resource "aws_ecs_task_definition" "api" {
     ]
 
     secrets = [
-      { name = "ACCESS_KEY", valueFrom = aws_ssm_parameter.access_key.arn },
       { name = "DB_PASSWORD", valueFrom = aws_ssm_parameter.db_password.arn },
     ]
 
