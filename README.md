@@ -4,7 +4,7 @@ Um chat em que um gestor faz perguntas sobre a experiência dos clientes da Olis
 
 Fiz este projeto para o Tech Challenge da Fase 4 da pós-graduação da POSTECH (FIAP). O tema proposto era Voice of Customer Intelligence: transformar o que os clientes escrevem em informação útil para quem toma decisões, usando RAG (Retrieval-Augmented Generation) sobre a base pública de e-commerce da Olist.
 
-O chat está publicado em **https://olist-chat.tuanyfortunato.com.br**. Ele pede uma chave de acesso e funciona das 9h às 22h, no horário de Brasília. Explico os dois limites mais abaixo.
+O chat está publicado em **https://olist-chat.tuanyfortunato.com.br**. Ele é aberto, sem cadastro, e funciona das 9h às 22h, no horário de Brasília. Para proteger os créditos da AWS, há um limite de perguntas por hora, que explico mais abaixo.
 
 ## Sumário
 
@@ -169,7 +169,6 @@ A página é feita em HTML, CSS e JavaScript, sem framework. Escolhi assim porqu
 
 O que ela oferece:
 
-- **Entrada pela chave de acesso.** A chave é conferida na hora, e a página só abre depois disso.
 - **Citações clicáveis.** Clicar em `[3]` abre o comentário num cartão ao lado do número, sem perder a frase que estava sendo lida.
 - **Comentários citados e não citados**, cada grupo num bloco recolhido, para conferir também o que a resposta deixou de fora.
 - **Uma linha no fim de cada resposta** dizendo em quantas avaliações ela se baseia, como "Baseada em 10 avaliações citadas, de 15 recuperadas para esta pergunta. Não mede a frequência na base inteira."
@@ -190,7 +189,7 @@ flowchart TB
     ALB --> ECS[ECS Fargate<br/>API em FastAPI]
     ECS --> BR[Amazon Bedrock<br/>Cohere Embed e Nova Micro]
     ECS --> RDS[(RDS PostgreSQL<br/>com pgvector)]
-    ECS --> SSM[Parameter Store<br/>chave e senha do banco]
+    ECS --> SSM[Parameter Store<br/>senha do banco]
     GH[GitHub Actions] -->|OIDC| AWS[Terraform, imagem,<br/>indexação e avaliação]
 ```
 
@@ -210,8 +209,9 @@ flowchart TB
 
 O repositório é público e o chat usa créditos da AWS, então coloquei alguns limites:
 
-- **Chave de acesso.** Toda pergunta precisa de uma chave no cabeçalho `X-Access-Key`. Sem chave, ou com chave errada, a API responde 401 antes de ler a pergunta. A chave é gerada pelo Terraform e guardada no Parameter Store.
-- **Cota diária.** São 300 perguntas por dia. Passado o limite, a API responde 429.
+- **Limite por pessoa.** Cada IP pode fazer até 100 perguntas por hora, bem mais do que alguém faz testando o chat com calma. Passado o limite, a API responde 429 e a página diz a partir de que horário dá para perguntar de novo.
+- **Teto do dia.** O chat inteiro aceita até 1.000 perguntas por dia. Mil perguntas custam menos de meio dólar nos modelos do Bedrock, então esse é o teto de custo do projeto.
+- **Contagem no banco.** As duas contagens ficam no PostgreSQL, que a API já usa para a busca. Assim elas valem para todas as tarefas da API ao mesmo tempo e não recomeçam quando a API reinicia. A tabela não guarda o IP, só um resumo SHA-256 dele.
 - **Limites da pergunta.** De 1 a 500 caracteres e no máximo três trocas de histórico, conferidos antes de qualquer chamada ao Bedrock.
 - **Horário de funcionamento.** A API liga às 9h e desliga às 22h, e o banco liga um pouco antes e desliga um pouco depois. Fora desse horário a página avisa que o chat está desligado. Um workflow manual, `Start API`, liga tudo fora do horário quando preciso.
 - **Sem NAT Gateway.** A rede usa só sub-redes públicas, e o banco não tem endereço público e aceita conexões apenas da API. Um NAT Gateway custaria sozinho mais do que o resto da aplicação.
@@ -248,7 +248,7 @@ Cada pergunta leva de 1,5 a 2 segundos do começo ao fim. A geração dos embedd
 ├── src/
 │   ├── knowledge_base/   # download, limpeza, preparação dos documentos e indexação
 │   ├── rag/              # análise da pergunta, busca, prompts, geração e citações
-│   ├── api/              # rotas, chave de acesso, cota diária e formato das mensagens
+│   ├── api/              # rotas, limites de perguntas e formato das mensagens
 │   ├── aws/              # acesso ao Bedrock
 │   ├── vector_db.py      # conexão e consultas ao PostgreSQL com pgvector
 │   └── config.py         # todos os parâmetros, com valor padrão e variável de ambiente
@@ -318,7 +318,6 @@ Os workflows `Calibrate retrieval` e `Evaluate` rodam as perguntas de teste numa
 - **A folga do score mínimo é pequena** na pergunta sem evidência. Uma variação na reescrita do tema pode deixar passar comentários de assunto vizinho. A regra do prompt contra assuntos não mencionados é a segunda proteção.
 - **O Nova Micro às vezes força a ligação** entre a frase e o comentário, como citar um comentário sobre a loja numa frase sobre o aplicativo. A revisão manual mede isso, e a troca planejada, se a fidelidade ficar baixa, é passar a resposta para o Nova Lite.
 - **O trecho entre o CloudFront e o ALB é HTTP**, porque o ALB não tem nome próprio nem certificado. O ALB só aceita tráfego vindo do CloudFront.
-- **A cota diária fica na memória da tarefa.** Se a API reiniciar no meio do dia, a contagem recomeça.
 - **A base vai de 2016 a 2018.** Assuntos mais recentes, como o Pix, não aparecem nos comentários.
 
 ## Documentação
