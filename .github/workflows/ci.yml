@@ -5,6 +5,9 @@ name: CI
 on:
   pull_request:
     branches: [develop, main]
+  # Também a cada push nas branches de trabalho, para testar antes de abrir o PR
+  push:
+    branches: ["feature/**"]
 
 permissions:
   contents: read
