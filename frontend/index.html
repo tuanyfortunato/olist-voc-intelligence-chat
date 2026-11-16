@@ -7,11 +7,49 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <main>
-    <h1>Olist VoC Intelligence Chat</h1>
-    <p>Perguntas sobre a experiência dos clientes da Olist, respondidas com base nas avaliações reais.</p>
-    <p id="status">Verificando a API...</p>
+  <header class="topbar">
+    <div class="brand">
+      <h1>Olist VoC Intelligence Chat</h1>
+      <p id="api-status" class="api-status">Verificando a API...</p>
+    </div>
+    <form id="key-form" class="key-form" autocomplete="off">
+      <label for="access-key">Chave de acesso</label>
+      <input id="access-key" type="password" placeholder="Digite a chave" spellcheck="false">
+    </form>
+  </header>
+
+  <main class="layout">
+    <section class="intro">
+      <p>
+        Pergunte sobre a experiência dos clientes da Olist. As respostas são escritas a partir
+        dos comentários das avaliações, e cada afirmação cita as avaliações que a sustentam.
+      </p>
+      <p class="fixed-note">
+        As respostas descrevem as avaliações recuperadas para cada pergunta, e não a base
+        inteira. Elas mostram relatos dos clientes, mas não medem com que frequência cada
+        problema acontece.
+      </p>
+      <p class="hint">Faça perguntas completas: cada pergunta é respondida sozinha.</p>
+      <div class="examples" id="examples" aria-label="Perguntas de exemplo">
+        <button type="button">Quais reclamações sobre entrega aparecem com mais frequência?</button>
+        <button type="button">O que os clientes relatam sobre produtos que chegaram com defeito?</button>
+        <button type="button">O que os clientes acham do aplicativo da loja?</button>
+        <button type="button">O que os clientes falam sobre pagar com Pix?</button>
+      </div>
+    </section>
+
+    <section id="conversation" class="conversation" aria-live="polite"></section>
   </main>
-  <script src="app.js"></script>
+
+  <form id="ask-form" class="ask-form">
+    <label for="question" class="visually-hidden">Pergunta</label>
+    <textarea id="question" rows="2" maxlength="500" placeholder="Escreva a sua pergunta"></textarea>
+    <div class="ask-actions">
+      <span id="counter" class="counter">0/500</span>
+      <button id="send" type="submit">Perguntar</button>
+    </div>
+  </form>
+
+  <script type="module" src="app.js"></script>
 </body>
 </html>
