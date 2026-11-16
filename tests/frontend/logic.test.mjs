@@ -3,6 +3,13 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import {
+  chipLabel,
+  filterCategories,
+  restrictionNotice,
+  searchScopeText,
+  toggleRating,
+  RATING_SHORTCUTS,
+  DELIVERY_OPTIONS,
   buildFilters,
   canRetry,
   currentTheme,
@@ -207,4 +214,63 @@ test("SUGGESTIONS tem perguntas distintas e dentro do limite de caracteres", () 
   for (const question of SUGGESTIONS) {
     assert.ok(question.length <= 500 && question.endsWith("?"), question);
   }
+});
+
+test("searchScopeText diz onde a busca está olhando", () => {
+  assert.equal(searchScopeText(null), "Buscando em todas as avaliações");
+  assert.equal(
+    searchScopeText({ ratings: [1, 2], delivery: "com_problema" }),
+    "Buscando só em avaliações com notas 1 e 2 e entregas com problema",
+  );
+  assert.equal(
+    searchScopeText({ ratings: [1], category: "cama_mesa_banho", delivery: "atrasada" }),
+    "Buscando só em avaliações com nota 1, Cama mesa banho e entregas atrasadas",
+  );
+});
+
+test("chipLabel mostra o valor escolhido", () => {
+  assert.equal(chipLabel("ratings", null), "Nota");
+  assert.equal(chipLabel("category", {}), "Categoria");
+  assert.equal(chipLabel("delivery", { ratings: [1] }), "Entrega");
+  assert.equal(chipLabel("ratings", { ratings: [1, 2] }), "Nota: 1 e 2");
+  assert.equal(chipLabel("category", { category: "cama_mesa_banho" }), "Categoria: Cama mesa banho");
+  assert.equal(chipLabel("delivery", { delivery: "com_problema" }), "Entrega: com problema");
+});
+
+test("toggleRating inclui e retira sem mexer na lista original", () => {
+  const original = [2];
+  assert.deepEqual(toggleRating(original, 1), [1, 2]);
+  assert.deepEqual(toggleRating([1, 2], 2), [1]);
+  assert.deepEqual(original, [2]);
+  assert.deepEqual(RATING_SHORTCUTS, { low: [1, 2], high: [4, 5] });
+});
+
+test("filterCategories ignora acentos, maiúsculas e sublinhados", () => {
+  const options = [
+    { value: "cama_mesa_banho", label: "Cama mesa banho" },
+    { value: "moveis_decoracao", label: "Moveis decoracao" },
+  ];
+  assert.deepEqual(filterCategories(options, "MÓVEIS"), [options[1]]);
+  assert.deepEqual(filterCategories(options, "mesa ba"), [options[0]]);
+  assert.equal(filterCategories(options, "  ").length, 2);
+  assert.deepEqual(filterCategories(options, "pix"), []);
+});
+
+test("restrictionNotice só aparece sem evidência e com filtros", () => {
+  const filters = { ratings: [1], category: "cama_mesa_banho" };
+  assert.equal(
+    restrictionNotice("no_evidence", filters),
+    "A busca estava restrita a nota 1 e Cama mesa banho",
+  );
+  assert.ok(restrictionNotice("weak_evidence", filters));
+  assert.equal(restrictionNotice("answered", filters), null);
+  assert.equal(restrictionNotice("no_evidence", null), null);
+});
+
+test("DELIVERY_OPTIONS tem as quatro situações com nome completo", () => {
+  assert.deepEqual(
+    DELIVERY_OPTIONS.map((option) => option.value),
+    ["no_prazo", "atrasada", "nao_entregue", "com_problema"],
+  );
+  assert.equal(DELIVERY_OPTIONS[3].label, "Com problema (atraso ou não entregue)");
 });

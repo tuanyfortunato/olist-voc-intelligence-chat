@@ -165,18 +165,100 @@ const DELIVERY_FILTER_LABELS = {
   com_problema: "entregas com problema",
 };
 
-// Resumo dos filtros, como "notas 1 e 2 · Cama mesa banho · entregas com problema"
-export function describeFilters(filters) {
-  if (!filters) return "";
+function joinList(items) {
+  if (items.length <= 1) return items.join("");
+  return `${items.slice(0, -1).join(", ")} e ${items.at(-1)}`;
+}
+
+// As partes do resumo dos filtros, uma por filtro ativo
+function filterParts(filters) {
   const parts = [];
+  if (!filters) return parts;
   if (filters.ratings && filters.ratings.length) {
     const list = filters.ratings;
-    const joined = list.length === 1 ? `${list[0]}` : `${list.slice(0, -1).join(", ")} e ${list.at(-1)}`;
-    parts.push(`${list.length === 1 ? "nota" : "notas"} ${joined}`);
+    parts.push(`${list.length === 1 ? "nota" : "notas"} ${joinList(list)}`);
   }
   if (filters.category) parts.push(categoryLabel(filters.category));
   if (filters.delivery) parts.push(DELIVERY_FILTER_LABELS[filters.delivery] || filters.delivery);
-  return parts.join(" · ");
+  return parts;
+}
+
+// Resumo dos filtros, como "notas 1 e 2 · Cama mesa banho · entregas com problema"
+export function describeFilters(filters) {
+  return filterParts(filters).join(" · ");
+}
+
+// Linha de apoio da faixa de filtros: diz onde a busca está olhando
+export function searchScopeText(filters) {
+  const parts = filterParts(filters);
+  if (!parts.length) return "Buscando em todas as avaliações";
+  return `Buscando só em avaliações com ${joinList(parts)}`;
+}
+
+const CHIP_NAMES = { ratings: "Nota", category: "Categoria", delivery: "Entrega" };
+const DELIVERY_CHIP_VALUES = {
+  no_prazo: "no prazo",
+  atrasada: "com atraso",
+  nao_entregue: "não entregue",
+  com_problema: "com problema",
+};
+
+// Texto de cada botão da faixa: só o nome, ou o nome com o valor escolhido
+export function chipLabel(kind, filters) {
+  const name = CHIP_NAMES[kind];
+  if (!filters) return name;
+  if (kind === "ratings" && filters.ratings && filters.ratings.length) {
+    return `${name}: ${joinList(filters.ratings)}`;
+  }
+  if (kind === "category" && filters.category) return `${name}: ${categoryLabel(filters.category)}`;
+  if (kind === "delivery" && filters.delivery) {
+    return `${name}: ${DELIVERY_CHIP_VALUES[filters.delivery] || filters.delivery}`;
+  }
+  return name;
+}
+
+// Inclui ou retira uma nota, sem alterar a lista recebida
+export function toggleRating(ratings, rating) {
+  const next = ratings.includes(rating)
+    ? ratings.filter((value) => value !== rating)
+    : [...ratings, rating];
+  return next.sort((a, b) => a - b);
+}
+
+export const RATING_SHORTCUTS = { low: [1, 2], high: [4, 5] };
+
+export const DELIVERY_OPTIONS = [
+  { value: "no_prazo", label: "Entregue no prazo" },
+  { value: "atrasada", label: "Entregue com atraso" },
+  { value: "nao_entregue", label: "Não entregue" },
+  { value: "com_problema", label: "Com problema (atraso ou não entregue)" },
+];
+
+// Minúsculas, sem acentos e sem sublinhados, para comparar o que a pessoa digita
+export function normalizeText(text) {
+  return text
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replaceAll("_", " ")
+    .toLowerCase()
+    .trim();
+}
+
+// Categorias cujo nome contém o texto digitado; sem texto, todas
+export function filterCategories(options, query) {
+  const wanted = normalizeText(query);
+  if (!wanted) return options;
+  return options.filter(
+    (option) =>
+      normalizeText(option.label).includes(wanted) || normalizeText(option.value).includes(wanted),
+  );
+}
+
+// Frase a mais no aviso de pouca evidência, quando a pergunta foi feita com filtros
+export function restrictionNotice(status, filters) {
+  const parts = filterParts(filters);
+  if (!parts.length || (status !== "no_evidence" && status !== "weak_evidence")) return null;
+  return `A busca estava restrita a ${joinList(parts)}`;
 }
 
 // Histórico enviado com a pergunta: as 3 últimas trocas, com as respostas cortadas
