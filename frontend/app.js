@@ -28,15 +28,35 @@ import {
   quotePreview,
   splitQuotes,
   stripCitations,
+  SUGGESTION_AREAS,
   SUGGESTIONS,
   statusNotice,
   TIMEOUT_STATUS,
 } from "./logic.js";
 import { createFilterBar } from "./filters.js";
 import { closeOverlay, openOverlay } from "./overlay.js";
+import { renderDashboard } from "./dashboard.js";
+import {
+  DEMO_EMAIL,
+  DEMO_PASSWORD,
+  DIRECTOR,
+  SECTOR_AREAS,
+  displayName,
+  findSector,
+  findTheme,
+  initials,
+  parseSession,
+  scopeLabel,
+  scopeLine,
+  scopeThemes,
+  sectorList,
+  themeQuestion,
+} from "./painel.js";
 
 // O mesmo nome usado em theme.js, que aplica o tema antes de a página aparecer
 const THEME_STORAGE = "olist-theme";
+// Login de demonstração e setor escolhido; somem ao fechar a aba
+const SESSION_STORAGE = "voz-do-cliente-sessao";
 // A pergunta leva de 2 a 5 segundos; 30 segundos já indicam um problema
 const REQUEST_TIMEOUT_MS = 30000;
 // Com a API desligada, a página volta a conferir de tempos em tempos
@@ -69,14 +89,36 @@ const filtersToggle = document.getElementById("filters-toggle");
 const filtersCount = document.getElementById("filters-count");
 const askForm = document.getElementById("ask-form");
 
-// O campo da pergunta fica fixo no rodapé e muda de altura com o texto e com
-// a faixa de filtros. A página reserva no fim o espaço que ele ocupa, para
-// ele não cobrir a última resposta nem as sugestões.
+const chatPanel = document.getElementById("chat-panel");
+const chatScroll = document.getElementById("chat-scroll");
+const scopeChips = document.getElementById("scope-chips");
+const welcomeLead = document.getElementById("welcome-lead");
+const openChatButton = document.getElementById("open-chat");
+const openChatLabel = document.getElementById("open-chat-label");
+const closeChatButton = document.getElementById("close-chat");
+
+// O campo da pergunta fica no pé do painel do chat e muda de altura com o
+// texto e com a faixa de filtros. O aviso de desfazer e o botão "ir para o
+// fim" ficam logo acima dele.
 const composer = document.querySelector(".composer");
 new ResizeObserver(() => {
-  document.body.style.setProperty("--composer-height", `${composer.offsetHeight}px`);
+  chatPanel.style.setProperty("--composer-height", `${composer.offsetHeight}px`);
 }).observe(composer);
-const exampleButtons = document.querySelectorAll("#examples button");
+const areaPanelTitle = document.getElementById("area-panel-title");
+const areaQuestions = document.getElementById("area-questions");
+// A faixa de demonstração e o topo ficam fixos; o painel do chat ocupa a
+// altura que sobra embaixo deles
+const topbar = document.getElementById("topbar");
+const demoStrip = document.querySelector(".demo-strip");
+const headerObserver = new ResizeObserver(() => {
+  document.body.style.setProperty("--strip-height", `${demoStrip.offsetHeight}px`);
+  document.body.style.setProperty(
+    "--header-height",
+    `${demoStrip.offsetHeight + topbar.offsetHeight}px`,
+  );
+});
+headerObserver.observe(topbar);
+headerObserver.observe(demoStrip);
 
 let messageCount = 0;
 // Trocas desta conversa; ficam só no navegador e somem com "Nova conversa"
@@ -89,14 +131,18 @@ let documentCount = null;
 const SUGGESTIONS_PER_ROUND = 3;
 // Quantas das sugestões de cada rodada vêm da mesma área da pergunta
 const SAME_AREA_SUGGESTIONS = 2;
-// Perguntas já sugeridas ou feitas nesta conversa, que não voltam a aparecer.
-// Os exemplos da tela inicial contam como já sugeridos.
+// Perguntas já sugeridas ou feitas nesta conversa, que não voltam a aparecer
 let used = [];
 
+// Números do painel (dashboard.json), sessão de demonstração e recorte do chat:
+// o setor escolhido e, quando a pessoa clica num tema do painel, o tema
+let dashboardData = null;
+let session = null;
+let period = "todos";
+let scope = { sector: null, theme: null };
+
 function resetUsed() {
-  used = [...exampleButtons].map((button) =>
-    button.querySelector(".example-question").textContent.trim(),
-  );
+  used = [];
 }
 
 function element(tag, className, text) {
@@ -157,8 +203,8 @@ function applyLocks() {
   sendButton.disabled = blocked;
   sendButton.textContent = busy ? "Aguarde..." : "Perguntar";
   questionInput.disabled = locked;
-  for (const button of exampleButtons) button.disabled = blocked;
   const waiting = ".suggestion, .more-suggestions, .ask-unfiltered, .retry-button";
+  for (const button of areaQuestions.querySelectorAll(".suggestion")) button.disabled = blocked;
   for (const button of conversation.querySelectorAll(waiting)) {
     button.disabled = blocked;
   }
@@ -396,13 +442,13 @@ function renderAnswer(container, result, messageId) {
       answerless ? result.answer : notice.text,
     );
     // Com filtros, a falta de evidência pode ser só o recorte escolhido
-    const restriction = restrictionNotice(result.status, container.filters);
+    const restriction = restrictionText(result.status, container);
     if (restriction) {
       box.body.appendChild(element("span", "notice-restriction", `${restriction}.`));
       const unfiltered = element("button", "retry-button ask-unfiltered", "Perguntar sem filtros");
       unfiltered.type = "button";
       unfiltered.addEventListener("click", () =>
-        startQuestion(container.question, { filters: null }),
+        startQuestion(container.question, { filters: null, scope: null }),
       );
       box.body.appendChild(unfiltered);
     }
@@ -414,6 +460,9 @@ function renderAnswer(container, result, messageId) {
   const chosenRatings = container.filters && container.filters.ratings;
   const inferred = chosenRatings ? null : describeInferredRatings(result.inferred_ratings);
   if (inferred) container.appendChild(element("p", "inferred-filter", inferred));
+  const used = result.cited.length + result.uncited.length;
+  const scopeText = scopeLine(result.scope_count, container.scopeLabel || "da base inteira", used);
+  if (scopeText) container.appendChild(element("p", "scope-line", scopeText));
   const reviews = new Map();
   for (const review of result.cited) reviews.set(review.number, { review, cited: true });
   for (const review of result.uncited) reviews.set(review.number, { review, cited: false });
@@ -439,6 +488,18 @@ function renderAnswer(container, result, messageId) {
   if (!container.example) container.appendChild(copyButton(result));
   const reviewList = renderReviews(result, messageId);
   if (reviewList) container.appendChild(reviewList);
+}
+
+// Aviso de recorte na falta de evidência: os filtros da faixa e o setor ou tema do painel
+function restrictionText(status, container) {
+  if (status !== "no_evidence" && status !== "weak_evidence") return null;
+  const parts = [];
+  const bar = restrictionNotice(status, container.barFilters);
+  if (bar) parts.push(bar);
+  if (container.filters && container.filters.themes && container.scopeLabel) {
+    parts.push(`A busca ficou nas avaliações ${container.scopeLabel}`);
+  }
+  return parts.length ? parts.join(". ") : null;
 }
 
 function renderError(container, error, question) {
@@ -510,8 +571,9 @@ async function send(question, reply) {
   const messageId = reply.dataset.messageId;
   if (status === 200 && body) {
     renderAnswer(reply, body, messageId);
-    conversationTurns.push({ question, answer: body.answer });
-    renderSuggestions(reply);
+    reply.turns.push({ question, answer: body.answer });
+    // Se a pessoa saiu da conversa enquanto esperava, as sugestões ficam para quando ela voltar
+    if (reply.isConnected) renderSuggestions(reply);
     announce("Resposta pronta.");
   } else {
     const error = errorMessage(status, body);
@@ -523,27 +585,44 @@ async function send(question, reply) {
 }
 
 // Sem filtros explícitos, a pergunta usa os que estão ativos na faixa
+// O recorte do painel (setor ou tema) entra nos filtros como lista de temas
+function requestFilters(barFilters, questionScope) {
+  const themes = dashboardData && questionScope
+    ? scopeThemes(dashboardData, questionScope.sector, questionScope.theme)
+    : null;
+  if (!themes) return barFilters;
+  return { ...(barFilters || {}), themes };
+}
+
 function startQuestion(question, options = {}) {
   if (busy || !online) return false;
   discardUndo();
   welcome.hidden = true;
   newChatButton.hidden = false;
   used.push(question);
+  openChat();
 
   messageCount += 1;
-  const filters = options.filters !== undefined ? options.filters : filterBar.current();
+  const barFilters = options.filters !== undefined ? options.filters : filterBar.current();
+  const questionScope = options.scope !== undefined ? options.scope : { ...scope };
+  const filters = requestFilters(barFilters, questionScope);
   const turn = element("div", "turn");
   // Título oculto, para quem navega pelos títulos com leitor de tela
   turn.appendChild(element("h2", "visually-hidden", `Pergunta: ${question}`));
   const userMessage = element("div", "message-user", question);
-  if (filters) userMessage.appendChild(element("span", "message-filters", `Filtros: ${describeFilters(filters)}`));
+  const described = describeFilters(barFilters);
+  if (described) userMessage.appendChild(element("span", "message-filters", `Filtros: ${described}`));
+  const label = dashboardData && questionScope ? scopeLabel(dashboardData, questionScope.sector, questionScope.theme) : null;
   turn.appendChild(userMessage);
   const reply = element("div", "message-bot");
   reply.dataset.messageId = `m${messageCount}`;
   reply.filters = filters;
+  reply.barFilters = barFilters;
+  reply.scopeLabel = label;
   reply.question = question;
   // O histórico também fica no balão, para a nova tentativa mandar o mesmo
   reply.history = buildHistory(conversationTurns);
+  reply.turns = conversationTurns;
   turn.appendChild(reply);
   conversation.appendChild(turn);
   send(question, reply);
@@ -580,13 +659,6 @@ questionInput.addEventListener("keydown", (event) => {
 
 questionInput.addEventListener("input", updateComposer);
 
-for (const button of exampleButtons) {
-  button.addEventListener("click", () => {
-    const question = button.querySelector(".example-question").textContent.trim();
-    startQuestion(question);
-  });
-}
-
 // "Nova conversa" guarda o que apagou por alguns segundos, para dar tempo de desfazer
 let undoState = null;
 let undoTimer = null;
@@ -597,8 +669,10 @@ function discardUndo() {
   undoToast.hidden = true;
 }
 
-newChatButton.addEventListener("click", () => {
-  if (busy) return;
+// Apaga a conversa e volta à tela inicial, guardando o que apagou para desfazer
+let focusAfterClear = false;
+
+function clearConversation() {
   closeOverlay();
   discardUndo();
   undoState = {
@@ -615,12 +689,20 @@ newChatButton.addEventListener("click", () => {
   applyLocks();
   undoToast.hidden = false;
   undoTimer = setTimeout(discardUndo, UNDO_MS);
-  window.scrollTo({ top: 0, behavior: "smooth" });
-  questionInput.focus();
+  chatScroll.scrollTo({ top: 0, behavior: "smooth" });
+  // Pelo botão, o foco vai para o campo; pelo voltar do celular, não abre o teclado
+  if (focusAfterClear) questionInput.focus({ preventScroll: true });
+  focusAfterClear = false;
+}
+
+newChatButton.addEventListener("click", () => {
+  if (busy) return;
+  focusAfterClear = true;
+  clearConversation();
 });
 
-undoButton.addEventListener("click", () => {
-  if (!undoState) return;
+function restoreConversation() {
+  if (!undoState) return false;
   conversation.replaceChildren(...undoState.nodes);
   conversationTurns = undoState.turns;
   used = undoState.used;
@@ -630,6 +712,11 @@ undoButton.addEventListener("click", () => {
   applyLocks();
   announce("Conversa recuperada.");
   conversation.lastElementChild.scrollIntoView({ behavior: "smooth", block: "start" });
+  return true;
+}
+
+undoButton.addEventListener("click", () => {
+  restoreConversation();
 });
 
 const themeToggle = document.getElementById("theme-toggle");
@@ -700,10 +787,10 @@ aboutButton.addEventListener("click", () => {
 // "Ir para o fim" aparece quando falta bastante conversa abaixo do que está na tela
 const TO_END_DISTANCE = 400;
 function updateToEnd() {
-  const below = document.documentElement.scrollHeight - (window.scrollY + window.innerHeight);
+  const below = chatScroll.scrollHeight - (chatScroll.scrollTop + chatScroll.clientHeight);
   toEndButton.hidden = conversation.childElementCount === 0 || below < TO_END_DISTANCE;
 }
-window.addEventListener("scroll", updateToEnd, { passive: true });
+chatScroll.addEventListener("scroll", updateToEnd, { passive: true });
 new ResizeObserver(updateToEnd).observe(conversation);
 toEndButton.addEventListener("click", () => {
   conversationEnd.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -755,6 +842,7 @@ function showExample(result) {
   conversation.replaceChildren();
   conversationTurns = [];
   welcome.hidden = true;
+  openChat();
   messageCount += 1;
   const turn = element("div", "turn");
   turn.appendChild(element("h2", "visually-hidden", `Exemplo: ${result.original_question}`));
@@ -780,8 +868,331 @@ function exampleNote() {
   );
 }
 
+// Painel por setor -----------------------------------------------------------
+
+const views = {
+  login: document.getElementById("login-view"),
+  setor: document.getElementById("sector-view"),
+  painel: document.getElementById("painel-view"),
+};
+const sectorSwitch = document.getElementById("sector-switch");
+const sectorSelect = document.getElementById("sector-select");
+const userChip = document.getElementById("user-chip");
+const logoutButton = document.getElementById("logout");
+const loginForm = document.getElementById("login-form");
+const loginEmail = document.getElementById("login-email");
+const loginPassword = document.getElementById("login-password");
+const loginError = document.getElementById("login-error");
+// No celular e em telas estreitas o chat abre por cima do painel, em tela cheia
+const NARROW = window.matchMedia("(max-width: 960px)");
+
+function saveSession() {
+  try {
+    if (session) sessionStorage.setItem(SESSION_STORAGE, JSON.stringify(session));
+    else sessionStorage.removeItem(SESSION_STORAGE);
+  } catch {
+    // sem armazenamento, o login vale até a página ser recarregada
+  }
+}
+
+function loadSession() {
+  try {
+    return parseSession(sessionStorage.getItem(SESSION_STORAGE), dashboardData);
+  } catch {
+    return null;
+  }
+}
+
+function showView(name) {
+  for (const [key, view] of Object.entries(views)) view.hidden = key !== name;
+  document.body.dataset.view = name;
+  const logged = Boolean(session);
+  userChip.hidden = !logged || name === "login";
+  logoutButton.hidden = !logged || name === "login";
+  sectorSwitch.hidden = name !== "painel";
+  if (logged) {
+    document.getElementById("user-name").textContent = session.name;
+    document.getElementById("user-email").textContent = session.email;
+    document.getElementById("user-avatar").textContent = initials(session.name);
+  }
+  if (name !== "painel") document.body.classList.remove("chat-open");
+  window.scrollTo({ top: 0 });
+}
+
+// Apaga a conversa sem oferecer desfazer: ao trocar de setor ou sair
+function resetChat() {
+  closeOverlay();
+  discardUndo();
+  conversation.replaceChildren();
+  conversationTurns = [];
+  resetUsed();
+  filterBar.clear();
+  newChatButton.hidden = true;
+  applyLocks();
+}
+
+// Navegação: cada tela é uma entrada no histórico do navegador, e o chat
+// aberto em tela cheia também. Assim o voltar do celular fecha o chat,
+// depois volta à escolha de setor, como se espera.
+function go(state, { replace = false } = {}) {
+  if (replace) history.replaceState(state, "");
+  else history.pushState(state, "");
+  render(state);
+}
+
+function render(state) {
+  const view = state && state.view;
+  if (!session || view === "login") {
+    renderLogin();
+    return;
+  }
+  if (view === "painel" && dashboardData && findSector(dashboardData, state.sector)) {
+    enterSector(state.sector);
+    document.body.classList.toggle("chat-open", Boolean(state.chat) && NARROW.matches);
+    return;
+  }
+  renderSectorPicker();
+}
+
+window.addEventListener("popstate", (event) => render(event.state));
+
+function renderLogin() {
+  showView("login");
+  loginError.hidden = true;
+}
+
+document.getElementById("fill-demo").addEventListener("click", () => {
+  loginEmail.value = DEMO_EMAIL;
+  loginPassword.value = DEMO_PASSWORD;
+  loginForm.querySelector("button[type=submit]").focus();
+});
+
+loginForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const email = loginEmail.value.trim();
+  if (!email || !loginPassword.value) {
+    loginError.hidden = false;
+    return;
+  }
+  session = { email, name: displayName(email), sector: null };
+  saveSession();
+  loginPassword.value = "";
+  go({ view: "setor" });
+});
+
+logoutButton.addEventListener("click", () => {
+  session = null;
+  saveSession();
+  resetChat();
+  scope = { sector: null, theme: null };
+  go({ view: "login" }, { replace: true });
+});
+
+const SECTOR_ICONS = {
+  diretoria: ["M4 20V10", "M10 20V4", "M16 20v-7", "M22 20H2"],
+  logistica: ["M3 7h11v9H3z", "M14 10h4l3 3v3h-7"],
+  produto: ["M3 8l9-5 9 5v8l-9 5-9-5z", "M3 8l9 5 9-5", "M12 13v8"],
+  vendedor: ["M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"],
+  retencao: ["M20 11a8 8 0 1 0-2.3 5.7", "M20 5v6h-6"],
+  fortes: ["M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"],
+};
+
+function sectorIcon(id) {
+  const svg = document.createElementNS(SVG_NS, "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("class", "sector-icon");
+  svg.setAttribute("aria-hidden", "true");
+  for (const d of SECTOR_ICONS[id] || []) {
+    const path = document.createElementNS(SVG_NS, "path");
+    path.setAttribute("d", d);
+    svg.appendChild(path);
+  }
+  return svg;
+}
+
+// Uma frase com um número do setor, para ajudar na escolha
+function sectorPeek(sector) {
+  const all = dashboardData.periods.todos;
+  if (sector.id === DIRECTOR) {
+    const low = all.ratings["1"] + all.ratings["2"];
+    return `${((100 * low) / all.total).toFixed(1).replace(".", ",")}% das avaliações com nota 1 ou 2`;
+  }
+  const numbers = all.sectors[sector.id];
+  return `${numbers.count.toLocaleString("pt-BR")} avaliações tratam de temas do setor`;
+}
+
+function renderSectorPicker() {
+  showView("setor");
+  document.getElementById("sector-greeting").textContent = `Olá, ${session.name}`;
+  const cards = document.getElementById("sector-cards");
+  if (!dashboardData) {
+    const box = noticeBox(
+      "error",
+      "error",
+      "Não foi possível carregar os números do painel",
+      "Recarregue a página em alguns instantes.",
+    );
+    cards.replaceChildren(box);
+    return;
+  }
+  cards.replaceChildren(
+    ...sectorList(dashboardData).map((sector) => {
+      const card = element("button", sector.id === DIRECTOR ? "sector-card director" : "sector-card");
+      card.type = "button";
+      card.appendChild(sectorIcon(sector.id));
+      const text = element("span", "sector-card-text");
+      text.appendChild(element("span", "sector-card-title", sector.label));
+      text.appendChild(element("span", "sector-card-summary", sector.summary));
+      card.appendChild(text);
+      card.appendChild(element("span", "sector-card-peek", sectorPeek(sector)));
+      card.addEventListener("click", () => chooseSector(sector.id));
+      return card;
+    }),
+  );
+}
+
+function chooseSector(id) {
+  session.sector = id;
+  saveSession();
+  go({ view: "painel", sector: id });
+}
+
+sectorSelect.addEventListener("change", () => chooseSector(sectorSelect.value));
+
+// Entra no painel do setor. Trocar de setor começa uma conversa nova, porque
+// o recorte da busca muda.
+function enterSector(id) {
+  if (scope.sector !== id) {
+    resetChat();
+    scope = { sector: id, theme: null };
+  }
+  if (session.sector !== id) {
+    session.sector = id;
+    saveSession();
+  }
+  showView("painel");
+  sectorSelect.replaceChildren(
+    ...sectorList(dashboardData).map((sector) => {
+      const option = element("option", null, sector.label);
+      option.value = sector.id;
+      option.selected = sector.id === id;
+      return option;
+    }),
+  );
+  renderPainel();
+  renderScope();
+}
+
+function renderPainel() {
+  renderDashboard({
+    data: dashboardData,
+    sectorId: scope.sector,
+    period,
+    selectedTheme: scope.theme,
+    onTheme: selectTheme,
+    onPeriod: (key) => {
+      period = key;
+      renderPainel();
+    },
+    onOpenSector: chooseSector,
+  });
+}
+
+// Clicar num tema abre o chat já com o filtro dele; clicar de novo tira o filtro
+function selectTheme(id) {
+  scope.theme = scope.theme === id ? null : id;
+  renderPainel();
+  renderScope();
+  if (scope.theme) {
+    openChat();
+    announce(`Chat filtrado pelo tema ${findTheme(dashboardData, id).label}.`);
+  }
+}
+
+function scopeChip(text, onRemove) {
+  const chip = element("span", "scope-chip", text);
+  if (onRemove) {
+    const remove = element("button", "scope-chip-remove", "×");
+    remove.type = "button";
+    remove.setAttribute("aria-label", `Tirar o filtro: ${text}`);
+    remove.addEventListener("click", onRemove);
+    chip.appendChild(remove);
+  }
+  return chip;
+}
+
+// Chips do recorte, texto de boas-vindas e perguntas sugeridas do chat
+function renderScope() {
+  const sector = findSector(dashboardData, scope.sector);
+  const theme = scope.theme ? findTheme(dashboardData, scope.theme) : null;
+  const chips = [scopeChip(sector.id === DIRECTOR ? "Todos os setores" : sector.label)];
+  if (theme) {
+    chips.push(
+      scopeChip(`Tema: ${theme.label}`, () => {
+        scope.theme = null;
+        renderPainel();
+        renderScope();
+      }),
+    );
+  }
+  scopeChips.replaceChildren(...chips);
+  welcomeLead.textContent = theme
+    ? `A busca fica nas avaliações do tema "${theme.label}". As respostas mostram os comentários usados.`
+    : sector.id === DIRECTOR
+      ? "A busca usa todas as avaliações. As respostas mostram os comentários usados."
+      : `A busca fica nas avaliações com temas de ${sector.label}. As respostas mostram os comentários usados.`;
+  const area = SUGGESTION_AREAS.find((item) => item.area === SECTOR_AREAS[sector.id]);
+  const questions = [...(theme ? [themeQuestion(theme)] : []), ...(area ? area.questions : [])];
+  const unique = [...new Set(questions)].slice(0, theme ? 3 : 5);
+  areaPanelTitle.textContent = "Perguntas sugeridas";
+  areaQuestions.replaceChildren(...unique.map(suggestionButton));
+  openChatLabel.textContent = theme ? `Perguntar sobre ${theme.label.toLowerCase()}` : "Perguntar ao chat do setor";
+  applyLocks();
+}
+
+// No celular, o chat abre em tela cheia e ganha uma entrada no histórico
+function openChat() {
+  if (!NARROW.matches || document.body.classList.contains("chat-open")) return;
+  document.body.classList.add("chat-open");
+  const state = history.state || {};
+  if (state.view === "painel" && !state.chat) history.pushState({ ...state, chat: true }, "");
+}
+
+function closeChat() {
+  if (history.state && history.state.chat) history.back();
+  else document.body.classList.remove("chat-open");
+}
+
+openChatButton.addEventListener("click", () => {
+  openChat();
+  questionInput.focus({ preventScroll: true });
+});
+closeChatButton.addEventListener("click", closeChat);
+
+// Ao passar para a tela larga com o chat aberto, o painel volta a aparecer ao lado
+NARROW.addEventListener("change", () => {
+  if (!NARROW.matches) document.body.classList.remove("chat-open");
+});
+
+async function start() {
+  checkApi();
+  try {
+    const response = await fetch("dashboard.json");
+    if (!response.ok) throw new Error(String(response.status));
+    dashboardData = await response.json();
+  } catch {
+    dashboardData = null;
+  }
+  session = loadSession();
+  const saved = history.state;
+  if (!session) go({ view: "login" }, { replace: true });
+  else if (saved && saved.view) go(saved, { replace: true });
+  else if (session.sector && dashboardData) go({ view: "painel", sector: session.sector }, { replace: true });
+  else go({ view: "setor" }, { replace: true });
+}
+
 resetUsed();
 updateThemeButton();
 updateComposer();
 applyLocks();
-checkApi();
+start();

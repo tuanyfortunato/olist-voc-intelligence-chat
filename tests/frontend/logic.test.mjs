@@ -369,8 +369,8 @@ import {
 } from "../../frontend/logic.js";
 
 test("suggestionArea encontra a área de uma pergunta da lista", () => {
-  assert.equal(suggestionArea("O que faz um cliente dizer que não volta a comprar?"), "Retenção");
-  assert.equal(suggestionArea("  o que faz um cliente dizer que não volta a comprar?  "), "Retenção");
+  assert.equal(suggestionArea("O que faz um cliente dizer que não volta a comprar?"), "Retenção e reputação");
+  assert.equal(suggestionArea("  o que faz um cliente dizer que não volta a comprar?  "), "Retenção e reputação");
   assert.equal(suggestionArea("Pergunta livre?"), null);
 });
 
@@ -381,7 +381,7 @@ test("pickAreaSuggestions puxa duas da mesma área e uma de outra", () => {
     assert.equal(picked.length, 3);
     assert.equal(new Set(picked).size, 3);
     const areas = picked.map(suggestionArea);
-    assert.equal(areas.filter((area) => area === "Retenção").length, 2);
+    assert.equal(areas.filter((area) => area === "Retenção e reputação").length, 2);
     assert.ok(!picked.includes(question));
   }
 });
@@ -403,12 +403,10 @@ test("pickAreaSuggestions completa com outras áreas quando a área acaba", () =
   for (const question of picked) assert.ok(!group.includes(question));
 });
 
-test("os cartões da tela inicial estão na lista de sugestões", async () => {
-  const { readFile } = await import("node:fs/promises");
-  const html = await readFile(new URL("../../frontend/index.html", import.meta.url), "utf8");
-  const cards = [...html.matchAll(/<span class="example-question">([^<]+)<\/span>/g)].map((m) => m[1]);
-  assert.equal(cards.length, 5);
-  for (const card of cards) assert.ok(suggestionArea(card), card);
+test("cada setor do painel tem uma área de perguntas sugeridas", async () => {
+  const { SECTOR_AREAS } = await import("../../frontend/painel.js");
+  const areas = SUGGESTION_AREAS.map((item) => item.area);
+  for (const area of Object.values(SECTOR_AREAS)) assert.ok(areas.includes(area), area);
 });
 
 import { citedNumbers, quotePreview, splitQuotes, stripCitations } from "../../frontend/logic.js";

@@ -1,0 +1,5 @@
+# Avaliação com o RAGAS, instalada só no workflow Evaluate.
+# Fica fora da imagem da API e do CI.
+-r requirements.txt
+
+ragas==0.4.4

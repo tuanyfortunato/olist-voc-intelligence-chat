@@ -9,6 +9,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, Field, StringConstraints, field_validator
 
 from src.config import Settings
+from src.themes.taxonomy import THEME_IDS
 
 _DEFAULTS = Settings()
 HISTORY_ANSWER_CHARS = _DEFAULTS.history_answer_chars
@@ -33,11 +34,22 @@ class HistoryTurn(BaseModel):
 
 
 class SearchFiltersIn(BaseModel):
-    """Filtros da busca. Aceitos desde já, mas só passam a valer na etapa de filtros."""
+    """Filtros da busca. Os temas são os da classificação em lote (src/themes)."""
 
     ratings: list[Rating] | None = None
     category: str | None = None
     delivery: Literal["no_prazo", "atrasada", "nao_entregue", "com_problema"] | None = None
+    themes: list[str] | None = Field(default=None, max_length=len(THEME_IDS))
+
+    @field_validator("themes")
+    @classmethod
+    def known_themes(cls, value: list[str] | None) -> list[str] | None:
+        if not value:
+            return None
+        unknown = sorted(set(value) - THEME_IDS)
+        if unknown:
+            raise ValueError(f"Temas desconhecidos: {', '.join(unknown)}")
+        return sorted(set(value))
 
 
 class AskRequest(BaseModel):
@@ -68,3 +80,4 @@ class AskResponse(BaseModel):
     original_question: str
     search_topic: str
     inferred_ratings: list[int] = []
+    scope_count: int | None = None
