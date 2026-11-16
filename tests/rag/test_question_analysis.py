@@ -100,3 +100,8 @@ def test_history_is_only_sent_when_present():
     turn = ConversationTurn("Quais reclamações sobre entrega?", "Atrasos [1].")
     analyze_question("E nas notas altas?", [turn], llm)
     assert "Quais reclamações sobre entrega?" in str(llm.messages[1])
+
+
+def test_removed_premise_defaults_to_false():
+    data = {"kind": "in_scope", "search_topic": "x", "clean_question": "x"}
+    assert validate_analysis(data).removed_premise is False

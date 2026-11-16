@@ -34,6 +34,8 @@ def test_system_prompt_rules():
         "Lannister",
         "não há informação suficiente",
         "percentuais",
+        "além de",
+        "principal",
     ]:
         assert rule in ANSWER_SYSTEM_PROMPT, rule
 

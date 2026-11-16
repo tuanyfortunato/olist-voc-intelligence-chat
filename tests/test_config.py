@@ -42,6 +42,8 @@ def test_calibrated_defaults(monkeypatch):
     assert settings.top_k == 15
     assert settings.use_rewrite is True
     assert settings.min_comment_chars == 0
+    assert settings.strong_similarity == 0.64
+    assert settings.answer_model_id == "amazon.nova-micro-v1:0"
 
 
 def test_boolean_from_environment(monkeypatch):
