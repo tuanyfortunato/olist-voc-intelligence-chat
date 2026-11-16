@@ -35,17 +35,21 @@ WEAK_EVIDENCE_MAX_CITED = 2
 FIXED_MESSAGES = {"out_of_scope": OUT_OF_SCOPE_MESSAGE, "greeting": GREETING_MESSAGE}
 
 
-def decide_status(n_retrieved: int, n_cited: int) -> str:
-    """Situação da resposta a partir das avaliações recuperadas e das citadas.
+def decide_status(
+    n_retrieved: int, n_cited: int, top_similarity: float = 1.0, strong_similarity: float = 0.0
+) -> str:
+    """Situação da resposta a partir das avaliações recuperadas, das citadas e do score.
 
-    Nenhuma recuperada ou nenhuma citada vale como sem evidência; uma ou duas
-    citadas, evidência fraca. A medida é pelas citações, e não pelo score,
-    porque o score não separa temas vizinhos: a busca pelo Pix traz comentários
-    sobre pagamento em geral, com score parecido com o de comentários relevantes.
+    Nenhuma recuperada ou nenhuma citada vale como sem evidência. A evidência é
+    fraca quando a resposta cita uma ou duas avaliações, ou quando nem o
+    comentário mais próximo chega ao score de evidência forte. O segundo sinal
+    existe porque o modelo tende a citar quase todos os comentários que parecem
+    próximos: na pergunta sobre embalagem de presente, citou dez quando só um
+    era relevante.
     """
     if n_retrieved == 0 or n_cited == 0:
         return "no_evidence"
-    if n_cited <= WEAK_EVIDENCE_MAX_CITED:
+    if n_cited <= WEAK_EVIDENCE_MAX_CITED or top_similarity < strong_similarity:
         return "weak_evidence"
     return "answered"
 
@@ -113,7 +117,10 @@ class RagPipeline:
         cited = [by_number[n] for n in check.cited]
         uncited = [review for review in reviews if review.number not in check.cited]
 
-        status = decide_status(len(reviews), len(cited))
+        top_similarity = max(review.similarity for review in reviews)
+        status = decide_status(
+            len(reviews), len(cited), top_similarity, self.settings.strong_similarity
+        )
         if analysis.removed_premise and status != "no_evidence":
             answer = f"{answer}\n\n{PREMISE_NOTE}"
         logger.info(
@@ -150,7 +157,9 @@ def build_pipeline(settings: Settings) -> RagPipeline:
     return RagPipeline(
         settings=settings,
         analysis_llm=get_chat_model(settings, settings.analysis_max_tokens),
-        answer_llm=get_chat_model(settings, settings.answer_max_tokens),
+        answer_llm=get_chat_model(
+            settings, settings.answer_max_tokens, model_id=settings.answer_model_id
+        ),
         embed=lambda text: embed_query(client, text, settings),
         search=search,
     )

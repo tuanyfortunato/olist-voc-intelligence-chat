@@ -47,7 +47,7 @@ def review(review_id):
 def fake_pipeline(retrieved=(), answer="Resposta [1].", use_rewrite=True, **analysis):
     embedded = []
     pipeline = RagPipeline(
-        settings=Settings(use_rewrite=use_rewrite),
+        settings=Settings(use_rewrite=use_rewrite, strong_similarity=0.64),
         analysis_llm=FakeAnalysisLLM(**analysis),
         answer_llm=FakeAnswerLLM(answer),
         embed=lambda text: embedded.append(text) or [1.0, 0.0, 0.0],
@@ -107,6 +107,20 @@ def test_answer_uses_clean_question():
 )
 def test_decide_status(retrieved, cited, status):
     assert decide_status(retrieved, cited) == status
+
+
+def test_low_top_similarity_makes_evidence_weak_even_with_many_citations():
+    assert decide_status(15, 10, top_similarity=0.61, strong_similarity=0.64) == "weak_evidence"
+    assert decide_status(15, 10, top_similarity=0.66, strong_similarity=0.64) == "answered"
+
+
+def test_pipeline_uses_top_similarity_for_weak_evidence():
+    weak = [
+        RetrievedReview(f"r{i}", 1, "bebes", "no_prazo", "2018-03-10", "Embalagem", 0.61)
+        for i in range(5)
+    ]
+    pipe = fake_pipeline(weak, "Muitos [1][2][3][4][5].")
+    assert pipe.ask("Embalagem de presente?").status == "weak_evidence"
 
 
 def test_no_retrieved_reviews_skips_answer_llm():

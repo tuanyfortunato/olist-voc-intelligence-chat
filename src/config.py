@@ -20,6 +20,8 @@ class Settings:
     embedding_dimensions: int = 1024
     embedding_batch_size: int = 96
     llm_model_id: str = "amazon.nova-micro-v1:0"
+    # Modelo que escreve a resposta; a análise da pergunta usa llm_model_id
+    answer_model_id: str = "amazon.nova-micro-v1:0"
 
     # Embeddings gerados pela indexação
     index_dir: str = "data/index"
@@ -44,6 +46,10 @@ class Settings:
     mmr_lambda: float = 0.5
     min_comment_chars: int = 0
     use_rewrite: bool = True
+    # Abaixo deste score no comentário mais próximo, a evidência é fraca mesmo
+    # que a resposta cite muitas avaliações (calibração: perguntas com evidência
+    # de 0,66 a 0,77; de evidência fraca, 0,61 e 0,63)
+    strong_similarity: float = 0.64
 
     # Geração
     analysis_max_tokens: int = 300
