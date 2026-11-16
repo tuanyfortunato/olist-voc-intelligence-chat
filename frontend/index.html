@@ -29,7 +29,6 @@
     <div class="top-actions">
       <button id="new-chat" class="ghost-button" type="button" hidden>Nova conversa</button>
       <button id="about-button" class="ghost-button" type="button" aria-haspopup="dialog" aria-label="Sobre os dados">Sobre<span class="wide-only"> os dados</span></button>
-      <button id="change-key" class="ghost-button" type="button" aria-label="Trocar a chave" hidden><span class="wide-only">Trocar a </span><span class="key-word">chave</span></button>
       <button id="theme-toggle" class="ghost-button theme-toggle" type="button">
         <span class="theme-icon" aria-hidden="true"></span>
         <span id="theme-label" class="visually-hidden">Tema escuro</span>
@@ -41,23 +40,6 @@
     <p id="offline-banner" class="offline-banner" role="status" hidden>
       O chat funciona das 9h às 22h, horário de Brasília. Volte nesse horário.
     </p>
-
-    <section id="key-gate" class="key-gate" hidden>
-      <form id="key-form" class="key-form" autocomplete="off">
-        <h2>Digite a chave de acesso para começar</h2>
-        <p class="key-help">A chave vem com o material de entrega do projeto.</p>
-        <label for="access-key">Chave de acesso</label>
-        <div class="key-field">
-          <input id="access-key" type="password" placeholder="Digite a chave" spellcheck="false" autocapitalize="off" aria-describedby="key-error">
-          <button id="toggle-key" class="key-toggle" type="button" aria-label="Mostrar a chave" aria-pressed="false">Mostrar</button>
-        </div>
-        <p id="key-error" class="key-error" role="alert" hidden></p>
-        <div class="key-actions">
-          <button id="key-submit" class="primary-button" type="submit">Entrar</button>
-          <button id="key-cancel" class="ghost-button" type="button" hidden>Cancelar</button>
-        </div>
-      </form>
-    </section>
 
     <section id="welcome" class="welcome" hidden>
       <h2>O que você quer saber sobre os clientes?</h2>
