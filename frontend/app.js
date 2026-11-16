@@ -5,7 +5,6 @@ import {
   canRetry,
   currentTheme,
   categoryLabel,
-  buildFilters,
   buildHistory,
   counterState,
   deliveryLabel,
@@ -25,6 +24,7 @@ import {
   statusNotice,
   TIMEOUT_STATUS,
 } from "./logic.js";
+import { createFilterBar } from "./filters.js";
 
 const KEY_STORAGE = "olist-voc-access-key";
 // O mesmo nome usado em theme.js, que aplica o tema antes de a página aparecer
@@ -49,19 +49,13 @@ const apiStatusText = document.getElementById("api-status-text");
 const announcer = document.getElementById("announcer");
 
 // O campo da pergunta fica fixo no rodapé e muda de altura com o texto e com
-// o painel de filtros. A página reserva no fim o espaço que ele ocupa, para
+// a faixa de filtros. A página reserva no fim o espaço que ele ocupa, para
 // ele não cobrir a última resposta nem as sugestões.
 const composer = document.querySelector(".composer");
 new ResizeObserver(() => {
   document.body.style.setProperty("--composer-height", `${composer.offsetHeight}px`);
 }).observe(composer);
 const exampleButtons = document.querySelectorAll("#examples button");
-const filtersPanel = document.getElementById("filters");
-const filtersSummary = document.getElementById("filters-summary");
-const ratingInputs = document.querySelectorAll('input[name="rating"]');
-const categorySelect = document.getElementById("filter-category");
-const deliverySelect = document.getElementById("filter-delivery");
-const clearFiltersButton = document.getElementById("clear-filters");
 
 let messageCount = 0;
 // Trocas desta conversa; ficam só no navegador e somem com "Nova conversa"
@@ -393,7 +387,7 @@ function startQuestion(question) {
   used.push(question);
 
   messageCount += 1;
-  const filters = currentFilters();
+  const filters = filterBar.current();
   const turn = element("div", "turn");
   const userMessage = element("div", "message-user", question);
   if (filters) userMessage.appendChild(element("span", "message-filters", `Filtros: ${describeFilters(filters)}`));
@@ -425,7 +419,6 @@ form.addEventListener("submit", (event) => {
   // A pergunta só sai do campo depois de enviada
   if (startQuestion(question)) {
     questionInput.value = "";
-    filtersPanel.open = false;
     updateComposer();
   }
 });
@@ -522,74 +515,16 @@ async function checkApi() {
   if (!online) healthTimer = setTimeout(checkApi, HEALTH_RETRY_MS);
 }
 
-function currentFilters() {
-  return buildFilters({
-    ratings: [...ratingInputs].filter((input) => input.checked).map((input) => input.value),
-    category: categorySelect.value,
-    delivery: deliverySelect.value,
-  });
-}
-
-function updateFiltersSummary() {
-  const filters = currentFilters();
-  filtersSummary.textContent = filters ? describeFilters(filters) : "nenhum";
-  filtersPanel.dataset.active = String(Boolean(filters));
-}
-
-// As categorias vêm da API, que exige a chave; sem chave, o filtro fica só com "Todas".
-// A carga em andamento é reaproveitada: a chave e a abertura do painel podem
-// pedir a lista ao mesmo tempo, e sem isso as categorias apareceriam duas vezes.
-let categoriesLoaded = false;
-let categoriesRequest = null;
-
-function loadCategories() {
-  if (categoriesLoaded || categoriesRequest || !keyInput.value.trim()) return categoriesRequest;
-  categoriesRequest = fetchCategories().finally(() => {
-    categoriesRequest = null;
-  });
-  return categoriesRequest;
-}
-
-async function fetchCategories() {
-  const key = keyInput.value.trim();
-  try {
-    const response = await fetch("/api/categories", { headers: { "X-Access-Key": key } });
-    if (!response.ok) return;
-    const data = await response.json();
-    const options = data.categories
-      .map((category) => ({ value: category, label: categoryLabel(category) }))
-      .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
-    for (const option of options) {
-      const node = element("option", null, option.label);
-      node.value = option.value;
-      categorySelect.appendChild(node);
-    }
-    categoriesLoaded = true;
-  } catch {
-    // sem as categorias, o filtro de categoria fica só com "Todas"
-  }
-}
-
-for (const input of [...ratingInputs, categorySelect, deliverySelect]) {
-  input.addEventListener("change", updateFiltersSummary);
-}
-
-clearFiltersButton.addEventListener("click", () => {
-  for (const input of ratingInputs) input.checked = false;
-  categorySelect.value = "";
-  deliverySelect.value = "";
-  updateFiltersSummary();
+const filterBar = createFilterBar({
+  container: document.getElementById("filter-bar"),
+  getKey: () => keyInput.value.trim(),
+  focusKey: () => showKeyError("Digite a chave de acesso para ver as categorias."),
+  announce,
 });
-
-filtersPanel.addEventListener("toggle", () => {
-  if (filtersPanel.open) loadCategories();
-});
-keyInput.addEventListener("change", loadCategories);
+keyInput.addEventListener("change", () => filterBar.reloadCategories());
 
 keyInput.value = loadKey();
 resetUsed();
 updateThemeButton();
 updateComposer();
-updateFiltersSummary();
 checkApi();
-loadCategories();
