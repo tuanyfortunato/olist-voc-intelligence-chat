@@ -1,0 +1,10 @@
+tipo,linhas,avaliadas_ragas,situacao_esperada,faithfulness,answer_relevancy,context_precision
+with_evidence,6,6,6 de 6,0.972,0.408,0.669
+no_evidence,1,1,0 de 1,1.000,0.000,0.000
+weak_evidence,1,1,1 de 1,0.667,0.539,0.722
+out_of_scope,1,0,1 de 1,,,
+false_premise,1,0,0 de 1,,,
+rule_change,1,0,,,,
+greeting_follow_up,2,1,2 de 2,0.750,0.607,0.000
+with_filter,3,3,3 de 3,0.952,0.340,0.546
+total,16,12,13 de 15,0.926,0.387,0.531

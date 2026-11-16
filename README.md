@@ -220,7 +220,40 @@ Cada pergunta leva de 1,5 a 2 segundos do começo ao fim. A geração dos embedd
 
 ## Como avaliei o chat
 
-**Perguntas de teste.** Montei 15 perguntas em [`evaluation/questions.yaml`](evaluation/questions.yaml), cada uma com o comportamento esperado. Elas cobrem perguntas com evidência, sem evidência, com evidência fraca, fora do escopo, com premissa falsa, tentativa de mudar as regras, cumprimento seguido de continuação e perguntas com filtro. Um workflow roda todas pelo pipeline completo e grava as respostas, os comentários recuperados e os citados em [`evaluation/results/`](evaluation/results/), com colunas para a revisão manual de relevância, fidelidade e citações corretas.
+**Perguntas de teste.** Montei 15 perguntas em [`evaluation/questions.yaml`](evaluation/questions.yaml), cada uma com o comportamento esperado. Elas cobrem perguntas com evidência, sem evidência, com evidência fraca, fora do escopo, com premissa falsa, tentativa de mudar as regras, cumprimento seguido de continuação e perguntas com filtro. Um workflow roda todas pelo pipeline completo, por padrão também com o RAGAS, e grava as respostas, os comentários recuperados e os citados em [`evaluation/results/`](evaluation/results/), com colunas para a revisão manual de relevância, fidelidade e citações corretas.
+
+**Notas do RAGAS.** Além da revisão manual, o mesmo workflow calcula três métricas do [RAGAS](https://docs.ragas.io/) que não precisam de resposta de referência: faithfulness (cada afirmação da resposta está nos comentários recuperados?), answer relevancy (a resposta trata da pergunta feita?) e context precision (os comentários úteis vêm nas primeiras posições da busca?). O juiz é o Amazon Nova Pro, e não o Nova Micro que escreve as respostas, para o modelo não avaliar a si mesmo. Os embeddings da answer relevancy são os do Cohere, os mesmos da base. As respostas fixas e as recusas (fora do escopo, cumprimento e sem evidência) não passam pelo RAGAS, que daria nota baixa justamente ao comportamento certo. Para todas as linhas há também uma checagem por regra: a situação que o chat devolveu é a esperada para o tipo da pergunta? Deixei o context recall de fora, porque ele exige uma resposta de referência escrita à mão, e para perguntas abertas como "quais os principais elogios" esse gabarito seria arbitrário.
+
+Rodada de 16/11/2026, com as 15 perguntas ([execução](https://github.com/tuanyfortunato/olist-voc-intelligence-chat/actions/runs/43948172065), [`ragas.csv`](evaluation/results/ragas.csv)):
+
+| Pergunta | Situação | Esperada? | Faithfulness | Relevancy | Precision |
+|---|---|---|---:|---:|---:|
+| 1. Reclamações sobre entrega | respondida | sim | 1,00 | 0,71 | 0,66 |
+| 2. Produtos com defeito | respondida | sim | 1,00 | 0,71 | 0,66 |
+| 3. Principais elogios | respondida | sim | 1,00 | 0,62 | 0,50 |
+| 4. Pagamento com Pix | evidência fraca | não | 1,00 | 0,00 | 0,00 |
+| 5. Embalagem de presente | evidência fraca | sim | 0,67 | 0,54 | 0,72 |
+| 6. Faturamento da Olist | fora do escopo | sim | | | |
+| 7. Aplicativo da loja | respondida | sim | 0,83 | 0,00 | 0,27 |
+| 8. Premissa dos 90% | sem evidência | não | | | |
+| 9. Mudança de regra | fora do escopo | revisão manual | | | |
+| 10. Atendimento do vendedor | respondida | sim | 1,00 | sem nota | 0,93 |
+| 11. Produto diferente do anunciado | respondida | sim | 1,00 | 0,00 | 1,00 |
+| 12. "Oi" | cumprimento | sim | | | |
+| 12. "E nas notas altas?" | evidência fraca | sim | 0,75 | 0,61 | 0,00 |
+| 13. Notas 1 e 2 (filtro) | respondida | sim | 1,00 | sem nota | 0,62 |
+| 14. cama_mesa_banho (filtro) | respondida | sim | 0,86 | 0,68 | 0,93 |
+| 15. Entregas atrasadas (filtro) | respondida | sim | 1,00 | 0,00 | 0,09 |
+| **Média das 12 respostas avaliadas** | | **13 de 15** | **0,93** | **0,39** | **0,53** |
+
+O que as notas mostram:
+
+- **A faithfulness é alta.** As respostas ficam no que os comentários dizem. A nota mais baixa é a da pergunta 5: a resposta diz que "vários clientes" pedem embalagem de presente e cita nove comentários, quando poucos pedem de fato. É o mesmo exagero que a situação de evidência fraca tenta sinalizar. A pergunta 7, sobre o aplicativo, fica em 0,83 pelo problema já conhecido de citar comentários sobre a loja numa frase sobre o aplicativo.
+- **A answer relevancy é a métrica menos confiável aqui.** O RAGAS zera a nota quando o juiz considera a resposta evasiva. Isso pegou respostas que terminam com frases como "Nenhum comentário fala sobre a forma de pagamento" (7 e 10) e respostas de uma linha só, que repetem a pergunta e citam os 15 comentários (11 e 15). As duas coisas são sinais reais de resposta rasa, mas a métrica também sofre com os prompts do RAGAS em inglês avaliando texto em português. Em duas perguntas o juiz não devolveu nota.
+- **A context precision cai onde a busca já era fraca.** Na pergunta 15, sobre entregas atrasadas, o filtro de atraso traz comentários que falam de atraso de forma genérica, e o juiz considera poucos úteis para responder quais temas aparecem. Na pergunta 7, poucos comentários falam de fato do aplicativo.
+- **A checagem por regra achou dois desvios.** Na pergunta do Pix, o modelo escreve que nenhum comentário fala de Pix, mas cita os comentários na mesma frase, e as citações fazem a resposta sair como evidência fraca em vez de sem evidência. Na pergunta 8, a premissa dos 90% foi retirada, mas a resposta disse que não havia informação além do atraso, em vez de listar outras críticas.
+
+A rodada do RAGAS fez 235 mil tokens de entrada e 23 mil de saída no Nova Pro, cerca de US$ 0,26, e levou uns 20 minutos, porque as chamadas vão em ritmo lento para não bater no limite do Bedrock.
 
 **Calibração da busca.** Antes de fixar o score mínimo, o número de comentários e o uso da reescrita, rodei as perguntas de teste buscando os 30 comentários mais próximos, sem corte e sem MMR, com a pergunta original e com o tema reescrito. As tabelas estão em [`evaluation/calibration/`](evaluation/calibration/), e os valores escolhidos saíram delas.
 
@@ -318,6 +351,7 @@ Os workflows `Calibrate retrieval` e `Evaluate` rodam as perguntas de teste numa
 - **A folga do score mínimo é pequena** na pergunta sem evidência. Uma variação na reescrita do tema pode deixar passar comentários de assunto vizinho. A regra do prompt contra assuntos não mencionados é a segunda proteção.
 - **O Nova Micro às vezes força a ligação** entre a frase e o comentário, como citar um comentário sobre a loja numa frase sobre o aplicativo. A revisão manual mede isso, e a troca planejada, se a fidelidade ficar baixa, é passar a resposta para o Nova Lite.
 - **O trecho entre o CloudFront e o ALB é HTTP**, porque o ALB não tem nome próprio nem certificado. O ALB só aceita tráfego vindo do CloudFront.
+- **As notas do RAGAS dependem de outro LLM.** O juiz também erra, os prompts do RAGAS são em inglês e a amostra é de 15 perguntas. As notas servem para comparar uma versão do chat com a anterior e para apontar respostas a conferir, não como medida absoluta de qualidade.
 - **A base vai de 2016 a 2018.** Assuntos mais recentes, como o Pix, não aparecem nos comentários.
 
 ## Documentação
