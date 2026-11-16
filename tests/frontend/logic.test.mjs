@@ -1,4 +1,4 @@
-// Testes da lógica da página, sem navegador: node --test tests/frontend/
+// Testes da lógica da página, sem navegador: node --test "tests/frontend/*.test.mjs"
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
