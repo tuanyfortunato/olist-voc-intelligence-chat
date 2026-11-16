@@ -11,6 +11,7 @@
   <script src="theme.js"></script>
 </head>
 <body>
+  <a class="skip-link" href="#question">Ir para a pergunta</a>
   <header class="topbar">
     <div class="brand">
       <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
@@ -27,23 +28,38 @@
     </div>
     <div class="top-actions">
       <button id="new-chat" class="ghost-button" type="button" hidden>Nova conversa</button>
+      <button id="about-button" class="ghost-button" type="button" aria-haspopup="dialog" aria-label="Sobre os dados">Sobre<span class="wide-only"> os dados</span></button>
+      <button id="change-key" class="ghost-button" type="button" aria-label="Trocar a chave" hidden><span class="wide-only">Trocar a </span><span class="key-word">chave</span></button>
       <button id="theme-toggle" class="ghost-button theme-toggle" type="button">
         <span class="theme-icon" aria-hidden="true"></span>
         <span id="theme-label" class="visually-hidden">Tema escuro</span>
       </button>
-      <form id="key-form" class="key-form" autocomplete="off">
-        <label for="access-key">Chave de acesso</label>
-        <div class="key-field">
-          <input id="access-key" type="password" placeholder="Digite a chave" spellcheck="false" aria-describedby="key-error">
-          <button id="toggle-key" class="key-toggle" type="button" aria-label="Mostrar a chave" aria-pressed="false">Mostrar</button>
-        </div>
-        <p id="key-error" class="key-error" hidden></p>
-      </form>
     </div>
   </header>
 
   <main class="layout">
-    <section id="welcome" class="welcome">
+    <p id="offline-banner" class="offline-banner" role="status" hidden>
+      O chat funciona das 9h às 22h, horário de Brasília. Volte nesse horário.
+    </p>
+
+    <section id="key-gate" class="key-gate" hidden>
+      <form id="key-form" class="key-form" autocomplete="off">
+        <h2>Digite a chave de acesso para começar</h2>
+        <p class="key-help">A chave vem com o material de entrega do projeto.</p>
+        <label for="access-key">Chave de acesso</label>
+        <div class="key-field">
+          <input id="access-key" type="password" placeholder="Digite a chave" spellcheck="false" autocapitalize="off" aria-describedby="key-error">
+          <button id="toggle-key" class="key-toggle" type="button" aria-label="Mostrar a chave" aria-pressed="false">Mostrar</button>
+        </div>
+        <p id="key-error" class="key-error" role="alert" hidden></p>
+        <div class="key-actions">
+          <button id="key-submit" class="primary-button" type="submit">Entrar</button>
+          <button id="key-cancel" class="ghost-button" type="button" hidden>Cancelar</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="welcome" class="welcome" hidden>
       <h2>O que você quer saber sobre os clientes?</h2>
       <p>
         As respostas são escritas a partir dos comentários das avaliações da Olist, e cada
@@ -70,57 +86,17 @@
       </div>
       <p class="fixed-note">
         As respostas descrevem as avaliações recuperadas para cada pergunta, e não a base
-        inteira: mostram relatos dos clientes, mas não medem com que frequência cada problema
-        acontece. Dá para continuar a conversa: "E nas notas altas?", depois de uma pergunta, usa o assunto da pergunta anterior.
+        inteira. Dá para continuar a conversa com perguntas curtas, como "E nas notas altas?".
       </p>
     </section>
 
     <section id="conversation" class="conversation" aria-label="Conversa"></section>
+    <div id="conversation-end"></div>
   </main>
 
   <div class="composer">
     <form id="ask-form" class="ask-form">
-      <details id="filters" class="filters">
-        <summary>
-          <span class="filters-title">Filtros da busca</span>
-          <span id="filters-summary" class="filters-summary">nenhum</span>
-        </summary>
-        <div class="filters-body">
-          <fieldset class="filter-group">
-            <legend>Notas</legend>
-            <div class="filter-ratings">
-              <label><input type="checkbox" name="rating" value="1"> 1</label>
-              <label><input type="checkbox" name="rating" value="2"> 2</label>
-              <label><input type="checkbox" name="rating" value="3"> 3</label>
-              <label><input type="checkbox" name="rating" value="4"> 4</label>
-              <label><input type="checkbox" name="rating" value="5"> 5</label>
-            </div>
-          </fieldset>
-          <label class="filter-group">
-            <span>Categoria</span>
-            <select id="filter-category">
-              <option value="">Todas</option>
-            </select>
-          </label>
-          <label class="filter-group">
-            <span>Entrega</span>
-            <select id="filter-delivery">
-              <option value="">Todas</option>
-              <option value="no_prazo">No prazo</option>
-              <option value="atrasada">Atrasadas</option>
-              <option value="nao_entregue">Não entregues</option>
-              <option value="com_problema">Com problema</option>
-            </select>
-          </label>
-          <button id="clear-filters" class="ghost-button" type="button">Limpar filtros</button>
-          <p class="filters-note">
-            Nenhuma nota marcada busca em todas. "Com problema" junta as entregas atrasadas e as
-            não entregues. Com uma categoria, os pedidos com produtos de
-            várias categorias ficam de fora; com um filtro de entrega, também os pedidos sem
-            essa informação.
-          </p>
-        </div>
-      </details>
+      <div id="filter-bar" class="filter-bar" aria-label="Filtros da busca"></div>
       <label for="question" class="visually-hidden">Pergunta</label>
       <textarea id="question" rows="1" maxlength="500" placeholder="Escreva a sua pergunta sobre as avaliações" aria-describedby="composer-hint"></textarea>
       <div class="ask-footer">
@@ -129,6 +105,30 @@
         <button id="send" type="submit">Perguntar</button>
       </div>
     </form>
+  </div>
+
+  <button id="to-end" class="to-end" type="button" hidden>Ir para o fim</button>
+
+  <template id="about-template">
+    <div class="about">
+      <p>
+        Os comentários vêm da base pública de avaliações da Olist, com pedidos feitos entre
+        2016 e 2018. <span class="about-count"></span>
+      </p>
+      <p>
+        O chat resume o que os clientes relatam e mostra as avaliações que sustentam cada
+        afirmação. Os nomes de lojas que aparecem nos comentários são fictícios.
+      </p>
+      <p>
+        Ele não mede com que frequência cada problema acontece e não responde a perguntas de
+        faturamento ou de outros números da operação.
+      </p>
+    </div>
+  </template>
+
+  <div id="undo-toast" class="undo-toast" role="status" hidden>
+    <span>Conversa apagada</span>
+    <button id="undo-button" type="button">Desfazer</button>
   </div>
 
   <p id="announcer" class="visually-hidden" aria-live="polite"></p>

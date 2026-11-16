@@ -52,3 +52,15 @@ variable "db_allocated_storage" {
   type        = number
   default     = 20
 }
+
+variable "zone_name" {
+  description = "Zona DNS já existente no Route 53, criada pelo repositório do site pessoal"
+  type        = string
+  default     = "tuanyfortunato.com.br"
+}
+
+variable "app_domain" {
+  description = "Endereço próprio da página e da API"
+  type        = string
+  default     = "olist-chat.tuanyfortunato.com.br"
+}

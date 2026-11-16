@@ -43,3 +43,7 @@ output "access_key_parameter" {
 output "db_endpoint" {
   value = aws_db_instance.main.address
 }
+
+output "app_url" {
+  value = "https://${var.app_domain}"
+}
