@@ -144,3 +144,62 @@ def read_manifest_row(conn: psycopg.Connection) -> IndexManifest:
 def read_index_status(conn: psycopg.Connection) -> IndexStatus:
     """Manifesto e número de linhas do banco, usados pela API ao iniciar e no /api/health."""
     return IndexStatus(manifest=read_manifest_row(conn), documents=count_reviews(conn))
+
+
+# Temas de cada avaliação, gravados pela classificação em lote. Ficam numa
+# tabela à parte para sobreviver a uma nova carga dos embeddings, que apaga e
+# recria a tabela reviews.
+def ensure_themes_table(conn: psycopg.Connection) -> None:
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS review_themes (
+            review_id text PRIMARY KEY,
+            themes text[] NOT NULL,
+            model_id text NOT NULL,
+            classified_at timestamptz NOT NULL DEFAULT now()
+        )
+        """
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS review_themes_themes_idx ON review_themes USING gin (themes)"
+    )
+    conn.commit()
+
+
+def read_texts_to_classify(conn: psycopg.Connection, redo: bool = False) -> list[tuple[str, str]]:
+    """review_id e texto das avaliações ainda sem tema (ou de todas, com redo)."""
+    where = "" if redo else "WHERE t.review_id IS NULL"
+    rows = conn.execute(
+        f"""
+        SELECT r.review_id, r.original_text
+        FROM reviews r LEFT JOIN review_themes t ON t.review_id = r.review_id
+        {where}
+        ORDER BY r.review_id
+        """
+    ).fetchall()
+    return [(review_id, text) for review_id, text in rows]
+
+
+def write_themes(conn: psycopg.Connection, themes: dict[str, list[str]], model_id: str) -> None:
+    with conn.transaction():
+        with conn.cursor() as cur:
+            cur.executemany(
+                """
+                INSERT INTO review_themes (review_id, themes, model_id) VALUES (%s, %s, %s)
+                ON CONFLICT (review_id) DO UPDATE
+                SET themes = EXCLUDED.themes, model_id = EXCLUDED.model_id, classified_at = now()
+                """,
+                [(review_id, values, model_id) for review_id, values in themes.items()],
+            )
+
+
+def read_review_rows(conn: psycopg.Connection) -> list[tuple]:
+    """Metadados, texto e temas de todas as avaliações, para os números do painel."""
+    return conn.execute(
+        """
+        SELECT r.review_id, r.rating, r.delivery, r.category, r.review_date, r.original_text,
+               coalesce(t.themes, '{}')
+        FROM reviews r LEFT JOIN review_themes t ON t.review_id = r.review_id
+        ORDER BY r.review_id
+        """
+    ).fetchall()

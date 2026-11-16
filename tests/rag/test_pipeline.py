@@ -240,3 +240,26 @@ def test_history_never_reaches_answer_generation():
     pipe.ask("E nas notas altas?", history=[ConversationTurn("PERGUNTA_ANTIGA", "RESPOSTA_ANTIGA")])
     sent = str(pipe.answer_llm.messages)
     assert "PERGUNTA_ANTIGA" not in sent and "RESPOSTA_ANTIGA" not in sent
+
+
+def test_scope_count_comes_with_the_answer_and_failures_are_ignored():
+    from src.rag.schemas import SearchFilters
+
+    pipeline = fake_pipeline(retrieved=[review("a"), review("b"), review("c")])
+    assert pipeline.ask("Pergunta?").scope_count is None
+
+    counted = []
+    pipeline.count = lambda filters: counted.append(filters) or 3300
+    filters = SearchFilters(themes=["nao_recebido"])
+    assert pipeline.ask("Pergunta?", filters=filters).scope_count == 3300
+    assert counted == [filters]
+
+    empty = fake_pipeline(retrieved=[])
+    empty.count = lambda filters: 12
+    assert empty.ask("Pergunta?").scope_count == 12
+
+    def broken(filters):
+        raise RuntimeError("banco")
+
+    pipeline.count = broken
+    assert pipeline.ask("Pergunta?").scope_count is None
