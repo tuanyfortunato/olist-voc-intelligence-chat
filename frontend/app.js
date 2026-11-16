@@ -665,13 +665,15 @@ async function checkApi() {
     if (response.ok && data) {
       online = true;
       documentCount = data.documents;
-      apiStatusText.textContent = `No ar, com ${data.documents.toLocaleString("pt-BR")} avaliações`;
+      apiStatus.title = `No ar, com ${data.documents.toLocaleString("pt-BR")} avaliações`;
     } else {
-      apiStatusText.textContent = errorMessage(response.status, data).message;
+      apiStatus.title = errorMessage(response.status, data).message;
     }
   } catch {
-    apiStatusText.textContent = errorMessage(0, null).message;
+    apiStatus.title = errorMessage(0, null).message;
   }
+  // O selo mostra só a situação; o detalhe fica no title e no aviso da página
+  apiStatusText.textContent = online ? "No ar" : "Fora do ar";
   apiStatus.dataset.state = online ? "online" : "offline";
   applyLocks();
   if (!online) healthTimer = setTimeout(checkApi, HEALTH_RETRY_MS);
