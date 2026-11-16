@@ -14,6 +14,7 @@ import {
   nextTheme,
   parseAnswerBlocks,
   pickSuggestions,
+  remainingSuggestions,
   shortId,
   splitCitations,
   SUGGESTIONS,
@@ -46,8 +47,16 @@ const exampleButtons = document.querySelectorAll("#examples button");
 
 let messageCount = 0;
 let busy = false;
-// Perguntas já feitas nesta conversa, para não sugeri-las de novo
-let asked = [];
+const SUGGESTIONS_PER_ROUND = 3;
+// Perguntas já sugeridas ou feitas nesta conversa, que não voltam a aparecer.
+// Os exemplos da tela inicial contam como já sugeridos.
+let used = [];
+
+function resetUsed() {
+  used = [...exampleButtons].map((button) =>
+    button.querySelector(".example-question").textContent.trim(),
+  );
+}
 
 // A chave fica só enquanto a aba estiver aberta. Em navegação privada o
 // armazenamento pode falhar, e a página continua funcionando sem ele.
@@ -87,7 +96,9 @@ function setBusy(value) {
   sendButton.disabled = value;
   sendButton.textContent = value ? "Aguarde..." : "Perguntar";
   for (const button of exampleButtons) button.disabled = value;
-  for (const button of conversation.querySelectorAll(".suggestion")) button.disabled = value;
+  for (const button of conversation.querySelectorAll(".suggestion, .more-suggestions")) {
+    button.disabled = value;
+  }
 }
 
 function showKeyError(message) {
@@ -202,19 +213,39 @@ function renderReviews(result, messageId) {
 }
 
 // Sugestões de novas perguntas, só embaixo da resposta mais recente
+function suggestionButton(question) {
+  const button = element("button", "suggestion", question);
+  button.type = "button";
+  button.disabled = busy;
+  button.addEventListener("click", () => startQuestion(question));
+  return button;
+}
+
+// Acrescenta perguntas sorteadas ao bloco e esconde o botão quando a lista acaba
+function addSuggestions(list, moreButton) {
+  const questions = pickSuggestions(SUGGESTIONS, used, SUGGESTIONS_PER_ROUND);
+  used.push(...questions);
+  for (const question of questions) list.appendChild(suggestionButton(question));
+  moreButton.hidden = remainingSuggestions(SUGGESTIONS, used) === 0;
+  return questions.length;
+}
+
 function renderSuggestions(container) {
   for (const old of conversation.querySelectorAll(".suggestions")) old.remove();
-  const questions = pickSuggestions(SUGGESTIONS, asked, 3);
-  if (!questions.length) return;
+  if (!remainingSuggestions(SUGGESTIONS, used)) return;
   const box = element("div", "suggestions");
   box.setAttribute("aria-label", "Outras perguntas");
   box.appendChild(element("p", "suggestions-title", "Outras perguntas"));
-  for (const question of questions) {
-    const button = element("button", "suggestion", question);
-    button.type = "button";
-    button.addEventListener("click", () => startQuestion(question));
-    box.appendChild(button);
-  }
+  const list = element("div", "suggestion-list");
+  box.appendChild(list);
+  const more = element("button", "more-suggestions", "Mais sugestões");
+  more.type = "button";
+  more.addEventListener("click", () => {
+    const first = list.children.length;
+    if (addSuggestions(list, more)) list.children[first].focus();
+  });
+  addSuggestions(list, more);
+  box.appendChild(more);
   container.after(box);
 }
 
@@ -335,7 +366,7 @@ function startQuestion(question) {
   }
   welcome.hidden = true;
   newChatButton.hidden = false;
-  asked.push(question);
+  used.push(question);
 
   messageCount += 1;
   const turn = element("div", "turn");
@@ -402,7 +433,7 @@ for (const button of exampleButtons) {
 newChatButton.addEventListener("click", () => {
   if (busy) return;
   conversation.replaceChildren();
-  asked = [];
+  resetUsed();
   welcome.hidden = false;
   newChatButton.hidden = true;
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -460,6 +491,7 @@ async function checkApi() {
 }
 
 keyInput.value = loadKey();
+resetUsed();
 updateThemeButton();
 updateComposer();
 checkApi();

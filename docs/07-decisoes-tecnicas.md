@@ -104,7 +104,7 @@ A página segue o tema claro ou escuro do sistema, e um botão no topo deixa a p
 
 As avaliações citadas também passaram a vir recolhidas, como as não citadas. A resposta aparece inteira, sem uma lista longa de comentários logo abaixo, e quem quer conferir abre o bloco pelo título ou clica num número entre colchetes, que abre o bloco e leva direto à avaliação.
 
-Os exemplos da tela inicial somem depois da primeira pergunta, e por isso cada resposta termina com três sugestões de outras perguntas. Elas vêm de uma lista com as perguntas da avaliação que respondem bem sem filtros, como a dos elogios e a do atendimento do vendedor, e deixam de fora as que já foram feitas na conversa. Só a resposta mais recente mostra sugestões, para a conversa não ficar repetitiva.
+Os exemplos da tela inicial somem depois da primeira pergunta, e por isso cada resposta termina com três sugestões de outras perguntas, sorteadas de uma lista de 26. As perguntas da lista tratam de temas que aparecem nos comentários, como entrega, defeito, embalagem, troca, reembolso e atendimento do vendedor, e algumas mostram o comportamento do chat com pouca ou nenhuma evidência, como a do Pix. Uma pergunta que já foi sugerida ou feita na conversa não volta a aparecer, e os quatro exemplos da tela inicial contam como já sugeridos. O botão "Mais sugestões" acrescenta outras três e some quando a lista acaba. Só a resposta mais recente mostra sugestões, e "Nova conversa" recomeça a lista.
 
 ## Termos que nenhum comentário menciona
 

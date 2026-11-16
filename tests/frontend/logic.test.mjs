@@ -14,9 +14,11 @@ import {
   nextTheme,
   parseAnswerBlocks,
   pickSuggestions,
+  remainingSuggestions,
   shortId,
   splitCitations,
   statusNotice,
+  SUGGESTIONS,
 } from "../../frontend/logic.js";
 
 test("splitCitations separa texto e citações", () => {
@@ -130,12 +132,31 @@ test("nextTheme alterna entre claro e escuro", () => {
   assert.equal(nextTheme("dark"), "light");
 });
 
-test("pickSuggestions sugere perguntas ainda não feitas na conversa", () => {
-  const pool = ["Pergunta A?", "Pergunta B?", "Pergunta C?", "Pergunta D?"];
-  assert.deepEqual(pickSuggestions(pool, ["Pergunta A?"], 2), ["Pergunta B?", "Pergunta C?"]);
-  assert.deepEqual(pickSuggestions(pool, ["  pergunta b?  ", "Pergunta A?"], 3), [
-    "Pergunta C?",
-    "Pergunta D?",
-  ]);
+test("pickSuggestions sorteia perguntas sem repetir as já usadas", () => {
+  const pool = ["Pergunta A?", "Pergunta B?", "Pergunta C?", "Pergunta D?", "Pergunta E?"];
+  const used = ["Pergunta A?", "  pergunta c?  "];
+  // Com o sorteio fixo em zero, a escolha é previsível
+  assert.deepEqual(pickSuggestions(pool, used, 2, () => 0), ["Pergunta B?", "Pergunta D?"]);
+  for (let i = 0; i < 50; i += 1) {
+    const picked = pickSuggestions(pool, used, 3);
+    assert.equal(picked.length, 3);
+    assert.equal(new Set(picked).size, 3);
+    for (const question of picked) assert.ok(!["Pergunta A?", "Pergunta C?"].includes(question));
+  }
   assert.deepEqual(pickSuggestions(pool, pool, 3), []);
+  assert.equal(pickSuggestions(pool, used, 10).length, 3);
+});
+
+test("remainingSuggestions conta as perguntas que ainda podem ser sugeridas", () => {
+  const pool = ["Pergunta A?", "Pergunta B?", "Pergunta C?"];
+  assert.equal(remainingSuggestions(pool, ["pergunta a?"]), 2);
+  assert.equal(remainingSuggestions(pool, pool), 0);
+});
+
+test("SUGGESTIONS tem perguntas distintas e dentro do limite de caracteres", () => {
+  assert.ok(SUGGESTIONS.length >= 20);
+  assert.equal(new Set(SUGGESTIONS.map((q) => q.toLowerCase())).size, SUGGESTIONS.length);
+  for (const question of SUGGESTIONS) {
+    assert.ok(question.length <= 500 && question.endsWith("?"), question);
+  }
 });

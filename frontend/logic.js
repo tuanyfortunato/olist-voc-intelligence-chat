@@ -159,8 +159,10 @@ export function nextTheme(theme) {
   return theme === "dark" ? "light" : "dark";
 }
 
-// Perguntas sugeridas depois de cada resposta, tiradas da avaliação do projeto
-// (evaluation/questions.yaml), na ordem em que aparecem.
+// Perguntas sugeridas depois de cada resposta. Todas tratam de temas que
+// aparecem nos comentários das avaliações (entrega, produto, vendedor,
+// pagamento, troca), e algumas testam o comportamento do chat quando há pouca
+// ou nenhuma evidência, como a do Pix e a da embalagem de presente.
 export const SUGGESTIONS = [
   "Quais reclamações sobre entrega aparecem com mais frequência?",
   "O que os clientes relatam sobre produtos que chegaram com defeito?",
@@ -170,14 +172,47 @@ export const SUGGESTIONS = [
   "O que os clientes acham do aplicativo da loja?",
   "Os clientes pedem que os produtos venham em embalagem de presente?",
   "O que os clientes falam sobre pagar com Pix?",
+  "O que os clientes comentam sobre a embalagem dos produtos?",
+  "Como os clientes avaliam a qualidade dos produtos em relação ao preço?",
+  "O que os clientes relatam sobre pedidos que chegaram incompletos?",
+  "Quais problemas os clientes relatam na troca ou devolução de produtos?",
+  "O que os clientes dizem quando o produto chega antes do prazo?",
+  "Como os clientes descrevem a comunicação sobre o andamento do pedido?",
+  "O que os clientes relatam sobre produtos que nunca foram entregues?",
+  "O que os clientes falam sobre o rastreamento das encomendas?",
+  "Por que os clientes recomendam a loja?",
+  "O que os clientes relatam sobre produtos falsificados ou que não são originais?",
+  "O que os clientes comentam sobre o tamanho e as medidas dos produtos?",
+  "Como os produtos frágeis chegam, segundo os clientes?",
+  "O que os clientes relatam sobre estorno ou reembolso do pagamento?",
+  "O que os clientes falam sobre a nota fiscal dos pedidos?",
+  "Quais reclamações aparecem sobre a montagem de móveis?",
+  "O que os clientes contam sobre a cor do produto ser diferente da foto?",
+  "O que os clientes dizem sobre voltar a comprar na loja?",
+  "O que os clientes relatam sobre pedidos entregues em datas diferentes?",
 ];
 
 function normalize(question) {
   return question.trim().toLowerCase();
 }
 
-// As primeiras perguntas da lista que ainda não foram feitas na conversa
-export function pickSuggestions(pool, asked, count) {
-  const done = new Set(asked.map(normalize));
-  return pool.filter((question) => !done.has(normalize(question))).slice(0, count);
+function available(pool, used) {
+  const done = new Set(used.map(normalize));
+  return pool.filter((question) => !done.has(normalize(question)));
+}
+
+// Sorteia até `count` perguntas que ainda não foram sugeridas nem feitas.
+// O sorteio pode ser trocado nos testes para dar um resultado previsível.
+export function pickSuggestions(pool, used, count, random = Math.random) {
+  const options = available(pool, used);
+  const picked = [];
+  while (picked.length < count && options.length) {
+    const index = Math.floor(random() * options.length);
+    picked.push(options.splice(index, 1)[0]);
+  }
+  return picked;
+}
+
+export function remainingSuggestions(pool, used) {
+  return available(pool, used).length;
 }

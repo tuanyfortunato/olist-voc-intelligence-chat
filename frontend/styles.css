@@ -554,6 +554,28 @@ textarea {
   opacity: 0.6;
 }
 
+.suggestion-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex-basis: 100%;
+}
+
+.more-suggestions {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+  background: transparent;
+  border: 1px dashed var(--border);
+  border-radius: 999px;
+  padding: 5px 14px;
+}
+
+.more-suggestions:hover:not(:disabled) {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
 /* Citação [n] no texto da resposta */
 .cite {
   display: inline-flex;
