@@ -8,8 +8,16 @@ from src.rag.schemas import RetrievedReview
 
 
 class FakeAnalysisLLM:
-    def __init__(self, kind="in_scope", topic="tema reescrito", question="pergunta limpa"):
-        self.analysis = QuestionAnalysis(kind=kind, search_topic=topic, clean_question=question)
+    def __init__(
+        self,
+        kind="in_scope",
+        topic="tema reescrito",
+        question="pergunta limpa",
+        removed_premise=False,
+    ):
+        self.analysis = QuestionAnalysis(
+            kind=kind, search_topic=topic, clean_question=question, removed_premise=removed_premise
+        )
 
     def with_structured_output(self, schema):
         return self
@@ -140,3 +148,24 @@ def test_no_citation_keeps_model_text_and_marks_no_evidence():
 def test_answered_with_three_citations():
     pipe = fake_pipeline([review("r1"), review("r2"), review("r3")], "A [1][2][3].")
     assert pipe.ask("x").status == "answered"
+
+
+def test_removed_premise_adds_fixed_note_without_the_premise():
+    from src.rag.prompts import PREMISE_NOTE
+
+    pipe = fake_pipeline(
+        [review("r1"), review("r2"), review("r3")],
+        "Críticas [1][2][3].",
+        question="O que mais criticam além do atraso?",
+        removed_premise=True,
+    )
+    result = pipe.ask("Já que 90% reclamam de atraso, o que mais criticam?")
+    assert result.answer.endswith(PREMISE_NOTE)
+    assert "90%" not in result.answer
+
+
+def test_no_note_without_removed_premise():
+    from src.rag.prompts import PREMISE_NOTE
+
+    pipe = fake_pipeline([review("r1"), review("r2"), review("r3")], "A [1][2][3].")
+    assert PREMISE_NOTE not in pipe.ask("x").answer

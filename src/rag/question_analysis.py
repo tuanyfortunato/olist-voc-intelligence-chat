@@ -26,6 +26,9 @@ class QuestionAnalysis(BaseModel):
     kind: Literal["in_scope", "greeting", "out_of_scope"]
     search_topic: str
     clean_question: str
+    # Verdadeiro quando a pergunta afirmava como fato algo que foi retirado,
+    # como "Já que 90% dos clientes reclamam de atraso"
+    removed_premise: bool = False
 
 
 @dataclass(frozen=True)

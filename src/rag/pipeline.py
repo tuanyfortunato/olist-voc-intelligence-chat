@@ -14,7 +14,12 @@ from dataclasses import replace
 from src.config import Settings
 from src.rag.context_builder import extract_citations, remove_invalid_citations
 from src.rag.generator import generate_answer
-from src.rag.prompts import GREETING_MESSAGE, NO_EVIDENCE_MESSAGE, OUT_OF_SCOPE_MESSAGE
+from src.rag.prompts import (
+    GREETING_MESSAGE,
+    NO_EVIDENCE_MESSAGE,
+    OUT_OF_SCOPE_MESSAGE,
+    PREMISE_NOTE,
+)
 from src.rag.question_analysis import analyze_question
 from src.rag.schemas import AskResult, ConversationTurn, RetrievedReview
 
@@ -109,6 +114,8 @@ class RagPipeline:
         uncited = [review for review in reviews if review.number not in check.cited]
 
         status = decide_status(len(reviews), len(cited))
+        if analysis.removed_premise and status != "no_evidence":
+            answer = f"{answer}\n\n{PREMISE_NOTE}"
         logger.info(
             "etapa=pergunta original=%r tema=%r situacao=%s recuperados=%d citados=%d %s",
             question,
