@@ -6,9 +6,6 @@ from .conftest import KEY, fixed_clock, make_client
 
 QUESTION = {"question": "O que falam do frete?"}
 
-# A rota /api/ask entra na Tarefa 8.2; até lá, estes testes falham de propósito.
-pytestmark = pytest.mark.xfail(reason="rota /api/ask ainda não existe", strict=True)
-
 
 @pytest.mark.parametrize("headers", [{}, {"X-Access-Key": ""}, {"X-Access-Key": "errada"}])
 def test_bad_key_is_401_and_does_not_consume_quota(client_with_quota, headers):
