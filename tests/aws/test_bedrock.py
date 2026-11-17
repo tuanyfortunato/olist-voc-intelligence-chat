@@ -3,7 +3,7 @@ import json
 
 import pytest
 
-from src.aws.bedrock import embed_query, embed_texts
+from src.aws.bedrock import embed_query, embed_texts, get_chat_model, is_claude
 
 
 class FakeClient:
@@ -49,3 +49,26 @@ def test_embed_texts_rejects_bad_batch_size(settings, texts):
     with pytest.raises(ValueError):
         embed_texts(client, texts, "search_document", settings)
     assert client.calls == 0
+
+
+@pytest.mark.parametrize(
+    "model_id, expected",
+    [
+        ("anthropic.claude-haiku-5-5", True),
+        ("us.anthropic.claude-haiku-5-5", True),
+        ("amazon.nova-micro-v1:0", False),
+    ],
+)
+def test_is_claude(model_id, expected):
+    assert is_claude(model_id) is expected
+
+
+def test_claude_runs_without_temperature_and_without_thinking(settings):
+    model = get_chat_model(settings, 800, model_id="anthropic.claude-haiku-5-5")
+    assert model.temperature is None
+    assert model.additional_model_request_fields == {"thinking": {"type": "disabled"}}
+
+
+def test_nova_keeps_temperature_zero(settings):
+    model = get_chat_model(settings, 800, model_id="amazon.nova-micro-v1:0")
+    assert model.temperature == 0

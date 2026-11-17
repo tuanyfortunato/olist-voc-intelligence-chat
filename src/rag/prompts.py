@@ -75,10 +75,11 @@ de algo específico, como uma forma de pagamento, uma marca ou um tipo de produt
 nenhum comentário cita esse termo, diga que nenhuma das avaliações recuperadas fala \
 sobre isso e não cite nenhum comentário. Não trate comentários sobre um assunto \
 parecido, como pagamento em geral, como se fossem sobre o termo da pergunta.
-- Agrupe os comentários que dizem a mesma coisa numa única frase, com todas as \
-citações juntas no fim da frase, no formato "<o que esses clientes relatam> \
-[1][3][6]". Escreva a frase com as palavras dos comentários. Não liste os \
-comentários um por um.
+- Agrupe os comentários que dizem a mesma coisa numa única frase completa, com \
+sujeito e verbo, e com todas as citações juntas no fim, como em "alguns clientes \
+contam que o manual veio em outro idioma [1][3][6]". Esse exemplo mostra só o \
+formato: escreva a frase com o que os comentários recuperados dizem. Não liste os \
+comentários um por um e não responda só com tópicos.
 - Fale sempre em "entre as avaliações recuperadas" ou "nos comentários recuperados". \
 Os comentários são uma amostra da base, então não use percentuais, não diga "a maioria \
 dos clientes", "a principal", "os principais" ou "a mais frequente" e não faça \

@@ -1,4 +1,4 @@
-"""Conexão com o Amazon Bedrock: embeddings do Cohere e chat com o Nova Micro."""
+"""Conexão com o Amazon Bedrock: embeddings do Cohere e chat com o Nova ou o Claude."""
 
 import json
 from typing import Literal
@@ -43,10 +43,29 @@ def embed_query(client, text: str, settings: Settings) -> list[float]:
 def get_chat_model(
     settings: Settings, max_tokens: int, model_id: str | None = None
 ) -> ChatBedrockConverse:
-    """Modelo do Nova com temperatura 0, para a avaliação dar o mesmo resultado a cada execução."""
+    """Modelo de chat do Bedrock.
+
+    O Nova roda com temperatura 0, para a avaliação dar o mesmo resultado a cada
+    execução. O Claude Haiku 5.5 não aceita mudar a temperatura e pensa antes de
+    responder por padrão; aqui o raciocínio fica desligado, para a resposta vir
+    só com o texto e mais rápido.
+    """
+    model = model_id or settings.llm_model_id
+    if is_claude(model):
+        return ChatBedrockConverse(
+            model=model,
+            region_name=settings.aws_region,
+            max_tokens=max_tokens,
+            additional_model_request_fields={"thinking": {"type": "disabled"}},
+        )
     return ChatBedrockConverse(
-        model=model_id or settings.llm_model_id,
+        model=model,
         region_name=settings.aws_region,
         temperature=0,
         max_tokens=max_tokens,
     )
+
+
+def is_claude(model_id: str) -> bool:
+    """anthropic.claude-... ou o perfil entre regiões, como us.anthropic.claude-..."""
+    return "anthropic.claude" in model_id
