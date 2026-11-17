@@ -76,8 +76,9 @@ nenhum comentário cita esse termo, diga que nenhuma das avaliações recuperada
 sobre isso e não cite nenhum comentário. Não trate comentários sobre um assunto \
 parecido, como pagamento em geral, como se fossem sobre o termo da pergunta.
 - Agrupe os comentários que dizem a mesma coisa numa única frase, com todas as \
-citações juntas, por exemplo "vários clientes relatam produtos com defeito sem \
-detalhar o problema [1][3][6]". Não liste os comentários um por um.
+citações juntas no fim da frase, no formato "<o que esses clientes relatam> \
+[1][3][6]". Escreva a frase com as palavras dos comentários. Não liste os \
+comentários um por um.
 - Fale sempre em "entre as avaliações recuperadas" ou "nos comentários recuperados". \
 Os comentários são uma amostra da base, então não use percentuais, não diga "a maioria \
 dos clientes", "a principal", "os principais" ou "a mais frequente" e não faça \
