@@ -134,3 +134,15 @@ def test_soften_ignores_sentences_without_citation_and_other_nouns():
     reviews = numbered("Atrasou")
     answer = "Vários clientes reclamam. O pedido atrasou muitos dias [1]."
     assert soften_unsupported_quantities(answer, reviews) == answer
+
+
+def test_soften_recurrence_as_predicate_keeps_a_verb():
+    reviews = numbered("Atrasou", "Não chegou")
+    answer = (
+        "Alguns clientes dizem que os problemas na entrega são recorrentes "
+        "e afetam a confiança [1][2]."
+    )
+    assert soften_unsupported_quantities(answer, reviews) == (
+        "Alguns clientes dizem que os problemas na entrega aparecem nos comentários "
+        "e afetam a confiança [1][2]."
+    )

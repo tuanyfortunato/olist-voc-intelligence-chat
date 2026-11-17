@@ -105,6 +105,18 @@ RECURRENCE_PATTERN = re.compile(
     r"com\s+frequ[eê]ncia|frequentemente|frequentes?|repetidamente)\b",
     re.IGNORECASE,
 )
+# "São recorrentes", "é frequente": tirar só o adjetivo deixaria a frase sem verbo,
+# então o trecho vira "aparecem nos comentários"
+RECURRENCE_PREDICATE = re.compile(
+    r"\b(é|são|foi|foram)\s+(?:recorrentes?|frequentes?)\b",
+    re.IGNORECASE,
+)
+PREDICATE_REPLACEMENT = {
+    "é": "aparece",
+    "são": "aparecem",
+    "foi": "apareceu",
+    "foram": "apareceram",
+}
 # Sinais, no texto do cliente, de que o problema aconteceu mais de uma vez
 REPETITION_CUE = re.compile(
     r"\b(?:novamente|de\s+novo|outra\s+vez|mais\s+uma\s+vez|sempre|toda\s+vez|"
@@ -148,6 +160,7 @@ def _soften_sentence(sentence: str, by_number: dict[int, RetrievedReview]) -> st
     softened = QUANTITY_PATTERN.sub(_to_some, sentence)
     repeated = any(REPETITION_CUE.search(by_number[n].original_text) for n in cited)
     if not repeated:
+        softened = RECURRENCE_PREDICATE.sub(_to_appears, softened)
         softened = RECURRENCE_PATTERN.sub("", softened)
         softened = re.sub(r"\s+([.,;:!?])", r"\1", softened)
         softened = re.sub(r"[ \t]{2,}", " ", softened)
@@ -159,3 +172,10 @@ def _to_some(match: re.Match) -> str:
     if match.group(1)[0].isupper():
         word = word.capitalize()
     return word + match.group(3)
+
+
+def _to_appears(match: re.Match) -> str:
+    verb = PREDICATE_REPLACEMENT[match.group(1).lower()]
+    if match.group(1)[0].isupper():
+        verb = verb.capitalize()
+    return verb + " nos comentários"
