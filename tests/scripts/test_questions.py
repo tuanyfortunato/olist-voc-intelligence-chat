@@ -3,7 +3,7 @@ from scripts.questions import QUESTION_TYPES, load_questions
 
 def test_questions_file_is_complete():
     questions = load_questions()
-    assert [q.id for q in questions] == list(range(1, 16))
+    assert [q.id for q in questions] == list(range(1, 21))
     assert questions[3].question == "O que os clientes falam sobre pagar com Pix?"
     assert questions[7].question.startswith("Já que 90% dos clientes reclamam de atraso")
     assert all(q.type in QUESTION_TYPES for q in questions)
@@ -15,6 +15,7 @@ def test_follow_up_and_filters():
     assert questions[12].history_from == 1
     assert questions[13].filters == {"ratings": [1, 2]}
     assert questions[14].filters == {"category": "cama_mesa_banho"}
+    assert questions[20].filters == {"delivery": "com_problema"}
     assert questions[1].turns == [] and questions[1].filters == {}
 
 

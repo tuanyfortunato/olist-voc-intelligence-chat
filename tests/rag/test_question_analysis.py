@@ -112,3 +112,10 @@ def test_ratings_default_to_empty_and_drop_invalid_values():
     assert validate_analysis(data).ratings == []
     data["ratings"] = [5, 4, 7, 4, 0]
     assert validate_analysis(data).ratings == [4, 5]
+
+
+def test_analysis_prompt_covers_generic_words_and_satisfaction():
+    from src.rag.prompts import ANALYSIS_PROMPT
+
+    for rule in ['"padrões"', '"determinadas categorias"', '"clientes insatisfeitos"']:
+        assert rule in ANALYSIS_PROMPT, rule

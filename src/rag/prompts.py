@@ -20,6 +20,11 @@ parecidos. Tire números, percentuais, premissas e opiniões do gestor. Exemplo:
 categoria do produto e a situação da entrega são escolhidas por filtros e não aparecem \
 no texto dos comentários; não as coloque no tema. Exemplo: "Quais os principais \
 problemas nas avaliações com nota baixa?" vira "problemas e reclamações dos clientes".
+  Tire também as palavras que descrevem o tipo de análise, e não o que o cliente \
+escreve, como "padrões", "temas", "avaliações" e "determinadas categorias". Exemplos: \
+"Quais padrões podem ser identificados nas avaliações de clientes insatisfeitos?" vira \
+"reclamações e insatisfação dos clientes"; "O que os clientes mais elogiam em \
+determinadas categorias de produtos?" vira "elogios dos clientes aos produtos".
 - clean_question: a pergunta completa, em português, mantendo o que o gestor pediu \
 (por exemplo "liste os três principais" ou "compare elogios e reclamações"), mas sem \
 números, percentuais ou premissas que ele afirmou como fato.
@@ -31,8 +36,9 @@ frequência não é premissa: "Quais reclamações aparecem com mais frequência
 os principais elogios?" são false.
 
 - ratings: as notas de avaliação (de 1 a 5) que a pergunta pede, ou uma lista vazia. \
-"Notas baixas" ou "avaliações negativas" são [1, 2]; "notas altas" ou "avaliações \
-positivas" são [4, 5]; "nota 3" é [3]. Se a pergunta não fala de notas, devolva [].
+"Notas baixas", "avaliações negativas" ou "clientes insatisfeitos" são [1, 2]; "notas \
+altas", "avaliações positivas" ou "clientes satisfeitos" são [4, 5]; "nota 3" é [3]. \
+Se a pergunta não fala de notas, devolva [].
 
 Para greeting e out_of_scope, deixe search_topic e clean_question vazios, \
 removed_premise como false e ratings vazio.
@@ -71,8 +77,15 @@ citações juntas, por exemplo "vários clientes relatam produtos com defeito se
 detalhar o problema [1][3][6]". Não liste os comentários um por um.
 - Fale sempre em "entre as avaliações recuperadas" ou "nos comentários recuperados". \
 Os comentários são uma amostra da base, então não use percentuais, não diga "a maioria \
-dos clientes", "a principal" ou "a mais frequente" e não faça afirmações sobre a base \
-inteira.
+dos clientes", "a principal", "os principais" ou "a mais frequente" e não faça \
+afirmações sobre a base inteira. Mesmo quando a pergunta pede os principais problemas \
+ou elogios, responda com o que aparece nos comentários recuperados, sem ordenar por \
+importância.
+- Não diga que um problema é recorrente, repetido ou frequente, a menos que o próprio \
+comentário conte que aconteceu mais de uma vez, como "é a segunda vez". Se a pergunta \
+pede as avaliações que sustentam uma conclusão, cite só os comentários que de fato a \
+sustentam e diga quando algum comentário recuperado vai no sentido contrário, como um \
+cliente que conta que foi a primeira vez.
 - Respeite as exclusões da pergunta. Se ela pede o que os clientes dizem além de um \
 tema, como "além do atraso", não responda sobre esse tema; se os comentários só falarem \
 dele, diga que não há informação suficiente sobre outros assuntos.
