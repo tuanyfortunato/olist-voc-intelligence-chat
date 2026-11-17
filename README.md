@@ -209,7 +209,7 @@ flowchart TB
     CF -->|/| S3[S3<br/>página do chat]
     CF -->|/api/*| ALB[Application Load Balancer]
     ALB --> ECS[ECS Fargate<br/>API em FastAPI]
-    ECS --> BR[Amazon Bedrock<br/>Cohere Embed e Nova Micro]
+    ECS --> BR[Amazon Bedrock<br/>Cohere Embed, Nova Micro<br/>e Claude Haiku 4.5]
     ECS --> RDS[(RDS PostgreSQL<br/>com pgvector)]
     ECS --> SSM[Parameter Store<br/>senha do banco]
     GH[GitHub Actions] -->|OIDC| AWS[Terraform, imagem,<br/>indexação e avaliação]
@@ -219,7 +219,7 @@ flowchart TB
 
 **API.** Uma aplicação FastAPI num contêiner, rodando no ECS Fargate com 0,5 vCPU e 1 GB de memória. Ela tem três rotas: `POST /api/ask`, que recebe a pergunta, até três trocas anteriores e os filtros; `GET /api/categories`, que lista as categorias para o filtro; e `GET /api/health`.
 
-**Modelos.** Os dois modelos vêm do Amazon Bedrock. Os embeddings são do **Cohere Embed Multilingual v3**, com 1.024 dimensões, que trata de forma diferente o texto que vai para o índice e o texto da pergunta. A análise da pergunta e a resposta usam o **Amazon Nova Micro**, rápido e barato. Comecei com o Titan Text Embeddings V2, mas o limite da conta, de 60 chamadas por minuto com um texto por chamada, levaria a indexação a cerca de 11 horas. O Cohere aceita 96 textos por chamada, o que derruba a indexação para cerca de 25 minutos.
+**Modelos.** Os modelos vêm do Amazon Bedrock. Os embeddings são do **Cohere Embed Multilingual v3**, com 1.024 dimensões, que trata de forma diferente o texto que vai para o índice e o texto da pergunta. A análise da pergunta usa o **Amazon Nova Micro**, rápido e barato, e a resposta é escrita pelo **Claude Haiku 4.5**, que segue melhor as regras de citação e de não afirmar o que os comentários não mostram. Comecei com o Titan Text Embeddings V2, mas o limite da conta, de 60 chamadas por minuto com um texto por chamada, levaria a indexação a cerca de 11 horas. O Cohere aceita 96 textos por chamada, o que derruba a indexação para cerca de 25 minutos.
 
 **Banco vetorial.** PostgreSQL no RDS com a extensão **pgvector**, num índice HNSW com distância de cosseno. Comparei com bibliotecas que rodam dentro da API (Chroma, FAISS, LanceDB), com serviços gerenciados (OpenSearch Serverless, Bedrock Knowledge Bases, S3 Vectors) e com o pgvector. Escolhi o pgvector porque os filtros viram SQL comum, a mesma consulta devolve a distância e o vetor de cada candidato, que o MMR precisa, e o índice não fica pesando na memória da API nem viaja dentro da imagem a cada publicação. O Bedrock Knowledge Bases faria a recuperação no lugar do meu código, e eu perderia o controle do score mínimo e do MMR, que são parte do que eu queria construir.
 
@@ -232,19 +232,19 @@ flowchart TB
 O repositório é público e o chat usa créditos da AWS, então coloquei alguns limites:
 
 - **Limite por pessoa.** Cada IP pode fazer até 100 perguntas por hora, bem mais do que alguém faz testando o chat com calma. Passado o limite, a API responde 429 e a página diz a partir de que horário dá para perguntar de novo.
-- **Teto do dia.** O chat inteiro aceita até 1.000 perguntas por dia. Mil perguntas custam menos de meio dólar nos modelos do Bedrock, então esse é o teto de custo do projeto.
+- **Teto do dia.** O chat inteiro aceita até 1.000 perguntas por dia. Com a resposta escrita pelo Claude Haiku 4.5, mil perguntas custam perto de US$ 6 nos modelos do Bedrock, então esse é o teto de custo diário do projeto.
 - **Contagem no banco.** As duas contagens ficam no PostgreSQL, que a API já usa para a busca. Assim elas valem para todas as tarefas da API ao mesmo tempo e não recomeçam quando a API reinicia. A tabela não guarda o IP, só um resumo SHA-256 dele.
 - **Limites da pergunta.** De 1 a 500 caracteres e no máximo três trocas de histórico, conferidos antes de qualquer chamada ao Bedrock.
 - **Horário de funcionamento.** A API liga às 9h e desliga às 22h, e o banco liga um pouco antes e desliga um pouco depois. Fora desse horário a página avisa que o chat está desligado. Um workflow manual, `Start API`, liga tudo fora do horário quando preciso.
 - **Sem NAT Gateway.** A rede usa só sub-redes públicas, e o banco não tem endereço público e aceita conexões apenas da API. Um NAT Gateway custaria sozinho mais do que o resto da aplicação.
 
-Cada pergunta leva de 1,5 a 2 segundos do começo ao fim. A geração dos embeddings da base inteira custou poucos centavos de dólar.
+Cada pergunta leva de 2,5 a 3,5 segundos do começo ao fim, cerca de 1 segundo a mais do que com o Nova Micro na resposta. A geração dos embeddings da base inteira custou poucos centavos de dólar.
 
 ## Como avaliei o chat
 
 **Perguntas de teste.** Montei 20 perguntas em [`evaluation/questions.yaml`](evaluation/questions.yaml), cada uma com o comportamento esperado. As de 16 a 20 são os exemplos de exploração e do desafio de metadados do enunciado, com o mesmo texto. Elas cobrem perguntas com evidência, sem evidência, com evidência fraca, fora do escopo, com premissa falsa, tentativa de mudar as regras, cumprimento seguido de continuação e perguntas com filtro. Um workflow roda todas pelo pipeline completo, por padrão também com o RAGAS, e grava as respostas, os comentários recuperados e os citados em [`evaluation/results/`](evaluation/results/), com colunas para a revisão manual de relevância, fidelidade e citações corretas.
 
-**Notas do RAGAS.** Além da revisão manual, o mesmo workflow calcula três métricas do [RAGAS](https://docs.ragas.io/) que não precisam de resposta de referência: faithfulness (cada afirmação da resposta está nos comentários recuperados?), answer relevancy (a resposta trata da pergunta feita?) e context precision (os comentários úteis vêm nas primeiras posições da busca?). O juiz é o Amazon Nova Pro, e não o Nova Micro que escreve as respostas, para o modelo não avaliar a si mesmo. Os embeddings da answer relevancy são os do Cohere, os mesmos da base. As respostas fixas e as recusas (fora do escopo, cumprimento e sem evidência) não passam pelo RAGAS, que daria nota baixa justamente ao comportamento certo. Para todas as linhas há também uma checagem por regra: a situação que o chat devolveu é a esperada para o tipo da pergunta? Deixei o context recall de fora, porque ele exige uma resposta de referência escrita à mão, e para perguntas abertas como "quais os principais elogios" esse gabarito seria arbitrário.
+**Notas do RAGAS.** Além da revisão manual, o mesmo workflow calcula três métricas do [RAGAS](https://docs.ragas.io/) que não precisam de resposta de referência: faithfulness (cada afirmação da resposta está nos comentários recuperados?), answer relevancy (a resposta trata da pergunta feita?) e context precision (os comentários úteis vêm nas primeiras posições da busca?). O juiz é o Amazon Nova Pro, um modelo diferente do que escreve as respostas, para o modelo não avaliar a si mesmo. Os embeddings da answer relevancy são os do Cohere, os mesmos da base. As respostas fixas e as recusas (fora do escopo, cumprimento e sem evidência) não passam pelo RAGAS, que daria nota baixa justamente ao comportamento certo. Para todas as linhas há também uma checagem por regra: a situação que o chat devolveu é a esperada para o tipo da pergunta? Deixei o context recall de fora, porque ele exige uma resposta de referência escrita à mão, e para perguntas abertas como "quais os principais elogios" esse gabarito seria arbitrário.
 
 Rodada de 16/11/2026, com as 15 perguntas ([execução](https://github.com/tuanyfortunato/olist-voc-intelligence-chat/actions/runs/43948172065), [`ragas.csv`](evaluation/results/ragas.csv)):
 
@@ -287,7 +287,7 @@ A rodada do RAGAS fez 235 mil tokens de entrada e 23 mil de saída no Nova Pro, 
 |---|---|
 | Linguagem | Python 3.12 |
 | Preparação dos dados | pandas e PyArrow |
-| Modelos | Amazon Bedrock: Cohere Embed Multilingual v3 e Amazon Nova Micro |
+| Modelos | Amazon Bedrock: Cohere Embed Multilingual v3, Amazon Nova Micro (análise da pergunta) e Claude Haiku 4.5 (resposta) |
 | Orquestração e MMR | LangChain (`langchain-core` e `langchain-aws`) |
 | Banco vetorial | PostgreSQL com pgvector, no Amazon RDS |
 | API | FastAPI e Uvicorn, num contêiner no ECS Fargate |
@@ -374,7 +374,7 @@ Os workflows `Calibrate retrieval` e `Evaluate` rodam as perguntas de teste numa
 - **As respostas descrevem os comentários recuperados, e não a base inteira.** O chat mostra padrões entre 15 comentários, não mede frequência. Quem mostra frequência é o painel, com a contagem dos temas. Por isso a página repete esse aviso em cada resposta e diz em quantas avaliações a busca foi feita.
 - **A contagem dos temas depende da classificação do modelo.** Um comentário pode ter tema a mais ou a menos. A amostra de revisão manual mede o tamanho desse erro, e o período do painel não filtra o chat, que sempre busca nas avaliações de 2016 a 2018.
 - **A folga do score mínimo é pequena** na pergunta sem evidência. Uma variação na reescrita do tema pode deixar passar comentários de assunto vizinho. A regra do prompt contra assuntos não mencionados é a segunda proteção.
-- **O Nova Micro às vezes força a ligação** entre a frase e o comentário, como citar um comentário sobre a loja numa frase sobre o aplicativo. A revisão manual mede isso, e a troca planejada, se a fidelidade ficar baixa, é passar a resposta para o Nova Lite.
+- **O modelo da resposta às vezes força a ligação** entre a frase e o comentário. Com o Nova Micro isso era frequente, como afirmar que um problema é recorrente a partir de relatos isolados, e foi o motivo da troca para o Claude Haiku 4.5. O Haiku erra menos, mas ainda pode repetir uma palavra de um comentário como se fosse conclusão. A revisão manual e o RAGAS medem isso.
 - **O trecho entre o CloudFront e o ALB é HTTP**, porque o ALB não tem nome próprio nem certificado. O ALB só aceita tráfego vindo do CloudFront.
 - **As notas do RAGAS dependem de outro LLM.** O juiz também erra, os prompts do RAGAS são em inglês e a amostra é de 15 perguntas. As notas servem para comparar uma versão do chat com a anterior e para apontar respostas a conferir, não como medida absoluta de qualidade.
 - **A base vai de 2016 a 2018.** Assuntos mais recentes, como o Pix, não aparecem nos comentários.
