@@ -22,7 +22,11 @@ on:
       answer_model_id:
         description: "Modelo que escreve a resposta"
         type: choice
-        options: [amazon.nova-micro-v1:0, amazon.nova-lite-v1:0]
+        options:
+          - amazon.nova-micro-v1:0
+          - amazon.nova-lite-v1:0
+          - anthropic.claude-haiku-5-5
+          - us.anthropic.claude-haiku-5-5
         default: amazon.nova-micro-v1:0
       log_level:
         description: "DEBUG mostra os prompts e as respostas completas no log"
