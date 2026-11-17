@@ -17,9 +17,23 @@ def review(review_id, rating, text):
 def test_build_context_numbering():
     context = build_context([review("r1", 1, "Não chegou"), review("r2", 5, "Ótimo")])
     assert context.splitlines() == [
-        "[1] (avaliação r1, nota 1) Não chegou",
-        "[2] (avaliação r2, nota 5) Ótimo",
+        "[1] (avaliação r1, nota 1, categoria bebes) Não chegou",
+        "[2] (avaliação r2, nota 5, categoria bebes) Ótimo",
     ]
+
+
+def test_lone_label_left_by_recurrence_removal_drops_the_line():
+    reviews = numbered("Não chegou", "Atrasou")
+    answer = (
+        "- Atrasos na entrega [1].\n- Problemas recorrentes, com clientes contando de novo [1][2]."
+    )
+    assert soften_unsupported_quantities(answer, reviews) == "- Atrasos na entrega [1]."
+
+
+def test_typo_in_second_time_counts_as_repetition():
+    reviews = numbered("Ja é as egunda vez que tenho problemas", "Ruim")
+    answer = "- Problemas recorrentes, com clientes contando que aconteceu de novo [1][2]."
+    assert soften_unsupported_quantities(answer, reviews) == answer
 
 
 def test_extract_citations_formats():
