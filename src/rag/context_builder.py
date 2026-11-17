@@ -105,6 +105,18 @@ RECURRENCE_PATTERN = re.compile(
     r"com\s+frequ[eê]ncia|frequentemente|frequentes?|repetidamente)\b",
     re.IGNORECASE,
 )
+# "São recorrentes", "é frequente": tirar só o adjetivo deixaria a frase sem verbo,
+# então o trecho vira "aparecem nos comentários"
+RECURRENCE_PREDICATE = re.compile(
+    r"\b(é|são|foi|foram)\s+(?:recorrentes?|frequentes?)\b",
+    re.IGNORECASE,
+)
+PREDICATE_REPLACEMENT = {
+    "é": "aparece",
+    "são": "aparecem",
+    "foi": "apareceu",
+    "foram": "apareceram",
+}
 # Sinais, no texto do cliente, de que o problema aconteceu mais de uma vez
 REPETITION_CUE = re.compile(
     r"\b(?:novamente|de\s+novo|outra\s+vez|mais\s+uma\s+vez|sempre|toda\s+vez|"
@@ -148,6 +160,7 @@ def _soften_sentence(sentence: str, by_number: dict[int, RetrievedReview]) -> st
     softened = QUANTITY_PATTERN.sub(_to_some, sentence)
     repeated = any(REPETITION_CUE.search(by_number[n].original_text) for n in cited)
     if not repeated:
+        softened = RECURRENCE_PREDICATE.sub(_to_appears, softened)
         softened = RECURRENCE_PATTERN.sub("", softened)
         softened = re.sub(r"\s+([.,;:!?])", r"\1", softened)
         softened = re.sub(r"[ \t]{2,}", " ", softened)
@@ -159,3 +172,45 @@ def _to_some(match: re.Match) -> str:
     if match.group(1)[0].isupper():
         word = word.capitalize()
     return word + match.group(3)
+
+
+def _to_appears(match: re.Match) -> str:
+    verb = PREDICATE_REPLACEMENT[match.group(1).lower()]
+    if match.group(1)[0].isupper():
+        verb = verb.capitalize()
+    return verb + " nos comentários"
+
+
+# Linha que é só um rótulo seguido de citações, como "Atraso na entrega: [1][2]"
+LABEL_ONLY_LINE = re.compile(r"^\s*(?:[-•*]\s*)?([^:\n]{1,80}):\s*$")
+
+
+def is_label_only_list(answer: str) -> bool:
+    """Diz se a resposta é só uma lista de rótulos com citações, sem nenhuma frase."""
+    lines = [line for line in answer.split("\n") if line.strip()]
+    if not lines:
+        return False
+    return all(LABEL_ONLY_LINE.match(CITATION_PATTERN.sub("", line)) for line in lines)
+
+
+def labels_to_sentence(answer: str) -> str:
+    """Junta uma lista de rótulos com citações numa frase só, mantendo as citações.
+
+    "- Atraso na entrega: [1][2]" e "- Falha na entrega: [5]" viram "Nos comentários
+    recuperados aparecem estes temas: atraso na entrega [1][2] e falha na entrega [5]."
+    """
+    items = []
+    for line in answer.split("\n"):
+        citations = "".join(match.group(0) for match in CITATION_PATTERN.finditer(line))
+        match = LABEL_ONLY_LINE.match(CITATION_PATTERN.sub("", line))
+        if not match:
+            continue
+        label = match.group(1).strip()
+        if len(label) > 1 and not label[:2].isupper():
+            label = label[0].lower() + label[1:]
+        items.append(f"{label} {citations}".strip())
+    if len(items) > 1:
+        listed = ", ".join(items[:-1]) + " e " + items[-1]
+    else:
+        listed = items[0]
+    return f"Nos comentários recuperados aparecem estes temas: {listed}."

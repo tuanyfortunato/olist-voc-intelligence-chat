@@ -15,12 +15,15 @@ from dataclasses import asdict, replace
 from src.config import Settings
 from src.rag.context_builder import (
     extract_citations,
+    is_label_only_list,
+    labels_to_sentence,
     remove_citations_from_negative_claims,
     remove_invalid_citations,
     soften_unsupported_quantities,
 )
 from src.rag.generator import generate_answer
 from src.rag.prompts import (
+    FULL_SENTENCES_REMINDER,
     GREETING_MESSAGE,
     NO_EVIDENCE_MESSAGE,
     OUT_OF_SCOPE_MESSAGE,
@@ -141,6 +144,16 @@ class RagPipeline:
 
         start = time.monotonic()
         answer = generate_answer(analysis.clean_question, reviews, self.answer_llm)
+        # O Nova Micro às vezes responde só com rótulos e citações, como
+        # "Atraso na entrega: [1][2]". Tenta uma vez com um lembrete e, se vier
+        # igual, junta os rótulos numa frase
+        if is_label_only_list(answer):
+            logger.warning("etapa=geracao resposta_so_lista=sim")
+            answer = generate_answer(
+                analysis.clean_question + FULL_SENTENCES_REMINDER, reviews, self.answer_llm
+            )
+            if is_label_only_list(answer):
+                answer = labels_to_sentence(answer)
         answer = remove_citations_from_negative_claims(answer)
         timings["geracao_ms"] = (time.monotonic() - start) * 1000
 
