@@ -14,11 +14,15 @@ logger = logging.getLogger(__name__)
 # apareceriam na tela.
 BOLD_PATTERN = re.compile(r"(\*\*|__)(.+?)\1", re.DOTALL)
 HEADING_PATTERN = re.compile(r"^[ \t]*#{1,6}[ \t]+", re.MULTILINE)
+# O modelo às vezes copia o formato do prompt com os sinais de menor e maior,
+# como em "<Adorei a experiência de compra> [1]"
+ANGLE_PATTERN = re.compile(r"<([^<>\n]{1,400})>")
 
 
 def remove_markdown(answer: str) -> str:
     answer = BOLD_PATTERN.sub(r"\2", answer)
     answer = answer.replace("**", "")
+    answer = ANGLE_PATTERN.sub(r"\1", answer)
     return HEADING_PATTERN.sub("", answer)
 
 

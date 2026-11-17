@@ -214,3 +214,18 @@ def test_negative_claim_with_citation_in_the_middle_is_dropped():
     assert remove_citations_from_negative_claims(answer) == (
         "- Vários clientes pedem embalagem [1][3][4]."
     )
+
+
+SHORT_TOPICS = "- Problemas com a entrega [1][8]\n- Incompetência dos correios [2][12]"
+
+
+def test_short_topics_without_period_are_label_only():
+    assert is_label_only_list(SHORT_TOPICS)
+    assert labels_to_sentence(SHORT_TOPICS) == (
+        "Nos comentários recuperados aparecem estes temas: problemas com a entrega [1][8] "
+        "e incompetência dos correios [2][12]."
+    )
+
+
+def test_short_sentence_with_period_is_not_label_only():
+    assert not is_label_only_list("- Os clientes elogiam a qualidade [7][14].")
