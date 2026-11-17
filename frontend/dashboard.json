@@ -1,8 +1,8 @@
 {
- "generated_at": "2026-11-16T23:31:46+00:00",
+ "generated_at": "2026-11-16T23:37:26+00:00",
  "model_id": "amazon.nova-micro-v1:0",
  "total": 40521,
- "classified": 35585,
+ "classified": 35593,
  "sectors": [
   {
    "id": "logistica",
@@ -231,14 +231,14 @@
    },
    "themes": {
     "atraso": {
-     "count": 2590,
+     "count": 2591,
      "avg_rating": 2.24,
-     "low": 1560
+     "low": 1561
     },
     "nao_recebido": {
-     "count": 3703,
+     "count": 3704,
      "avg_rating": 1.4,
-     "low": 3248
+     "low": 3249
     },
     "incompleto": {
      "count": 2305,
@@ -281,14 +281,14 @@
      "low": 221
     },
     "sem_resposta": {
-     "count": 2158,
+     "count": 2159,
      "avg_rating": 1.55,
-     "low": 1805
+     "low": 1806
     },
     "troca_devolucao": {
-     "count": 952,
-     "avg_rating": 1.85,
-     "low": 703
+     "count": 954,
+     "avg_rating": 1.84,
+     "low": 705
     },
     "reembolso": {
      "count": 687,
@@ -296,9 +296,9 @@
      "low": 588
     },
     "cancelamento": {
-     "count": 438,
+     "count": 439,
      "avg_rating": 1.47,
-     "low": 377
+     "low": 378
     },
     "nao_volta": {
      "count": 401,
@@ -311,46 +311,46 @@
      "low": 150
     },
     "recompra": {
-     "count": 4956,
+     "count": 4957,
      "avg_rating": 4.76,
      "low": 50
     },
     "entrega_rapida": {
-     "count": 10093,
+     "count": 10094,
      "avg_rating": 4.77,
      "low": 80
     },
     "produto_bom": {
-     "count": 8659,
+     "count": 8660,
      "avg_rating": 4.77,
      "low": 63
     },
     "conforme_anuncio": {
-     "count": 2329,
+     "count": 2330,
      "avg_rating": 4.71,
      "low": 20
     },
     "bem_embalado": {
-     "count": 1300,
+     "count": 1301,
      "avg_rating": 4.69,
      "low": 28
     },
     "bom_atendimento": {
-     "count": 3827,
+     "count": 3828,
      "avg_rating": 4.74,
      "low": 67
     },
     "bom_preco": {
-     "count": 957,
+     "count": 958,
      "avg_rating": 4.58,
      "low": 27
     }
    },
    "sectors": {
     "logistica": {
-     "count": 9256,
+     "count": 9257,
      "avg_rating": 1.88,
-     "low": 6627
+     "low": 6628
     },
     "produto": {
      "count": 5460,
@@ -358,17 +358,17 @@
      "low": 3098
     },
     "vendedor": {
-     "count": 3745,
+     "count": 3747,
      "avg_rating": 1.63,
-     "low": 3029
+     "low": 3031
     },
     "retencao": {
-     "count": 5505,
+     "count": 5506,
      "avg_rating": 4.41,
      "low": 549
     },
     "fortes": {
-     "count": 18992,
+     "count": 18997,
      "avg_rating": 4.72,
      "low": 262
     }
@@ -626,14 +626,14 @@
    },
    "themes": {
     "atraso": {
-     "count": 1594,
+     "count": 1595,
      "avg_rating": 2.21,
-     "low": 978
+     "low": 979
     },
     "nao_recebido": {
-     "count": 2252,
+     "count": 2253,
      "avg_rating": 1.4,
-     "low": 1983
+     "low": 1984
     },
     "incompleto": {
      "count": 1357,
@@ -706,17 +706,17 @@
      "low": 89
     },
     "recompra": {
-     "count": 3122,
+     "count": 3123,
      "avg_rating": 4.75,
      "low": 25
     },
     "entrega_rapida": {
-     "count": 5515,
+     "count": 5516,
      "avg_rating": 4.78,
      "low": 34
     },
     "produto_bom": {
-     "count": 4952,
+     "count": 4953,
      "avg_rating": 4.78,
      "low": 29
     },
@@ -736,16 +736,16 @@
      "low": 37
     },
     "bom_preco": {
-     "count": 550,
+     "count": 551,
      "avg_rating": 4.62,
      "low": 9
     }
    },
    "sectors": {
     "logistica": {
-     "count": 5497,
+     "count": 5498,
      "avg_rating": 1.85,
-     "low": 3995
+     "low": 3996
     },
     "produto": {
      "count": 3180,
@@ -758,12 +758,12 @@
      "low": 1749
     },
     "retencao": {
-     "count": 3461,
+     "count": 3462,
      "avg_rating": 4.42,
      "low": 329
     },
     "fortes": {
-     "count": 10534,
+     "count": 10536,
      "avg_rating": 4.73,
      "low": 122
     }
@@ -966,14 +966,14 @@
      "low": 65
     },
     "sem_resposta": {
-     "count": 866,
+     "count": 867,
      "avg_rating": 1.61,
-     "low": 716
+     "low": 717
     },
     "troca_devolucao": {
-     "count": 381,
+     "count": 383,
      "avg_rating": 1.96,
-     "low": 268
+     "low": 270
     },
     "reembolso": {
      "count": 303,
@@ -981,9 +981,9 @@
      "low": 267
     },
     "cancelamento": {
-     "count": 218,
+     "count": 219,
      "avg_rating": 1.37,
-     "low": 192
+     "low": 193
     },
     "nao_volta": {
      "count": 146,
@@ -1011,17 +1011,17 @@
      "low": 34
     },
     "conforme_anuncio": {
-     "count": 1044,
+     "count": 1045,
      "avg_rating": 4.69,
      "low": 12
     },
     "bem_embalado": {
-     "count": 583,
+     "count": 584,
      "avg_rating": 4.7,
      "low": 15
     },
     "bom_atendimento": {
-     "count": 1592,
+     "count": 1593,
      "avg_rating": 4.74,
      "low": 28
     },
@@ -1043,9 +1043,9 @@
      "low": 1225
     },
     "vendedor": {
-     "count": 1554,
+     "count": 1556,
      "avg_rating": 1.67,
-     "low": 1245
+     "low": 1247
     },
     "retencao": {
      "count": 2008,
@@ -1053,7 +1053,7 @@
      "low": 212
     },
     "fortes": {
-     "count": 8355,
+     "count": 8358,
      "avg_rating": 4.71,
      "low": 136
     }
