@@ -28,7 +28,7 @@ on:
           - anthropic.claude-haiku-5-5
           - us.anthropic.claude-haiku-5-5
           - us.anthropic.claude-haiku-4-5-20251001-v1:0
-        default: amazon.nova-micro-v1:0
+        default: us.anthropic.claude-haiku-4-5-20251001-v1:0
       log_level:
         description: "DEBUG mostra os prompts e as respostas completas no log"
         type: choice

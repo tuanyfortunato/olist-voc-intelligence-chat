@@ -46,9 +46,9 @@ def get_chat_model(
     """Modelo de chat do Bedrock.
 
     O Nova roda com temperatura 0, para a avaliação dar o mesmo resultado a cada
-    execução. O Claude Haiku 5.5 não aceita mudar a temperatura e pensa antes de
-    responder por padrão; aqui o raciocínio fica desligado, para a resposta vir
-    só com o texto e mais rápido.
+    execução. O Claude roda sem mudar a temperatura, que o Haiku 5.5 nem aceita,
+    e com o raciocínio desligado, para a resposta vir só com o texto e mais
+    rápido.
     """
     model = model_id or settings.llm_model_id
     if is_claude(model):
