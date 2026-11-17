@@ -65,7 +65,7 @@ jobs:
         run: >-
           docker run --rm olist-voc-api:ci python -c
           "import src.api.main, scripts.load_vectors, scripts.calibrate_retrieval;
-          from scripts.questions import load_questions; assert len(load_questions()) == 15"
+          from scripts.questions import load_questions; assert len(load_questions()) == 20"
 
   frontend:
     runs-on: ubuntu-latest

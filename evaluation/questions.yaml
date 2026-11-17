@@ -1,5 +1,6 @@
 # Perguntas de teste da avaliação. Os tipos e o comportamento esperado vêm do
-# plano de avaliação; as perguntas 13 a 15 usam os filtros por metadados.
+# plano de avaliação; as perguntas 13 a 15 usam os filtros por metadados, e as
+# de 16 a 20 são os exemplos do enunciado.
 
 - id: 1
   question: Quais reclamações sobre entrega aparecem com mais frequência?
@@ -93,3 +94,45 @@
   type: with_filter
   filters: {delivery: atrasada}
   expected: Busca só nos pedidos atrasados
+
+# Perguntas 16 a 20: os exemplos de exploração e do desafio de metadados que o
+# enunciado traz e que não estavam acima com o mesmo texto.
+
+- id: 16
+  question: Quais são os principais problemas relatados pelos clientes em suas avaliações?
+  type: with_evidence
+  expected: >-
+    Resumo dos problemas, com citações, sem dizer qual é o principal nem ordenar
+    por frequência
+
+- id: 17
+  question: Quais padrões podem ser identificados nas avaliações de clientes insatisfeitos?
+  type: with_evidence
+  expected: >-
+    "Clientes insatisfeitos" vira filtro de notas 1 e 2, e o tema da busca fica
+    sem a palavra "padrões". Resumo das reclamações, com citações
+
+- id: 18
+  question: >-
+    Quais avaliações sustentam a conclusão de que existem problemas recorrentes
+    relacionados ao prazo de entrega?
+  type: with_evidence
+  expected: >-
+    Cita só comentários que contam que o problema se repetiu e avisa quando
+    algum comentário diz que foi a primeira vez
+
+- id: 19
+  question: O que os clientes mais elogiam em determinadas categorias de produtos?
+  type: with_filter
+  filters: {category: cama_mesa_banho}
+  expected: >-
+    Busca só na categoria, com o tema sem "determinadas categorias". Resumo dos
+    elogios, com citações
+
+- id: 20
+  question: >-
+    Quais temas aparecem nas avaliações relacionadas a experiências de entrega
+    insatisfatórias?
+  type: with_filter
+  filters: {delivery: com_problema}
+  expected: Busca só nos pedidos atrasados ou não entregues
