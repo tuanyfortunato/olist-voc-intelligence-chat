@@ -1,6 +1,8 @@
 from src.rag.context_builder import (
     build_context,
     extract_citations,
+    is_label_only_list,
+    labels_to_sentence,
     remove_citations_from_negative_claims,
     remove_invalid_citations,
     soften_unsupported_quantities,
@@ -134,3 +136,39 @@ def test_soften_ignores_sentences_without_citation_and_other_nouns():
     reviews = numbered("Atrasou")
     answer = "Vários clientes reclamam. O pedido atrasou muitos dias [1]."
     assert soften_unsupported_quantities(answer, reviews) == answer
+
+
+def test_soften_recurrence_as_predicate_keeps_a_verb():
+    reviews = numbered("Atrasou", "Não chegou")
+    answer = (
+        "Alguns clientes dizem que os problemas na entrega são recorrentes "
+        "e afetam a confiança [1][2]."
+    )
+    assert soften_unsupported_quantities(answer, reviews) == (
+        "Alguns clientes dizem que os problemas na entrega aparecem nos comentários "
+        "e afetam a confiança [1][2]."
+    )
+
+
+LABEL_LIST = (
+    "- Atraso na entrega: [1][2][4]\n"
+    "- Falha na entrega: [5]\n"
+    "- Insatisfação com a transportadora: [4]"
+)
+
+
+def test_label_only_list_is_detected():
+    assert is_label_only_list(LABEL_LIST)
+
+
+def test_sentences_are_not_label_only():
+    assert not is_label_only_list("- Atraso na entrega: vários clientes reclamam [1][2].")
+    assert not is_label_only_list("Os clientes reclamam de atraso [1].")
+    assert not is_label_only_list("")
+
+
+def test_labels_to_sentence_keeps_citations():
+    assert labels_to_sentence(LABEL_LIST) == (
+        "Nos comentários recuperados aparecem estes temas: atraso na entrega [1][2][4], "
+        "falha na entrega [5] e insatisfação com a transportadora [4]."
+    )

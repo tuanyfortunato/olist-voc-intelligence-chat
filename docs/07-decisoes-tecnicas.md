@@ -145,6 +145,10 @@ Também comparei o Nova Lite com o Nova Micro na geração da resposta, com as m
 
 Como o Nova Micro às vezes ignora a regra de não chamar um problema de recorrente, a checagem passou a ser feita também no código, depois da leitura das citações. Frase a frase, quando há menos de três comentários citados, "vários", "muitos" e "diversos" seguidos de clientes, avaliações ou reclamações viram "alguns" ou "algumas", e "recorrente", "frequente", "com frequência" e "repetidamente" saem do texto, a menos que algum comentário citado diga que o problema se repetiu. Com três citações ou mais, a frase fica como está, porque aí a repetição pode ser entre clientes diferentes. A regra não resolve a frase da embalagem de presente, que cita nove comentários dos quais poucos pedem a embalagem; conferir cada citação pelo sentido precisaria de outra chamada ao modelo.
 
+Testei também contar como apoio só os comentários citados que têm as palavras do tema da busca. Na resposta da embalagem de presente, 5 dos 12 comentários citados falam em embalagem e em presente, então a frase continuaria com "vários" e a checagem não mudaria nada. Em temas amplos, como entrega, ela trocaria "vários" por "alguns" em frases bem sustentadas por comentários que dizem "não chegou" sem usar a palavra entrega. Por isso não entrou.
+
+Na rodada ao vivo depois dessas mudanças, a pergunta sobre entregas insatisfatórias voltou só com rótulos e citações, como "Atraso na entrega: [1][2][4][14][15]", sem nenhuma frase. O código passou a reconhecer esse formato, pedir a resposta de novo uma vez com o lembrete de escrever frases completas e, se vier igual, juntar os rótulos numa frase com as mesmas citações.
+
 As cinco que ainda não estavam nas perguntas de teste com o mesmo texto entraram em `evaluation/questions.yaml` como perguntas 16 a 20.
 
 ## Horário de funcionamento

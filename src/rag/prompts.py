@@ -143,3 +143,10 @@ PREMISE_NOTE = (
     "permitem confirmar. Os comentários recuperados mostram relatos, mas não medem com que "
     "frequência cada problema acontece na base."
 )
+
+# Lembrete acrescentado à pergunta quando a primeira resposta veio só como uma
+# lista de rótulos com citações, sem frases
+FULL_SENTENCES_REMINDER = (
+    "\n\nResponda com frases completas que digam o que os clientes relatam, "
+    "e não só com uma lista de temas e citações."
+)
