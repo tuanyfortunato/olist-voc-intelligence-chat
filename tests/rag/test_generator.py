@@ -48,7 +48,7 @@ def test_generate_answer_returns_content_and_sends_context():
     llm = FakeChatLLM("Atrasos aparecem [1].")
     answer = generate_answer("Pergunta?", [review("r1", 1, "Atrasou")], llm)
     assert answer == "Atrasos aparecem [1]."
-    assert "[1] (avaliação r1, nota 1) Atrasou" in llm.messages[0][1][1]
+    assert "[1] (avaliação r1, nota 1, categoria bebes) Atrasou" in llm.messages[0][1][1]
 
 
 def test_remove_markdown_keeps_text_and_citations():
