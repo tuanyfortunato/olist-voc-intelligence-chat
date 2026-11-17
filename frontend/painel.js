@@ -323,9 +323,9 @@ export function scopeLabel(data, sectorId, themeId) {
 // Frase sobre o recorte da busca, embaixo da pergunta respondida
 export function scopeLine(scopeCount, label, used) {
   if (scopeCount === null || scopeCount === undefined) return null;
-  const base = `Busca feita em ${formatNumber(scopeCount)} ${scopeCount === 1 ? "avaliação" : "avaliações"} ${label}.`;
+  const base = `${formatNumber(scopeCount)} ${scopeCount === 1 ? "avaliação" : "avaliações"} ${label}`;
   if (!used) return base;
-  return `${base} A resposta usa as ${used} mais parecidas com a pergunta.`;
+  return `${base} · ${used} usadas na resposta`;
 }
 
 // O dashboard.json de prévia foi calculado por palavras-chave, e não pelo modelo
