@@ -2563,8 +2563,18 @@ textarea:disabled {
     display: flex;
   }
 
+  html.chat-open,
   body.chat-open {
     overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+  /* Com o chat aberto, o que fica atrás sai da página. No iPhone, travar a
+     rolagem do body não basta, e o toque acabava rolando o painel. */
+  body.chat-open .demo-strip,
+  body.chat-open .topbar,
+  body.chat-open .dashboard {
+    display: none;
   }
 
   .close-chat {
