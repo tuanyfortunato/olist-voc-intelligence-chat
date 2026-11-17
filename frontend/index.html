@@ -168,9 +168,9 @@
           Painel
         </button>
         <div class="chat-head-row">
-          <div>
-            <h2 id="chat-title" class="chat-title">Chat do setor</h2>
-            <p class="chat-sub">Respostas a partir dos comentários dos clientes da Olist</p>
+          <div class="chat-head-main">
+            <h2 id="chat-title" class="chat-title">Chat</h2>
+            <div id="scope-chips" class="scope-chips" aria-label="Recorte da busca"></div>
           </div>
           <div class="chat-head-actions">
             <p id="api-status" class="api-status" data-state="checking" role="status">
@@ -183,7 +183,6 @@
       </button>
           </div>
         </div>
-        <div id="scope-chips" class="scope-chips" aria-label="Recorte da busca"></div>
       </div>
       <div id="chat-scroll" class="chat-scroll">
         <div class="layout">
@@ -202,10 +201,6 @@
               <h3 id="area-panel-title" class="area-panel-title" tabindex="-1"></h3>
               <div id="area-questions" class="suggestion-list area-questions"></div>
             </div>
-            <p class="fixed-note">
-              As respostas descrevem as avaliações recuperadas para cada pergunta, e não todas as
-              do recorte. Dá para continuar com perguntas curtas, como "E nas notas altas?".
-            </p>
           </section>
 
           <section id="conversation" class="conversation" aria-label="Conversa"></section>

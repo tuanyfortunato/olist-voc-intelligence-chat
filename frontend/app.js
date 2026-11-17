@@ -66,7 +66,7 @@ const UNDO_MS = 6000;
 // Momento em que o texto de carregando passa da busca para a escrita
 const LOADING_STEP_MS = 1200;
 // Trechos de avaliação mostrados embaixo de cada frase antes do "+N avaliações"
-const QUOTES_PER_CLAIM = 2;
+const QUOTES_PER_CLAIM = 1;
 
 const form = document.getElementById("ask-form");
 const questionInput = document.getElementById("question");
@@ -128,7 +128,7 @@ let busy = false;
 let online = true;
 // Número de comentários na base, vindo do /api/health
 let documentCount = null;
-const SUGGESTIONS_PER_ROUND = 3;
+const SUGGESTIONS_PER_ROUND = 2;
 // Quantas das sugestões de cada rodada vêm da mesma área da pergunta
 const SAME_AREA_SUGGESTIONS = 2;
 // Perguntas já sugeridas ou feitas nesta conversa, que não voltam a aparecer
@@ -915,7 +915,7 @@ function showView(name) {
     document.getElementById("user-email").textContent = session.email;
     document.getElementById("user-avatar").textContent = initials(session.name);
   }
-  if (name !== "painel") document.body.classList.remove("chat-open");
+  if (name !== "painel") setChatOpen(false, { restore: false });
   window.scrollTo({ top: 0 });
 }
 
@@ -948,7 +948,7 @@ function render(state) {
   }
   if (view === "painel" && dashboardData && findSector(dashboardData, state.sector)) {
     enterSector(state.sector);
-    document.body.classList.toggle("chat-open", Boolean(state.chat) && NARROW.matches);
+    setChatOpen(Boolean(state.chat) && NARROW.matches);
     return;
   }
   renderSectorPicker();
@@ -1137,30 +1137,43 @@ function renderScope() {
   }
   scopeChips.replaceChildren(...chips);
   welcomeLead.textContent = theme
-    ? `A busca fica nas avaliações do tema "${theme.label}". As respostas mostram os comentários usados.`
+    ? `Pergunte sobre as avaliações do tema "${theme.label}".`
     : sector.id === DIRECTOR
-      ? "A busca usa todas as avaliações. As respostas mostram os comentários usados."
-      : `A busca fica nas avaliações com temas de ${sector.label}. As respostas mostram os comentários usados.`;
+      ? "Pergunte sobre qualquer avaliação dos clientes."
+      : `Pergunte sobre as avaliações de ${sector.label}.`;
   const area = SUGGESTION_AREAS.find((item) => item.area === SECTOR_AREAS[sector.id]);
   const questions = [...(theme ? [themeQuestion(theme)] : []), ...(area ? area.questions : [])];
-  const unique = [...new Set(questions)].slice(0, theme ? 3 : 5);
+  const unique = [...new Set(questions)].slice(0, 3);
   areaPanelTitle.textContent = "Perguntas sugeridas";
   areaQuestions.replaceChildren(...unique.map(suggestionButton));
   openChatLabel.textContent = theme ? `Perguntar sobre ${theme.label.toLowerCase()}` : "Perguntar ao chat do setor";
   applyLocks();
 }
 
+// No celular, o chat aberto esconde o painel de trás: sem nada embaixo, o
+// toque só rola a conversa. Ao fechar, o painel volta onde estava.
+let painelScroll = 0;
+
+function setChatOpen(open, { restore = true } = {}) {
+  const isOpen = document.body.classList.contains("chat-open");
+  if (open === isOpen) return;
+  if (open) painelScroll = window.scrollY;
+  document.body.classList.toggle("chat-open", open);
+  document.documentElement.classList.toggle("chat-open", open);
+  if (!open && restore) window.scrollTo({ top: painelScroll });
+}
+
 // No celular, o chat abre em tela cheia e ganha uma entrada no histórico
 function openChat() {
   if (!NARROW.matches || document.body.classList.contains("chat-open")) return;
-  document.body.classList.add("chat-open");
+  setChatOpen(true);
   const state = history.state || {};
   if (state.view === "painel" && !state.chat) history.pushState({ ...state, chat: true }, "");
 }
 
 function closeChat() {
   if (history.state && history.state.chat) history.back();
-  else document.body.classList.remove("chat-open");
+  else setChatOpen(false);
 }
 
 openChatButton.addEventListener("click", () => {
@@ -1171,7 +1184,7 @@ closeChatButton.addEventListener("click", closeChat);
 
 // Ao passar para a tela larga com o chat aberto, o painel volta a aparecer ao lado
 NARROW.addEventListener("change", () => {
-  if (!NARROW.matches) document.body.classList.remove("chat-open");
+  if (!NARROW.matches) setChatOpen(false);
 });
 
 async function start() {
