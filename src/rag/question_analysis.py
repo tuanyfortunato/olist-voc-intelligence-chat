@@ -9,6 +9,7 @@ mínimo e instrução no prompt da resposta) continuam valendo.
 
 import json
 import logging
+import re
 from dataclasses import dataclass
 from typing import Literal
 
@@ -20,6 +21,26 @@ from src.rag.schemas import ConversationTurn
 logger = logging.getLogger(__name__)
 
 ATTEMPTS = 2
+
+# Palavras que descrevem o tipo de análise pedida, e não o que o cliente escreve.
+# O prompt pede ao modelo que as tire do tema da busca, mas o Nova Micro nem
+# sempre obedece, e elas afastam a busca dos comentários.
+ANALYSIS_WORDS = [
+    r"\bpadr(?:ão|ões)\b",
+    r"\brecorrentes?\b",
+    r"\bfrequentes?\b",
+    r"\bprincipais\b",
+    r"\b(?:determinadas\s+)?categorias\s+de\s+produtos\b",
+    r"\b(?:nas|das|em)\s+avaliações(?:\s+(?:de|dos|das))?\b",
+]
+EDGE_WORDS = {"a", "o", "ao", "e", "de", "da", "do", "das", "dos", "em", "na", "no", "nas", "nos"}
+
+# A nota só vira filtro quando a própria pergunta fala dela. Sem isto, o modelo
+# chegou a marcar notas 1 e 2 em perguntas que só falavam de reclamações.
+RATING_CUE = re.compile(
+    r"\b(?:notas?|estrelas?|insatisfeit\w*|satisfeit\w*|negativ\w*|positiv\w*)\b",
+    re.IGNORECASE,
+)
 
 
 class QuestionAnalysis(BaseModel):
@@ -65,6 +86,29 @@ def validate_analysis(raw: object) -> QuestionAnalysis | None:
     return analysis
 
 
+def clean_search_topic(topic: str) -> str:
+    """Tira do tema da busca as palavras de análise. Se não sobrar nada, fica o original."""
+    cleaned = topic
+    for pattern in ANALYSIS_WORDS:
+        cleaned = re.sub(pattern, " ", cleaned, flags=re.IGNORECASE)
+    words = cleaned.split()
+    while words and words[0].lower() in EDGE_WORDS:
+        words.pop(0)
+    while words and words[-1].lower() in EDGE_WORDS:
+        words.pop()
+    return " ".join(words) or topic.strip()
+
+
+def tidy_analysis(question: str, analysis: QuestionAnalysis) -> QuestionAnalysis:
+    """Regras aplicadas em código sobre a análise do modelo."""
+    if analysis.kind != "in_scope":
+        return analysis
+    ratings = analysis.ratings if RATING_CUE.search(question) else []
+    return analysis.model_copy(
+        update={"search_topic": clean_search_topic(analysis.search_topic), "ratings": ratings}
+    )
+
+
 def format_history(history: list[ConversationTurn]) -> str:
     lines = []
     for turn in history:
@@ -93,6 +137,7 @@ def analyze_question(question: str, history: list[ConversationTurn], llm) -> Ana
             logger.warning("etapa=analise tentativa=%d erro=chamada", attempt, exc_info=True)
             analysis = None
         if analysis is not None:
+            analysis = tidy_analysis(question, analysis)
             logger.info(
                 "etapa=analise tipo=%s tema=%r pergunta=%r",
                 analysis.kind,

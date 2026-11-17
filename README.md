@@ -130,6 +130,8 @@ A geração recebe só a pergunta limpa e os comentários. O histórico da conve
 
 Depois da geração, o código lê os números entre colchetes da resposta. Citações para números que não existem são apagadas do texto. É essa leitura que liga cada afirmação a um `review_id` real e separa, na página, os comentários citados dos que foram recuperados e não usados.
 
+A mesma leitura confere as afirmações de quantidade. Numa frase que cita só um ou dois comentários, "vários clientes" vira "alguns clientes", e palavras como "recorrente" e "frequente" saem, a não ser que um dos comentários citados conte que o problema se repetiu, com "mais uma vez" ou "é a segunda vez". Isso não pega o caso de uma frase com muitas citações em que só parte dos comentários diz o que a frase afirma; esse caso aparece na faithfulness do RAGAS.
+
 ## Quando não há evidência suficiente
 
 Esse foi o ponto que mais trabalhei, porque um chat que inventa respostas não serve para tomar decisões. A resposta sempre sai com uma situação, e a página mostra um aviso diferente para cada uma:
@@ -162,7 +164,7 @@ O filtro é aplicado dentro do banco, antes do score mínimo e do MMR. Para prov
 | O que os clientes mais elogiam em cama, mesa e banho? | Categoria | 15 de 15 | 8 de 15 |
 | Quais temas aparecem nas entregas atrasadas? | Entrega atrasada | 15 de 15 | 12 de 15 |
 
-A nota também pode vir da própria pergunta. "Notas baixas" e "notas altas" não aparecem no texto dos comentários, então buscar por essas palavras não adianta. A análise da pergunta identifica as notas mencionadas e o sistema as aplica como filtro, a menos que o gestor tenha marcado outra coisa na página, que sempre vale mais.
+A nota também pode vir da própria pergunta. "Notas baixas" e "notas altas" não aparecem no texto dos comentários, então buscar por essas palavras não adianta. A análise da pergunta identifica as notas mencionadas e o sistema as aplica como filtro, a menos que o gestor tenha marcado outra coisa na página, que sempre vale mais. Para não depender só do modelo, o código só aceita essas notas quando a pergunta fala de nota, estrelas, clientes satisfeitos ou insatisfeitos, ou avaliações positivas ou negativas.
 
 ## Painel por setor
 

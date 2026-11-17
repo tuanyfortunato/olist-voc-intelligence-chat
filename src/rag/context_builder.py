@@ -90,3 +90,72 @@ def _strip_citations(sentence: str) -> str:
     without = CITATION_PATTERN.sub("", sentence)
     without = re.sub(r"\s+([.,;:!?])", r"\1", without)
     return re.sub(r"[ \t]{2,}", " ", without).rstrip()
+
+
+# "Vários clientes", "muitas avaliações": quantidade que pede mais de dois
+# comentários citados na mesma frase
+QUANTITY_PATTERN = re.compile(
+    r"\b(v[aá]ri|muit|divers|in[uú]mer)(os|as)(\s+(?:clientes|compradores|consumidores|"
+    r"pessoas|usu[aá]rios|avalia[cç][oõ]es|coment[aá]rios|relatos|reclama[cç][oõ]es|casos))\b",
+    re.IGNORECASE,
+)
+# Palavras que dizem que o problema se repete
+RECURRENCE_PATTERN = re.compile(
+    r"\s*\b(?:de\s+(?:forma|maneira)\s+recorrente|recorrentes?|recorrentemente|"
+    r"com\s+frequ[eê]ncia|frequentemente|frequentes?|repetidamente)\b",
+    re.IGNORECASE,
+)
+# Sinais, no texto do cliente, de que o problema aconteceu mais de uma vez
+REPETITION_CUE = re.compile(
+    r"\b(?:novamente|de\s+novo|outra\s+vez|mais\s+uma\s+vez|sempre|toda\s+vez|"
+    r"todas\s+as\s+vezes|segunda\s+vez|terceira\s+vez|v[aá]rias\s+vezes|"
+    r"repetid\w*|recorrent\w*|n[aã]o\s+[eé]\s+a\s+primeira)\b",
+    re.IGNORECASE,
+)
+# A partir de quantos comentários citados uma frase pode falar em "vários" ou
+# em problema recorrente entre clientes
+MIN_CITATIONS_FOR_MANY = 3
+
+
+def soften_unsupported_quantities(answer: str, reviews: list[RetrievedReview]) -> str:
+    """Suaviza "vários clientes" e "problemas recorrentes" que os comentários não sustentam.
+
+    O modelo às vezes escreve "vários clientes relatam problemas recorrentes"
+    citando um ou dois comentários, e às vezes um comentário que diz que foi a
+    primeira vez. Frase a frase, com menos de três comentários citados, "vários"
+    vira "alguns" e a palavra de repetição sai, a não ser que algum comentário
+    citado diga que o problema se repetiu. Frases sem citação ficam como estão,
+    porque não há o que conferir.
+    """
+    by_number = {review.number: review for review in reviews}
+    lines = []
+    for line in answer.split("\n"):
+        sentences = SENTENCE_END.split(line)
+        lines.append(" ".join(_soften_sentence(s, by_number) for s in sentences))
+    return "\n".join(lines)
+
+
+def _soften_sentence(sentence: str, by_number: dict[int, RetrievedReview]) -> str:
+    cited = {
+        n
+        for match in CITATION_PATTERN.finditer(sentence)
+        for n in _numbers(match.group(1))
+        if n in by_number
+    }
+    if not cited or len(cited) >= MIN_CITATIONS_FOR_MANY:
+        return sentence
+
+    softened = QUANTITY_PATTERN.sub(_to_some, sentence)
+    repeated = any(REPETITION_CUE.search(by_number[n].original_text) for n in cited)
+    if not repeated:
+        softened = RECURRENCE_PATTERN.sub("", softened)
+        softened = re.sub(r"\s+([.,;:!?])", r"\1", softened)
+        softened = re.sub(r"[ \t]{2,}", " ", softened)
+    return softened
+
+
+def _to_some(match: re.Match) -> str:
+    word = "alguns" if match.group(2).lower() == "os" else "algumas"
+    if match.group(1)[0].isupper():
+        word = word.capitalize()
+    return word + match.group(3)
