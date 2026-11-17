@@ -13,15 +13,18 @@ experiência dos clientes. Exemplo: "Qual o faturamento da Olist em 2018?".
 
 Para in_scope, escreva também:
 - search_topic: o assunto da pergunta em poucas palavras, para buscar comentários \
-parecidos. Tire números, percentuais, premissas e opiniões do gestor. Exemplo: \
-"Já que 90% dos clientes reclamam de atraso, o que mais eles criticam?" vira \
-"críticas e reclamações dos clientes além do atraso na entrega".
+parecidos. Tire números, percentuais, premissas e opiniões do gestor. Quando a \
+pergunta exclui um assunto, como "além do atraso", deixe esse assunto fora do tema, \
+porque a busca traria justamente os comentários sobre ele; a exclusão continua na \
+pergunta limpa. Exemplo: "Já que 90% dos clientes reclamam de atraso, o que mais eles \
+criticam?" vira "críticas e reclamações dos clientes".
   O tema descreve o que os clientes escrevem nos comentários. A nota da avaliação, a \
 categoria do produto e a situação da entrega são escolhidas por filtros e não aparecem \
 no texto dos comentários; não as coloque no tema. Exemplo: "Quais os principais \
 problemas nas avaliações com nota baixa?" vira "problemas e reclamações dos clientes".
   Tire também as palavras que descrevem o tipo de análise, e não o que o cliente \
-escreve, como "padrões", "temas", "avaliações" e "determinadas categorias". Exemplos: \
+escreve, como "padrões", "temas", "recorrentes", "frequentes", "principais", \
+"avaliações" e "determinadas categorias". Exemplos: \
 "Quais padrões podem ser identificados nas avaliações de clientes insatisfeitos?" vira \
 "reclamações e insatisfação dos clientes"; "O que os clientes mais elogiam em \
 determinadas categorias de produtos?" vira "elogios dos clientes aos produtos".

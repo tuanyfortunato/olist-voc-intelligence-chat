@@ -117,5 +117,11 @@ def test_ratings_default_to_empty_and_drop_invalid_values():
 def test_analysis_prompt_covers_generic_words_and_satisfaction():
     from src.rag.prompts import ANALYSIS_PROMPT
 
-    for rule in ['"padrões"', '"determinadas categorias"', '"clientes insatisfeitos"']:
+    for rule in [
+        '"padrões"',
+        '"recorrentes"',
+        '"determinadas categorias"',
+        '"clientes insatisfeitos"',
+        "deixe esse assunto fora do tema",
+    ]:
         assert rule in ANALYSIS_PROMPT, rule
