@@ -21,6 +21,7 @@ import {
   nextTheme,
   parseAnswerBlocks,
   pickAreaSuggestions,
+  pickSuggestions,
   remainingSuggestions,
   restrictionNotice,
   similarityLabel,
@@ -50,7 +51,7 @@ import {
   scopeLine,
   scopeThemes,
   sectorList,
-  themeQuestion,
+  scopeSuggestionPool,
 } from "./painel.js";
 
 // O mesmo nome usado em theme.js, que aplica o tema antes de a página aparecer
@@ -378,17 +379,21 @@ function suggestionButton(question) {
 }
 
 // Acrescenta perguntas ao bloco, puxando pela área da pergunta feita, e esconde o botão quando a lista acaba
-function addSuggestions(list, moreButton, question) {
-  const questions = pickAreaSuggestions(question, used, SUGGESTIONS_PER_ROUND, SAME_AREA_SUGGESTIONS);
+// Com um setor ou tema escolhido, as sugestões ficam dentro desse recorte
+function addSuggestions(list, moreButton, question, pool) {
+  const questions = pool
+    ? pickSuggestions(pool, used, SUGGESTIONS_PER_ROUND)
+    : pickAreaSuggestions(question, used, SUGGESTIONS_PER_ROUND, SAME_AREA_SUGGESTIONS);
   used.push(...questions);
   for (const question of questions) list.appendChild(suggestionButton(question));
-  moreButton.hidden = remainingSuggestions(SUGGESTIONS, used) === 0;
+  moreButton.hidden = remainingSuggestions(pool || SUGGESTIONS, used) === 0;
   return questions.length;
 }
 
 function renderSuggestions(container) {
   for (const old of conversation.querySelectorAll(".suggestions")) old.remove();
-  if (!remainingSuggestions(SUGGESTIONS, used)) return;
+  const pool = container.suggestionPool || null;
+  if (!remainingSuggestions(pool || SUGGESTIONS, used)) return;
   const box = element("div", "suggestions");
   box.setAttribute("aria-label", "Outras perguntas");
   box.appendChild(element("p", "suggestions-title", "Outras perguntas"));
@@ -398,9 +403,9 @@ function renderSuggestions(container) {
   more.type = "button";
   more.addEventListener("click", () => {
     const first = list.children.length;
-    if (addSuggestions(list, more, container.question)) list.children[first].focus();
+    if (addSuggestions(list, more, container.question, pool)) list.children[first].focus();
   });
-  addSuggestions(list, more, container.question);
+  addSuggestions(list, more, container.question, pool);
   box.appendChild(more);
   container.after(box);
 }
@@ -619,6 +624,9 @@ function startQuestion(question, options = {}) {
   reply.filters = filters;
   reply.barFilters = barFilters;
   reply.scopeLabel = label;
+  reply.suggestionPool = dashboardData && questionScope
+    ? scopeSuggestionPool(dashboardData, SUGGESTION_AREAS, questionScope.sector, questionScope.theme)
+    : null;
   reply.question = question;
   // O histórico também fica no balão, para a nova tentativa mandar o mesmo
   reply.history = buildHistory(conversationTurns);
@@ -1142,11 +1150,12 @@ function renderScope() {
       ? "Pergunte sobre qualquer avaliação dos clientes."
       : `Pergunte sobre as avaliações de ${sector.label}.`;
   const area = SUGGESTION_AREAS.find((item) => item.area === SECTOR_AREAS[sector.id]);
-  const questions = [...(theme ? [themeQuestion(theme)] : []), ...(area ? area.questions : [])];
+  const pool = scopeSuggestionPool(dashboardData, SUGGESTION_AREAS, sector.id, theme ? theme.id : null);
+  const questions = pool || (area ? area.questions : []);
   const unique = [...new Set(questions)].slice(0, 3);
   areaPanelTitle.textContent = "Perguntas sugeridas";
   areaQuestions.replaceChildren(...unique.map(suggestionButton));
-  openChatLabel.textContent = theme ? `Perguntar sobre ${theme.label.toLowerCase()}` : "Perguntar ao chat do setor";
+  openChatLabel.textContent = theme ? `Perguntar sobre ${theme.label.toLowerCase()}` : sector.id === DIRECTOR ? "Perguntar ao chat" : "Perguntar ao chat do setor";
   applyLocks();
 }
 

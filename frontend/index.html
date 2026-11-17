@@ -130,11 +130,16 @@
         classificação em lote pelo modelo.
       </p>
       <div id="dash-error" class="notice notice-error" role="alert" hidden></div>
+      <p class="dash-headline"><strong>Em resumo:</strong> <span id="dash-headline"></span></p>
       <div id="kpis" class="kpis"></div>
       <div class="dash-grid">
         <section class="dash-card" aria-labelledby="complaints-title">
           <h3 id="complaints-title"></h3>
-          <p class="dash-card-sub">Avaliações que citam cada tema. Clique num tema para ver exemplos e perguntar ao chat.</p>
+          <p class="dash-card-sub">Quantas avaliações citam cada problema. Clique num tema para ver comentários e perguntar ao chat.</p>
+          <p class="dash-legend">
+            <span><span class="legend-bar" aria-hidden="true"></span>A barra compara os temas entre si</span>
+            <span><span class="theme-rating" data-tone="bad">★ 1,40</span> nota média de quem citou o tema, de 1 a 5</span>
+          </p>
           <div id="complaints" class="theme-list"></div>
         </section>
         <section class="dash-card" aria-labelledby="side-title">
@@ -146,12 +151,15 @@
       <section class="dash-card chart-card" aria-labelledby="chart-title">
         <h3 id="chart-title"></h3>
         <p id="chart-sub" class="dash-card-sub"></p>
+        <p id="chart-takeaway" class="chart-takeaway"></p>
         <div id="chart" class="chart"></div>
       </section>
       <div id="sector-summary" class="sector-summary" hidden></div>
       <p class="dash-foot">
         Os temas de cada avaliação foram marcados uma vez, em lote, por um modelo de linguagem.
         Uma avaliação pode ter mais de um tema. As contagens não usam o chat e não gastam perguntas.
+        A situação da entrega (no prazo, com atraso ou não entregue) vem do registro do pedido na
+        base da Olist e às vezes não bate com o que o cliente escreveu.
         <span id="dash-generated"></span>
       </p>
       <p class="credit">

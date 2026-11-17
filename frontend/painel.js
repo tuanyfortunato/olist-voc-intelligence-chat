@@ -59,6 +59,33 @@ export function themeQuestion(theme) {
   return THEME_QUESTIONS[theme.id] || `O que os clientes comentam sobre ${theme.label.toLowerCase()}?`;
 }
 
+// Perguntas do chat quando há um tema escolhido no painel. Todas falam do
+// próprio tema, porque a busca fica restrita a ele: uma pergunta geral ali
+// seria respondida só com as avaliações do tema.
+export function themeSuggestions(theme) {
+  const name = `"${theme.label}"`;
+  const extra = theme.polarity === "elogio"
+    ? [
+        `O que os clientes que deram nota 5 destacam no tema ${name}?`,
+        `Que detalhes os clientes citam quando falam de ${name}?`,
+      ]
+    : [
+        `O que os clientes que deram nota 1 contam sobre ${name}?`,
+        `Como os clientes dizem que a loja resolveu, ou não, os casos de ${name}?`,
+      ];
+  return [themeQuestion(theme), ...extra];
+}
+
+// Perguntas que fazem sentido no recorte do chat: as do tema, as da área do
+// setor ou null na diretoria, que pode receber perguntas de qualquer área
+export function scopeSuggestionPool(data, areas, sectorId, themeId) {
+  const theme = themeId ? findTheme(data, themeId) : null;
+  if (theme) return themeSuggestions(theme);
+  if (!sectorId || sectorId === DIRECTOR) return null;
+  const area = areas.find((item) => item.area === SECTOR_AREAS[sectorId]);
+  return area ? [...area.questions] : null;
+}
+
 // Diretoria geral primeiro, depois os setores na ordem do arquivo
 export function sectorList(data) {
   return [DIRECTOR_SECTOR, ...data.sectors];
@@ -159,6 +186,21 @@ export function themeGroups(data, period, sectorId) {
   return { complaints, praises };
 }
 
+// "1 em cada 4": a proporção dita do jeito que se fala, para quem lê rápido
+export function oneIn(part, total) {
+  if (!part || !total) return null;
+  const exact = total / part;
+  const n = Math.round(exact);
+  // Só quando o arredondamento não distorce: 39,6% não vira "1 em cada 3"
+  if (n < 2 || Math.abs(exact - n) / exact > 0.12) return null;
+  return `1 em cada ${n}`;
+}
+
+function withOneIn(text, part, total) {
+  const ratio = oneIn(part, total);
+  return ratio ? `${text}: ${ratio}` : text;
+}
+
 function deliveryShare(summary, keys) {
   return keys.reduce((total, key) => total + summary.delivery[key].count, 0);
 }
@@ -200,19 +242,31 @@ export function sectorKpis(data, period, sectorId) {
   if (sectorId === DIRECTOR) {
     const low = ratingSum(summary, [1, 2]);
     return [
-      { label: "Avaliações com comentário", value: formatNumber(total), note: summary.label },
-      { label: "Nota média", value: formatRating(summary.avg_rating), note: "de 1 a 5 estrelas" },
+      {
+        label: "Avaliações com comentário",
+        value: formatNumber(total),
+        note: summary.label,
+        help: "Base usada no painel e no chat",
+      },
+      {
+        label: "Nota média",
+        value: formatRating(summary.avg_rating),
+        note: "de 1 a 5 estrelas",
+        help: "Média das estrelas dadas pelos clientes",
+      },
       {
         label: "Notas 1 e 2",
         value: formatPercent(low, total),
         note: `${formatNumber(low)} avaliações`,
         tone: "bad",
+        help: withOneIn("Clientes insatisfeitos", low, total),
       },
       {
-        label: "Entrega fora do prazo",
+        label: "Atrasadas ou não entregues",
         value: formatPercent(deliveryShare(summary, late), total),
         note: `nota média ${formatRating(combinedRating(summary, late))}`,
         tone: "bad",
+        help: withOneIn("Pedidos fora do prazo", deliveryShare(summary, late), total),
       },
     ];
   }
@@ -225,17 +279,20 @@ export function sectorKpis(data, period, sectorId) {
         label: "Entregas atrasadas",
         value: formatPercent(summary.delivery.atrasada.count, total),
         note: `${formatNumber(summary.delivery.atrasada.count)} avaliações`,
+        help: "Chegaram depois da data prometida",
       },
       {
         label: "Não entregues",
         value: formatPercent(summary.delivery.nao_entregue.count, total),
         note: `${formatNumber(summary.delivery.nao_entregue.count)} avaliações`,
+        help: "O pedido não tem data de entrega",
       },
       {
         label: "Nota média com atraso",
         value: formatRating(lateRating),
         note: `contra ${formatRating(onTime)} no prazo`,
         tone: "bad",
+        help: "Quanto a nota cai quando a entrega atrasa",
       },
     ];
     if (worst) {
@@ -243,6 +300,7 @@ export function sectorKpis(data, period, sectorId) {
         label: "Pior mês",
         value: monthLabel(worst.month),
         note: `${formatPercent(worst.late, worst.total)} fora do prazo`,
+        help: "Mês com mais entregas fora do prazo",
       });
     }
     return kpis;
@@ -255,17 +313,20 @@ export function sectorKpis(data, period, sectorId) {
       label: praise ? "Avaliações com elogio" : "Avaliações do setor",
       value: formatNumber(sector.count),
       note: `${formatPercent(sector.count, total)} das avaliações`,
+      help: praise ? "Citam pelo menos um elogio" : "Citam pelo menos um tema do setor",
     },
     {
       label: "Nota média nelas",
       value: formatRating(sector.avg_rating),
       note: `${formatRating(summary.avg_rating)} na base inteira`,
       tone: praise ? "ok" : "bad",
+      help: "Média das estrelas nessas avaliações",
     },
-    ...top.map((row) => ({
+    ...top.map((row, index) => ({
       label: row.label,
       value: formatNumber(row.count),
       note: `nota média ${formatRating(row.avgRating)}`,
+      help: index === 0 ? "Tema mais citado do setor" : "Segundo tema mais citado",
     })),
   ];
 }
@@ -299,7 +360,87 @@ export function monthlySeries(data, period, sectorId) {
     if (peaks.every((other) => Math.abs(other - index) >= MIN_PEAK_DISTANCE)) peaks.push(index);
   }
   peaks.sort((a, b) => a - b);
-  return { kind, title: titles[kind], points, peaks };
+  // Média ponderada dos meses mostrados, desenhada como linha de referência
+  const shown = summary.monthly.filter((item) => item.total >= MIN_MONTH_REVIEWS);
+  const shownTotal = shown.reduce((sum, item) => sum + item.total, 0);
+  const average = shownTotal
+    ? Math.round((1000 * shown.reduce((sum, item) => sum + item[kind], 0)) / shownTotal) / 10
+    : null;
+  // Só a logística e a diretoria têm uma série que é delas; nos outros setores
+  // a curva é a da base inteira, e o título diz isso
+  const baseWide = sectorId !== DIRECTOR && sectorId !== "logistica";
+  return { kind, title: titles[kind], points, peaks, average, baseWide };
+}
+
+const SERIES_WORDS = {
+  late: "das entregas ficaram fora do prazo",
+  high: "das avaliações tiveram nota 4 ou 5",
+  low: "das avaliações tiveram nota 1 ou 2",
+};
+
+// Frase que diz o que o gráfico mostra, em vez de deixar a leitura para o gestor
+export function chartTakeaway(series) {
+  if (series.points.length < 2) return "";
+  const pick = series.kind === "high"
+    ? (a, b) => (b.value < a.value ? b : a)
+    : (a, b) => (b.value > a.value ? b : a);
+  const extreme = series.points.reduce(pick);
+  const ratio = oneIn(extreme.value, 100);
+  const word = series.kind === "high" ? "Pior mês" : "Mês mais crítico";
+  const parts = [
+    `${word}: ${extreme.label}, quando ${String(extreme.value).replace(".", ",")}% ${SERIES_WORDS[series.kind]}${ratio ? ` (${ratio})` : ""}.`,
+  ];
+  if (series.average !== null) {
+    parts.push(`A média do período é ${String(series.average).replace(".", ",")}%, a linha tracejada.`);
+  }
+  return parts.join(" ");
+}
+
+// Resumo do painel numa frase, no topo, para quem só tem alguns segundos
+export function sectorHeadline(data, period, sectorId) {
+  const summary = data.periods[period];
+  const total = summary.total;
+  const groups = themeGroups(data, period, sectorId);
+  const topComplaint = groups.complaints[0];
+  const topPraise = groups.praises[0];
+  if (sectorId === DIRECTOR) {
+    const low = ratingSum(summary, [1, 2]);
+    const ratio = oneIn(low, total);
+    const parts = [
+      ratio
+        ? `${ratio} avaliações tem nota 1 ou 2.`
+        : `${formatPercent(low, total)} das avaliações têm nota 1 ou 2.`,
+    ];
+    if (topComplaint) {
+      parts.push(`A reclamação mais citada é "${topComplaint.label}" (${formatNumber(topComplaint.count)} avaliações)`);
+    }
+    if (topPraise) {
+      parts[parts.length - 1] += `, e o elogio mais citado é "${topPraise.label}" (${formatNumber(topPraise.count)}).`;
+    } else if (topComplaint) {
+      parts[parts.length - 1] += ".";
+    }
+    return parts.join(" ");
+  }
+  if (sectorId === "logistica") {
+    const late = deliveryShare(summary, ["atrasada", "nao_entregue"]);
+    const ratio = oneIn(late, total);
+    return (
+      `${ratio ? `${ratio} pedidos avaliados chegou` : `${formatPercent(late, total)} dos pedidos avaliados chegaram`} fora do prazo ou não chegou. ` +
+      `Quando atrasa, a nota média cai de ${formatRating(summary.delivery.no_prazo.avg_rating)} para ${formatRating(summary.delivery.atrasada.avg_rating)}.`
+    );
+  }
+  const sector = summary.sectors[sectorId];
+  const label = findSector(data, sectorId)?.label || "";
+  if (sectorId === "fortes") {
+    const parts = [`${formatPercent(sector.count, total, 0)} das avaliações trazem algum elogio.`];
+    if (topPraise) parts.push(`O mais citado é "${topPraise.label}", em ${formatNumber(topPraise.count)} avaliações.`);
+    return parts.join(" ");
+  }
+  const parts = [
+    `${formatPercent(sector.count, total)} das avaliações falam de ${label.toLowerCase()}, com nota média ${formatRating(sector.avg_rating)} (a base inteira tem ${formatRating(summary.avg_rating)}).`,
+  ];
+  if (topComplaint) parts.push(`O problema mais citado é "${topComplaint.label}".`);
+  return parts.join(" ");
 }
 
 // Temas usados como filtro do chat: o tema clicado, os do setor ou nenhum

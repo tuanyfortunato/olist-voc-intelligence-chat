@@ -378,6 +378,8 @@ export const SUGGESTION_AREAS = [
     questions: [
       "Quais são os principais temas de reclamação e de elogio dos clientes?",
       "Quais são os principais elogios dos clientes?",
+      "Quais problemas aparecem nas avaliações com nota 1?",
+      "O que os clientes satisfeitos destacam nas avaliações com nota 5?",
     ],
   },
   {
