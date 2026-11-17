@@ -34,7 +34,8 @@ class CitationCheck:
 
 def build_context(reviews: list[RetrievedReview]) -> str:
     return "\n".join(
-        f"[{number}] (avaliação {review.review_id}, nota {review.rating}) {review.original_text}"
+        f"[{number}] (avaliação {review.review_id}, nota {review.rating}, "
+        f"categoria {review.category or 'sem categoria'}) {review.original_text}"
         for number, review in enumerate(reviews, start=1)
     )
 
@@ -145,9 +146,12 @@ PREDICATE_REPLACEMENT = {
 # Frase que nega, como "não há menção de problemas recorrentes", fica como está
 NEGATION = re.compile(r"\b(?:n[aã]o|nenhum|nenhuma|sem)\b", re.IGNORECASE)
 # Sinais, no texto do cliente, de que o problema aconteceu mais de uma vez
+# Tópico que ficou só com uma palavra antes da vírgula ou dos dois-pontos
+LONE_LABEL = re.compile(r"^\s*(?:[-•*]\s*)?\w+\s*[,:]")
+
 REPETITION_CUE = re.compile(
     r"\b(?:novamente|de\s+novo|outra\s+vez|mais\s+uma\s+vez|sempre|toda\s+vez|"
-    r"todas\s+as\s+vezes|segunda\s+vez|terceira\s+vez|v[aá]rias\s+vezes|"
+    r"todas\s+as\s+vezes|s?egunda\s+vez|terceira\s+vez|[23][ªa°o]\s+vez|v[aá]rias\s+vezes|"
     r"repetid\w*|recorrent\w*|n[aã]o\s+[eé]\s+a\s+primeira)\b",
     re.IGNORECASE,
 )
@@ -195,8 +199,11 @@ def _soften_sentence(sentence: str, by_number: dict[int, RetrievedReview]) -> st
     softened = RECURRENCE_PREDICATE_AND.sub("", softened)
     if RECURRENCE_PREDICATE.search(softened):
         return ""
-    softened = RECURRENCE_PATTERN.sub("", softened)
-    softened = re.sub(r"\s+([.,;:!?])", r"\1", softened)
+    without_recurrence = RECURRENCE_PATTERN.sub("", softened)
+    if LONE_LABEL.match(without_recurrence) and not LONE_LABEL.match(softened):
+        # O rótulo do tópico era só "Problemas recorrentes" e ficaria "Problemas,"
+        return ""
+    softened = re.sub(r"\s+([.,;:!?])", r"\1", without_recurrence)
     return re.sub(r"[ \t]{2,}", " ", softened)
 
 
