@@ -27,6 +27,7 @@ on:
           - amazon.nova-lite-v1:0
           - anthropic.claude-haiku-5-5
           - us.anthropic.claude-haiku-5-5
+          - us.anthropic.claude-haiku-4-5-20251001-v1:0
         default: amazon.nova-micro-v1:0
       log_level:
         description: "DEBUG mostra os prompts e as respostas completas no log"
@@ -83,6 +84,18 @@ jobs:
         run: |
           mkdir -p avaliacao
           aws s3 cp "s3://${{ vars.INDEX_BUCKET }}/results/avaliacao.csv" avaliacao/
+
+      # As respostas no resumo da execução, para ler sem baixar o artifact
+      - name: Respostas no resumo
+        run: |
+          python3 - avaliacao/avaliacao.csv <<'PY' | tee -a "$GITHUB_STEP_SUMMARY"
+          import csv, sys
+          print(f"## Respostas ({'${{ inputs.answer_model_id }}'})\n")
+          for row in csv.DictReader(open(sys.argv[1], encoding="utf-8")):
+              print(f"### Pergunta {row['question_id']}.{row['turn']}: {row['question']}\n")
+              print(f"Situação: {row['status']}, {row['latency_ms']} ms, filtros: {row['filters']}\n")
+              print(row["answer"] + "\n")
+          PY
 
       # O RAGAS roda aqui no runner: precisa só do CSV e do Bedrock, não do banco
       - uses: actions/setup-python@v5
