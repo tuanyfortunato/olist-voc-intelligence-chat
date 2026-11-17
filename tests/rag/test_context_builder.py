@@ -1,4 +1,9 @@
-from src.rag.context_builder import build_context, extract_citations, remove_invalid_citations
+from src.rag.context_builder import (
+    build_context,
+    extract_citations,
+    remove_citations_from_negative_claims,
+    remove_invalid_citations,
+)
 from src.rag.schemas import RetrievedReview
 
 
@@ -43,3 +48,26 @@ def test_remove_invalid_citations():
 
 def test_remove_invalid_citations_keeps_text_without_invalid():
     assert remove_invalid_citations("Defeitos [1].", []) == "Defeitos [1]."
+
+
+def test_negative_claim_loses_its_citations():
+    answer = "- Nenhum dos comentários recuperados fala sobre o pagamento com Pix. [1][2][4]"
+    assert remove_citations_from_negative_claims(answer) == (
+        "- Nenhum dos comentários recuperados fala sobre o pagamento com Pix."
+    )
+
+
+def test_negative_claim_only_touches_its_own_sentence():
+    answer = (
+        "Alguns clientes gostam do aplicativo [4][11]. "
+        "Nenhum comentário menciona problemas com o aplicativo em si [2][6]."
+    )
+    assert remove_citations_from_negative_claims(answer) == (
+        "Alguns clientes gostam do aplicativo [4][11]. "
+        "Nenhum comentário menciona problemas com o aplicativo em si."
+    )
+
+
+def test_answer_without_negative_claim_is_unchanged():
+    answer = "- Atrasos [1][2].\n- Nenhum vendedor respondeu, segundo um cliente [3]."
+    assert remove_citations_from_negative_claims(answer) == answer

@@ -263,3 +263,12 @@ def test_scope_count_comes_with_the_answer_and_failures_are_ignored():
 
     pipeline.count = broken
     assert pipeline.ask("Pergunta?").scope_count is None
+
+
+def test_negative_claim_with_citations_becomes_no_evidence():
+    text = "- Nenhum dos comentários recuperados fala sobre o pagamento com Pix. [1][2][3]"
+    pipe = fake_pipeline([review("r1"), review("r2"), review("r3")], text)
+    result = pipe.ask("O que falam do Pix?")
+    assert result.status == "no_evidence"
+    assert result.answer == "- Nenhum dos comentários recuperados fala sobre o pagamento com Pix."
+    assert result.cited == [] and len(result.uncited) == 3
