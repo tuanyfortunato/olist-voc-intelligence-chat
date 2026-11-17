@@ -149,6 +149,8 @@ Testei também contar como apoio só os comentários citados que têm as palavra
 
 Na rodada ao vivo depois dessas mudanças, a pergunta sobre entregas insatisfatórias voltou só com rótulos e citações, como "Atraso na entrega: [1][2][4][14][15]", sem nenhuma frase. O código passou a reconhecer esse formato, pedir a resposta de novo uma vez com o lembrete de escrever frases completas e, se vier igual, juntar os rótulos numa frase com as mesmas citações.
 
+Na rodada seguinte apareceram mais quatro desvios. A troca de "são recorrentes" por "aparecem nos comentários" deixou a frase vazia "os problemas na entrega aparecem nos comentários [13]"; agora, quando a repetição é o assunto da frase, ela sai inteira, e com três citações ou mais o trecho vira "aparecem em vários comentários". Uma frase sem citação, no fim da resposta, dizia que a entrega ruim "é um tema recorrente"; frases assim, sem citação e sem negação, saem. Na embalagem de presente, tirar as citações de uma frase negativa deixou "como no caso de, que menciona"; quando sobra uma preposição solta, a frase negativa sai inteira. E na pergunta da premissa dos 90%, o modelo copiou a frase de exemplo do prompt, "vários clientes relatam produtos com defeito sem detalhar o problema"; o exemplo virou um formato, "<o que esses clientes relatam> [1][3][6]".
+
 As cinco que ainda não estavam nas perguntas de teste com o mesmo texto entraram em `evaluation/questions.yaml` como perguntas 16 a 20.
 
 ## Horário de funcionamento

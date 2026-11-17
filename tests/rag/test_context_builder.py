@@ -138,15 +138,14 @@ def test_soften_ignores_sentences_without_citation_and_other_nouns():
     assert soften_unsupported_quantities(answer, reviews) == answer
 
 
-def test_soften_recurrence_as_predicate_keeps_a_verb():
+def test_soften_recurrence_as_predicate_keeps_the_other_verb():
     reviews = numbered("Atrasou", "Não chegou")
     answer = (
         "Alguns clientes dizem que os problemas na entrega são recorrentes "
         "e afetam a confiança [1][2]."
     )
     assert soften_unsupported_quantities(answer, reviews) == (
-        "Alguns clientes dizem que os problemas na entrega aparecem nos comentários "
-        "e afetam a confiança [1][2]."
+        "Alguns clientes dizem que os problemas na entrega afetam a confiança [1][2]."
     )
 
 
@@ -171,4 +170,47 @@ def test_labels_to_sentence_keeps_citations():
     assert labels_to_sentence(LABEL_LIST) == (
         "Nos comentários recuperados aparecem estes temas: atraso na entrega [1][2][4], "
         "falha na entrega [5] e insatisfação com a transportadora [4]."
+    )
+
+
+def test_soften_drops_sentence_whose_claim_is_only_recurrence():
+    answer = (
+        "- Vários clientes relatam atraso [1][2][3].\n"
+        "- Alguns clientes mencionam que os problemas na entrega são recorrentes [2]."
+    )
+    reviews = numbered("Atrasou", "Não chegou", "Demorou")
+    assert soften_unsupported_quantities(answer, reviews) == (
+        "- Vários clientes relatam atraso [1][2][3]."
+    )
+
+
+def test_soften_predicate_with_many_citations_says_many_comments():
+    reviews = numbered("Atrasou", "Não chegou", "Demorou")
+    answer = "Problemas com a entrega são frequentes, com produtos não entregues [1][2][3]."
+    assert soften_unsupported_quantities(answer, reviews) == (
+        "Problemas com a entrega aparecem em vários comentários, "
+        "com produtos não entregues [1][2][3]."
+    )
+
+
+def test_soften_drops_uncited_recurrence_claim_and_keeps_negation():
+    reviews = numbered("Atrasou", "Não chegou", "Demorou")
+    answer = (
+        "Clientes relatam atraso [1][2][3].\n\n"
+        "Esses comentários indicam que a entrega ruim é um tema recorrente entre os clientes.\n"
+        "Não há menção de que os problemas sejam recorrentes."
+    )
+    assert soften_unsupported_quantities(answer, reviews) == (
+        "Clientes relatam atraso [1][2][3].\n\nNão há menção de que os problemas sejam recorrentes."
+    )
+
+
+def test_negative_claim_with_citation_in_the_middle_is_dropped():
+    answer = (
+        "- Vários clientes pedem embalagem [1][3][4].\n"
+        "- Nenhum comentário fala sobre isso de forma detalhada como no caso de [10], "
+        "que menciona papel de presente."
+    )
+    assert remove_citations_from_negative_claims(answer) == (
+        "- Vários clientes pedem embalagem [1][3][4]."
     )
