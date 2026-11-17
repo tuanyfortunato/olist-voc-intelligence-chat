@@ -73,17 +73,18 @@ def remove_citations_from_negative_claims(answer: str) -> str:
     O modelo às vezes escreve "Nenhum dos comentários recuperados fala de Pix" e
     cita os 15 comentários na mesma frase. Uma frase assim não tem como ser
     sustentada por um comentário, e as citações fariam a resposta parecer ter
-    evidência. Sem elas, a resposta que só diz isso sai como sem evidência.
+    evidência. Sem elas, a resposta que só diz isso sai como sem evidência. Se a
+    citação estava no meio da frase, como em "como no caso de [10], que menciona",
+    a frase fica sem sentido sem ela e sai inteira.
     """
-    lines = []
-    for line in answer.split("\n"):
-        sentences = SENTENCE_END.split(line)
-        cleaned = [
-            _strip_citations(sentence) if NEGATIVE_CLAIM_PATTERN.search(sentence) else sentence
-            for sentence in sentences
-        ]
-        lines.append(" ".join(cleaned))
-    return "\n".join(lines)
+
+    def clean(sentence: str) -> str:
+        if not NEGATIVE_CLAIM_PATTERN.search(sentence):
+            return sentence
+        stripped = _strip_citations(sentence)
+        return "" if DANGLING_WORD.search(stripped) else stripped
+
+    return _rewrite_sentences(answer, clean)
 
 
 def _strip_citations(sentence: str) -> str:
@@ -92,6 +93,25 @@ def _strip_citations(sentence: str) -> str:
     return re.sub(r"[ \t]{2,}", " ", without).rstrip()
 
 
+def _rewrite_sentences(answer: str, rewrite) -> str:
+    """Aplica rewrite a cada frase; frase que vira "" sai, e a linha que fica vazia também."""
+    lines = []
+    for line in answer.split("\n"):
+        if not line.strip():
+            lines.append(line)
+            continue
+        kept = [new for new in map(rewrite, SENTENCE_END.split(line)) if new.strip()]
+        new_line = " ".join(kept)
+        if new_line.strip(" -•*\t"):
+            lines.append(new_line)
+    return "\n".join(lines).rstrip()
+
+
+# Preposição que ficou solta no fim da frase ou antes da pontuação depois que a
+# citação saiu, como "como no caso de, que menciona"
+DANGLING_WORD = re.compile(
+    r"\b(?:de|do|da|dos|das|em|no|na|nos|nas|como|caso)\s*(?:[,;:.!?]|$)", re.IGNORECASE
+)
 # "Vários clientes", "muitas avaliações": quantidade que pede mais de dois
 # comentários citados na mesma frase
 QUANTITY_PATTERN = re.compile(
@@ -105,10 +125,15 @@ RECURRENCE_PATTERN = re.compile(
     r"com\s+frequ[eê]ncia|frequentemente|frequentes?|repetidamente)\b",
     re.IGNORECASE,
 )
-# "São recorrentes", "é frequente": tirar só o adjetivo deixaria a frase sem verbo,
-# então o trecho vira "aparecem nos comentários"
+# "São recorrentes", "é frequente": aqui a repetição é o próprio predicado, e só
+# tirar o adjetivo deixaria a frase sem sentido
 RECURRENCE_PREDICATE = re.compile(
     r"\b(é|são|foi|foram)\s+(?:recorrentes?|frequentes?)\b",
+    re.IGNORECASE,
+)
+# "São recorrentes e afetam": o predicado sai e a frase segue pelo outro verbo
+RECURRENCE_PREDICATE_AND = re.compile(
+    r"\b(?:é|são|foi|foram)\s+(?:recorrentes?|frequentes?)\s+e\s+",
     re.IGNORECASE,
 )
 PREDICATE_REPLACEMENT = {
@@ -117,6 +142,8 @@ PREDICATE_REPLACEMENT = {
     "foi": "apareceu",
     "foram": "apareceram",
 }
+# Frase que nega, como "não há menção de problemas recorrentes", fica como está
+NEGATION = re.compile(r"\b(?:n[aã]o|nenhum|nenhuma|sem)\b", re.IGNORECASE)
 # Sinais, no texto do cliente, de que o problema aconteceu mais de uma vez
 REPETITION_CUE = re.compile(
     r"\b(?:novamente|de\s+novo|outra\s+vez|mais\s+uma\s+vez|sempre|toda\s+vez|"
@@ -132,19 +159,19 @@ MIN_CITATIONS_FOR_MANY = 3
 def soften_unsupported_quantities(answer: str, reviews: list[RetrievedReview]) -> str:
     """Suaviza "vários clientes" e "problemas recorrentes" que os comentários não sustentam.
 
-    O modelo às vezes escreve "vários clientes relatam problemas recorrentes"
-    citando um ou dois comentários, e às vezes um comentário que diz que foi a
-    primeira vez. Frase a frase, com menos de três comentários citados, "vários"
-    vira "alguns" e a palavra de repetição sai, a não ser que algum comentário
-    citado diga que o problema se repetiu. Frases sem citação ficam como estão,
-    porque não há o que conferir.
+    Frase a frase:
+    - com menos de três comentários citados, "vários" vira "alguns" e a palavra de
+      repetição sai, a não ser que algum comentário citado diga que o problema se
+      repetiu. Quando a repetição é o próprio predicado, como em "os problemas são
+      recorrentes", a frase sai inteira, porque não sobra o que dizer;
+    - com três ou mais, "são recorrentes" vira "aparecem em vários comentários",
+      que é o que as citações mostram;
+    - sem nenhuma citação, a frase que afirma repetição, como "é um tema
+      recorrente", sai, porque não tem comentário que a sustente. A que nega,
+      como "não há menção de problemas recorrentes", fica.
     """
     by_number = {review.number: review for review in reviews}
-    lines = []
-    for line in answer.split("\n"):
-        sentences = SENTENCE_END.split(line)
-        lines.append(" ".join(_soften_sentence(s, by_number) for s in sentences))
-    return "\n".join(lines)
+    return _rewrite_sentences(answer, lambda sentence: _soften_sentence(sentence, by_number))
 
 
 def _soften_sentence(sentence: str, by_number: dict[int, RetrievedReview]) -> str:
@@ -154,17 +181,23 @@ def _soften_sentence(sentence: str, by_number: dict[int, RetrievedReview]) -> st
         for n in _numbers(match.group(1))
         if n in by_number
     }
-    if not cited or len(cited) >= MIN_CITATIONS_FOR_MANY:
-        return sentence
+    if not cited:
+        claims_recurrence = RECURRENCE_PATTERN.search(sentence) and not NEGATION.search(sentence)
+        return "" if claims_recurrence else sentence
+    if any(REPETITION_CUE.search(by_number[n].original_text) for n in cited):
+        if len(cited) >= MIN_CITATIONS_FOR_MANY:
+            return sentence
+        return QUANTITY_PATTERN.sub(_to_some, sentence)
+    if len(cited) >= MIN_CITATIONS_FOR_MANY:
+        return RECURRENCE_PREDICATE.sub(_to_appears_in_many, sentence)
 
     softened = QUANTITY_PATTERN.sub(_to_some, sentence)
-    repeated = any(REPETITION_CUE.search(by_number[n].original_text) for n in cited)
-    if not repeated:
-        softened = RECURRENCE_PREDICATE.sub(_to_appears, softened)
-        softened = RECURRENCE_PATTERN.sub("", softened)
-        softened = re.sub(r"\s+([.,;:!?])", r"\1", softened)
-        softened = re.sub(r"[ \t]{2,}", " ", softened)
-    return softened
+    softened = RECURRENCE_PREDICATE_AND.sub("", softened)
+    if RECURRENCE_PREDICATE.search(softened):
+        return ""
+    softened = RECURRENCE_PATTERN.sub("", softened)
+    softened = re.sub(r"\s+([.,;:!?])", r"\1", softened)
+    return re.sub(r"[ \t]{2,}", " ", softened)
 
 
 def _to_some(match: re.Match) -> str:
@@ -174,11 +207,11 @@ def _to_some(match: re.Match) -> str:
     return word + match.group(3)
 
 
-def _to_appears(match: re.Match) -> str:
+def _to_appears_in_many(match: re.Match) -> str:
     verb = PREDICATE_REPLACEMENT[match.group(1).lower()]
     if match.group(1)[0].isupper():
         verb = verb.capitalize()
-    return verb + " nos comentários"
+    return verb + " em vários comentários"
 
 
 # Linha que é só um rótulo seguido de citações, como "Atraso na entrega: [1][2]"
