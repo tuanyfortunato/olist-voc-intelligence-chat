@@ -13,7 +13,11 @@ from collections.abc import Callable
 from dataclasses import asdict, replace
 
 from src.config import Settings
-from src.rag.context_builder import extract_citations, remove_invalid_citations
+from src.rag.context_builder import (
+    extract_citations,
+    remove_citations_from_negative_claims,
+    remove_invalid_citations,
+)
 from src.rag.generator import generate_answer
 from src.rag.prompts import (
     GREETING_MESSAGE,
@@ -136,6 +140,7 @@ class RagPipeline:
 
         start = time.monotonic()
         answer = generate_answer(analysis.clean_question, reviews, self.answer_llm)
+        answer = remove_citations_from_negative_claims(answer)
         timings["geracao_ms"] = (time.monotonic() - start) * 1000
 
         check = extract_citations(answer, len(reviews))
