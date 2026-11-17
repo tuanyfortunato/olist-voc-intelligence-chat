@@ -70,3 +70,9 @@ def test_generate_answer_removes_bold():
     llm = FakeChatLLM("- **Atraso na entrega**: vários clientes [1].")
     answer = generate_answer("Pergunta?", [review("r1", 1, "Atrasou")], llm)
     assert answer == "- Atraso na entrega: vários clientes [1]."
+
+
+def test_remove_markdown_drops_angle_brackets_copied_from_the_prompt():
+    assert remove_markdown("- <Adorei a experiência de compra> [1]") == (
+        "- Adorei a experiência de compra [1]"
+    )

@@ -216,6 +216,23 @@ def _to_appears_in_many(match: re.Match) -> str:
 
 # Linha que é só um rótulo seguido de citações, como "Atraso na entrega: [1][2]"
 LABEL_ONLY_LINE = re.compile(r"^\s*(?:[-•*]\s*)?([^:\n]{1,80}):\s*$")
+# Tópico curto sem ponto final, como "- Problemas com a entrega [1][8]"
+MAX_TOPIC_WORDS = 8
+
+
+def _label_of(line: str) -> str | None:
+    """O rótulo da linha, se ela for só um rótulo ou tópico curto com citações."""
+    text = CITATION_PATTERN.sub("", line)
+    match = LABEL_ONLY_LINE.match(text)
+    if match:
+        return match.group(1).strip()
+    text = text.strip()
+    topic = text.lstrip("-•* ").strip()
+    if text.endswith((".", "!", "?")) or not topic:
+        return None
+    if len(topic.split()) <= MAX_TOPIC_WORDS:
+        return topic.rstrip(",;")
+    return None
 
 
 def is_label_only_list(answer: str) -> bool:
@@ -223,7 +240,7 @@ def is_label_only_list(answer: str) -> bool:
     lines = [line for line in answer.split("\n") if line.strip()]
     if not lines:
         return False
-    return all(LABEL_ONLY_LINE.match(CITATION_PATTERN.sub("", line)) for line in lines)
+    return all(_label_of(line) is not None for line in lines)
 
 
 def labels_to_sentence(answer: str) -> str:
@@ -234,11 +251,10 @@ def labels_to_sentence(answer: str) -> str:
     """
     items = []
     for line in answer.split("\n"):
-        citations = "".join(match.group(0) for match in CITATION_PATTERN.finditer(line))
-        match = LABEL_ONLY_LINE.match(CITATION_PATTERN.sub("", line))
-        if not match:
+        label = _label_of(line) if line.strip() else None
+        if label is None:
             continue
-        label = match.group(1).strip()
+        citations = "".join(match.group(0) for match in CITATION_PATTERN.finditer(line))
         if len(label) > 1 and not label[:2].isupper():
             label = label[0].lower() + label[1:]
         items.append(f"{label} {citations}".strip())
