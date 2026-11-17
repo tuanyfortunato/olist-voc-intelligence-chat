@@ -361,7 +361,7 @@ A publicação inteira roda pelo GitHub Actions. A ordem, a partir de uma conta 
 3. **Build index**, manual: baixa a base, prepara os documentos, gera os embeddings e envia o arquivo para o S3.
 4. **Load vectors**, manual: carrega os embeddings no PostgreSQL, cria o índice HNSW e liga a API pela primeira vez.
 5. **Deploy**, a cada merge na `main`: constrói a imagem, publica a nova versão da API e copia a página para o S3.
-6. **Classify themes**, manual: classifica as avaliações nos temas do painel e grava o `frontend/dashboard.json` e a amostra de revisão num commit na branch escolhida. Só classifica o que ainda falta, e o modo `numeros` só recalcula o painel.
+6. **Classify themes**, manual: classifica as avaliações nos temas do painel e grava o `frontend/dashboard.json` e a amostra de revisão numa branch nova, `feature/numeros-do-painel-N`, para abrir o pull request. Só classifica o que ainda falta, e o modo `numeros` só recalcula o painel.
 
 Os workflows `Calibrate retrieval` e `Evaluate` rodam as perguntas de teste numa tarefa avulsa do ECS, dentro da mesma rede do banco. O `Publish frontend` publica só a página, em cerca de um minuto.
 
