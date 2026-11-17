@@ -29,6 +29,17 @@ def remove_markdown(answer: str) -> str:
 def generate_answer(clean_question: str, reviews: list[RetrievedReview], llm) -> str:
     messages = build_answer_messages(clean_question, build_context(reviews))
     logger.debug("etapa=geracao mensagens=%r", messages)
-    answer = llm.invoke(messages).content
+    answer = message_text(llm.invoke(messages).content)
     logger.debug("etapa=geracao resposta=%r", answer)
     return remove_markdown(answer)
+
+
+def message_text(content) -> str:
+    """Texto da resposta. O Claude pode devolver uma lista de blocos em vez de texto."""
+    if isinstance(content, str):
+        return content
+    return "".join(
+        block.get("text", "") if isinstance(block, dict) else str(block)
+        for block in content
+        if not isinstance(block, dict) or block.get("type") == "text"
+    )

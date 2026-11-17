@@ -58,6 +58,17 @@ data "aws_iam_policy_document" "task" {
     ]
   }
 
+  # Claude Haiku 5.5 em teste como modelo da resposta, chamado direto ou pelo
+  # perfil entre regiões dos EUA, que pode mandar a chamada a outra região
+  statement {
+    sid     = "ClaudeHaikuNaResposta"
+    actions = ["bedrock:InvokeModel"]
+    resources = [
+      "arn:aws:bedrock:*::foundation-model/anthropic.claude-haiku-5-5",
+      "arn:aws:bedrock:${var.aws_region}:${data.aws_caller_identity.current.account_id}:inference-profile/us.anthropic.claude-haiku-5-5",
+    ]
+  }
+
   statement {
     sid       = "LerOsEmbeddings"
     actions   = ["s3:GetObject"]
