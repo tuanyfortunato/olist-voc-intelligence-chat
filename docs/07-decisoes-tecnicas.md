@@ -143,6 +143,8 @@ Depois da publicação, as mesmas perguntas mostraram que o Nova Micro nem sempr
 
 Também comparei o Nova Lite com o Nova Micro na geração da resposta, com as mesmas nove perguntas e o RAGAS. O Nova Micro ficou com faithfulness 0,97, relevancy 0,52 e precision 0,79. O Nova Lite ficou com 0,89, 0,48 e 0,61, e ainda escreveu "os principais" e "com mais frequência", que o prompt proíbe. O Nova Lite só foi melhor na pergunta da embalagem de presente. A geração continua com o Nova Micro.
 
+Como o Nova Micro às vezes ignora a regra de não chamar um problema de recorrente, a checagem passou a ser feita também no código, depois da leitura das citações. Frase a frase, quando há menos de três comentários citados, "vários", "muitos" e "diversos" seguidos de clientes, avaliações ou reclamações viram "alguns" ou "algumas", e "recorrente", "frequente", "com frequência" e "repetidamente" saem do texto, a menos que algum comentário citado diga que o problema se repetiu. Com três citações ou mais, a frase fica como está, porque aí a repetição pode ser entre clientes diferentes. A regra não resolve a frase da embalagem de presente, que cita nove comentários dos quais poucos pedem a embalagem; conferir cada citação pelo sentido precisaria de outra chamada ao modelo.
+
 As cinco que ainda não estavam nas perguntas de teste com o mesmo texto entraram em `evaluation/questions.yaml` como perguntas 16 a 20.
 
 ## Horário de funcionamento
