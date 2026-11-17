@@ -203,6 +203,10 @@ Todo texto que vem da API entra na página como texto, nunca como HTML. Os comen
 
 ## Arquitetura na AWS
 
+![Arquitetura na AWS](docs/arquitetura.png)
+
+O diagrama completo, com a indexação, o agendamento e os logs, está em [`docs/arquitetura.png`](docs/arquitetura.png), e o arquivo editável em [`docs/arquitetura.drawio`](docs/arquitetura.drawio). O resumo abaixo mostra só as peças principais.
+
 ```mermaid
 flowchart TB
     U[Navegador] --> CF[CloudFront<br/>olist-chat.tuanyfortunato.com.br]
@@ -226,6 +230,10 @@ flowchart TB
 **Índice gerado uma vez.** Os embeddings são gerados por um workflow do GitHub Actions e guardados num arquivo Parquet no S3, junto com um manifesto que registra o modelo, as dimensões e as categorias. A API confere esse manifesto ao iniciar e não sobe se o modelo da pergunta for diferente do modelo do índice, porque vetores de modelos diferentes dariam resultados sem sentido.
 
 **Tudo em código.** A infraestrutura é descrita em Terraform, na pasta [`infra/`](infra/). O GitHub Actions entra na AWS por OIDC, sem nenhuma chave guardada no repositório, e as permissões valem só para recursos com o prefixo do projeto.
+
+![CI/CD](docs/cicd.png)
+
+O diagrama acima mostra o caminho do código até a AWS: o CI a cada push e pull request, o Terraform e o Deploy a cada merge na main e os workflows que rodam à mão, como a indexação e a avaliação. O arquivo editável está em [`docs/cicd.drawio`](docs/cicd.drawio).
 
 ## Segurança e custo
 
@@ -382,6 +390,7 @@ Os workflows `Calibrate retrieval` e `Evaluate` rodam as perguntas de teste numa
 ## Documentação
 
 - [`docs/07-decisoes-tecnicas.md`](docs/07-decisoes-tecnicas.md): cada decisão do projeto, com o motivo, as alternativas e os números que a sustentaram.
+- [`docs/arquitetura.png`](docs/arquitetura.png) e [`docs/cicd.png`](docs/cicd.png): diagramas da arquitetura na AWS e do CI/CD, com os arquivos editáveis do draw.io ao lado.
 - [`docs/05-infraestrutura.md`](docs/05-infraestrutura.md): bootstrap, acesso do GitHub à AWS e domínio.
 - [`docs/08-especificacao-pagina-do-chat.md`](docs/08-especificacao-pagina-do-chat.md): especificação da página do chat.
 - [`notebooks/01_data_exploration.ipynb`](notebooks/01_data_exploration.ipynb): exploração da base que deu origem às regras de preparação.
