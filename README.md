@@ -132,6 +132,8 @@ Depois da geração, o código lê os números entre colchetes da resposta. Cita
 
 A mesma leitura confere as afirmações de quantidade. Numa frase que cita só um ou dois comentários, "vários clientes" vira "alguns clientes", e palavras como "recorrente" e "frequente" saem, a não ser que um dos comentários citados conte que o problema se repetiu, com "mais uma vez" ou "é a segunda vez". Isso não pega o caso de uma frase com muitas citações em que só parte dos comentários diz o que a frase afirma; esse caso aparece na faithfulness do RAGAS.
 
+Quando a resposta vem só como uma lista de rótulos com citações, como "Atraso na entrega: [1][2]", sem nenhuma frase, o código pede a resposta de novo uma vez, com um lembrete para escrever frases completas. Se vier igual, junta os rótulos numa frase só, mantendo as citações.
+
 ## Quando não há evidência suficiente
 
 Esse foi o ponto que mais trabalhei, porque um chat que inventa respostas não serve para tomar decisões. A resposta sempre sai com uma situação, e a página mostra um aviso diferente para cada uma:

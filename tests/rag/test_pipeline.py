@@ -272,3 +272,35 @@ def test_negative_claim_with_citations_becomes_no_evidence():
     assert result.status == "no_evidence"
     assert result.answer == "- Nenhum dos comentários recuperados fala sobre o pagamento com Pix."
     assert result.cited == [] and len(result.uncited) == 3
+
+
+class SequenceAnswerLLM(FakeAnswerLLM):
+    def __init__(self, answers):
+        super().__init__(answers[0])
+        self.answers = list(answers)
+
+    def invoke(self, messages):
+        self.answer = self.answers[min(self.calls, len(self.answers) - 1)]
+        return super().invoke(messages)
+
+
+def test_label_only_answer_is_retried_with_reminder():
+    pipe = fake_pipeline([review("r1"), review("r2"), review("r3")])
+    pipe.answer_llm = SequenceAnswerLLM(
+        ["- Atraso: [1][2]\n- Falha: [3]", "Clientes relatam atraso [1][2] e falha [3]."]
+    )
+    result = pipe.ask("Quais temas aparecem?")
+    assert pipe.answer_llm.calls == 2
+    assert "frases completas" in str(pipe.answer_llm.messages[1])
+    assert result.answer == "Clientes relatam atraso [1][2] e falha [3]."
+
+
+def test_label_only_answer_twice_becomes_one_sentence():
+    pipe = fake_pipeline([review("r1"), review("r2"), review("r3")])
+    pipe.answer_llm = SequenceAnswerLLM(["- Atraso: [1][2]\n- Falha: [3]"])
+    result = pipe.ask("Quais temas aparecem?")
+    assert pipe.answer_llm.calls == 2
+    assert result.answer == (
+        "Nos comentários recuperados aparecem estes temas: atraso [1][2] e falha [3]."
+    )
+    assert result.status == "answered"
