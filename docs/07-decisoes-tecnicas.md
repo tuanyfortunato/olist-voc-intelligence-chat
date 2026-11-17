@@ -128,6 +128,17 @@ Depois da publicação, a pergunta do Pix mostrou que a folga do score mínimo e
 
 Acrescentei ao prompt da resposta uma regra: nunca atribuir aos comentários um assunto que eles não mencionam, e, quando a pergunta fala de algo específico que nenhum comentário cita, dizer isso em vez de tratar um assunto parecido como se fosse o mesmo. Em três execuções seguidas, a resposta passou a ser "Nenhum dos comentários recuperados fala especificamente sobre o pagamento com Pix". O modelo ainda pendura as citações nessa frase, e por isso a situação sai como evidência fraca, e não como sem evidência. O texto está correto e não inventa nada, que era o essencial; a página mostra os comentários sobre pagamento em geral, e o gestor consegue conferir que nenhum fala de Pix.
 
+## Perguntas do enunciado
+
+Rodei no chat publicado os cinco exemplos de exploração e as três perguntas do desafio de metadados do enunciado, com o texto original. Seis responderam bem, mas o teste mostrou quatro problemas, e cada um virou um ajuste.
+
+- **Palavras de análise no tema da busca.** "Quais padrões podem ser identificados nas avaliações de clientes insatisfeitos?" virou o tema "padrões nas avaliações de clientes insatisfeitos", e o comentário mais próximo ficou em 0,61, perto do score mínimo. Com "determinadas categorias de produtos" aconteceu o mesmo. Nenhum cliente escreve "padrões" ou "categorias", então essas palavras só afastam a busca dos comentários. A análise da pergunta passou a tirá-las do tema, como já fazia com a nota.
+- **"Clientes insatisfeitos" como nota.** A mesma pergunta não virou filtro de nota, e a busca olhou a base inteira. "Clientes insatisfeitos" passou a valer como notas 1 e 2, e "clientes satisfeitos" como 4 e 5, do mesmo jeito que "notas baixas" e "notas altas".
+- **Conclusão aceita sem conferir.** Em "Quais avaliações sustentam a conclusão de que existem problemas recorrentes relacionados ao prazo de entrega?", a resposta disse que vários clientes relatavam problemas recorrentes e citou oito comentários. Dois diziam que era a segunda vez, mas outros dois diziam o contrário: "foi a primeira vez que ocorreu" e "nunca tive problemas, porém dessa vez". O prompt da resposta ganhou a regra de só chamar um problema de recorrente quando o comentário conta que ele se repetiu, e de avisar quando um comentário vai contra a conclusão pedida.
+- **Negrito na tela.** Em três das oito respostas o Nova Micro usou negrito em Markdown, apesar de o prompt pedir texto simples, e a página mostrava os asteriscos. O código agora tira o negrito e os títulos em Markdown depois da geração, antes de ler as citações. Na mesma rodada, uma resposta começou com "os principais problemas", e o prompt passou a proibir também essa expressão.
+
+As cinco que ainda não estavam nas perguntas de teste com o mesmo texto entraram em `evaluation/questions.yaml` como perguntas 16 a 20.
+
 ## Horário de funcionamento
 
 A API e o banco ficam ligados das 9h às 22h, no horário de Brasília. Fora disso, ninguém usa o chat, e os dois juntos custariam cerca de US$ 0,45 a mais por dia. A API é ligada e desligada pelo próprio ECS, com duas ações agendadas que trocam o número de tarefas do serviço entre zero e um. O banco é ligado às 8h40, porque leva de 5 a 10 minutos para ficar disponível, e desligado às 22h05, depois da API, pelo EventBridge Scheduler, que chama a API do RDS com um papel que só pode ligar e desligar essa instância. O ALB fica ligado o dia todo; recriá-lo todo dia mudaria o endereço do chat.
