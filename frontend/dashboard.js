@@ -11,7 +11,9 @@ import {
   formatPercent,
   formatRating,
   isPreview,
+  chartTakeaway,
   monthlySeries,
+  sectorHeadline,
   sectorKpis,
   themeGroups,
 } from "./painel.js";
@@ -41,6 +43,8 @@ function kpiTile(kpi) {
   const note = element("p", "kpi-note", kpi.note);
   if (kpi.tone) note.dataset.tone = kpi.tone;
   tile.appendChild(note);
+  // O que o número quer dizer, em palavras, para quem não conhece o indicador
+  if (kpi.help) tile.appendChild(element("p", "kpi-help", kpi.help));
   return tile;
 }
 
@@ -57,10 +61,13 @@ function themeButton(row, max, { selected, showSector, onSelect }) {
   const numbers = element("span", "theme-numbers");
   numbers.appendChild(element("strong", null, formatNumber(row.count)));
   numbers.appendChild(
-    document.createTextNode(
-      ` avaliações · ${formatPercent(row.share * 100, 100)} · nota ${formatRating(row.avgRating)}`,
-    ),
+    document.createTextNode(` avaliações (${formatPercent(row.share * 100, 100)} do total)`),
   );
+  const rating = element("span", "theme-rating", `★ ${formatRating(row.avgRating)}`);
+  rating.dataset.tone = row.avgRating !== null && row.avgRating < 3 ? "bad" : "ok";
+  rating.title = "Nota média dessas avaliações, de 1 a 5";
+  rating.setAttribute("aria-label", `nota média ${formatRating(row.avgRating)} de 5`);
+  numbers.appendChild(rating);
   button.appendChild(numbers);
   const bar = element("span", "theme-bar");
   bar.setAttribute("aria-hidden", "true");
@@ -118,9 +125,11 @@ function lineChart(container, series) {
     container.appendChild(element("p", "dash-empty", "Poucos meses com avaliações neste período."));
     return;
   }
-  const width = 760;
-  const height = 220;
-  const pad = { left: 40, right: 16, top: 24, bottom: 28 };
+  // A largura do desenho acompanha a da caixa, para o texto não encolher no celular
+  const width = Math.max(300, Math.min(900, container.clientWidth || 760));
+  const height = width < 520 ? 200 : 220;
+  // A margem da direita guarda o rótulo da média, fora da área das linhas
+  const pad = { left: 40, right: 64, top: 24, bottom: 28 };
   const top = Math.max(10, Math.ceil(Math.max(...points.map((p) => p.value)) / 10) * 10);
   const x = (i) => pad.left + (i * (width - pad.left - pad.right)) / (points.length - 1);
   const y = (v) => height - pad.bottom - (v / top) * (height - pad.top - pad.bottom);
@@ -137,12 +146,24 @@ function lineChart(container, series) {
       svg("text", { x: pad.left - 6, y: y(v) + 4, "text-anchor": "end" }, `${Math.round(v)}%`),
     );
   }
-  const labelEvery = Math.ceil(points.length / 6);
+  const labelEvery = Math.ceil(points.length / (width < 520 ? 4 : 6));
   points.forEach((point, i) => {
-    if (i % labelEvery !== 0 && i !== points.length - 1) return;
+    const last = points.length - 1;
+    // O último mês sempre aparece; o rótulo anterior sai se ficar colado nele
+    if (i !== last && (i % labelEvery !== 0 || last - i < labelEvery)) return;
     const anchor = i === 0 ? "start" : i === points.length - 1 ? "end" : "middle";
     chart.appendChild(svg("text", { x: x(i), y: height - 8, "text-anchor": anchor }, point.label));
   });
+  if (series.average !== null && series.average !== undefined) {
+    const avgY = y(series.average);
+    chart.appendChild(svg("line", { x1: pad.left, x2: width - pad.right, y1: avgY, y2: avgY, class: "average" }));
+    // Rótulo em duas linhas, para caber na margem também no celular
+    const labelX = width - pad.right + 6;
+    chart.appendChild(svg("text", { x: labelX, y: avgY - 2, class: "average-label" }, "média"));
+    chart.appendChild(
+      svg("text", { x: labelX, y: avgY + 11, class: "average-label" }, `${String(series.average).replace(".", ",")}%`),
+    );
+  }
   const path = points.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p.value).toFixed(1)}`);
   chart.appendChild(svg("path", { d: path.join(""), class: "line" }));
   for (const i of series.peaks) {
@@ -180,11 +201,10 @@ function lineChart(container, series) {
 }
 
 function chartSubtitle(series) {
-  const peaks = series.peaks.map((i) => series.points[i].label);
-  const base = "Percentual sobre as avaliações de cada mês, só nos meses com 200 avaliações ou mais.";
-  if (!peaks.length) return base;
-  const word = series.kind === "high" ? "Os pontos mais baixos" : "Os picos";
-  return `${base} ${word}: ${peaks.join(" e ")}.`;
+  const base = series.baseWide
+    ? "Curva da base inteira, e não só deste setor. Cada ponto é o percentual sobre as avaliações do mês, só nos meses com 200 avaliações ou mais."
+    : "Cada ponto é o percentual sobre as avaliações do mês, só nos meses com 200 avaliações ou mais.";
+  return base;
 }
 
 function sectorSummary(container, data, period, onOpenSector) {
@@ -231,6 +251,7 @@ export function renderDashboard({ data, sectorId, period, selectedTheme, onTheme
     `Clientes da Olist · ${formatNumber(summary.total)} avaliações com comentário · ${summary.label === "Todo o período" ? "pedidos de 2016 a 2018" : `avaliações de ${summary.label}`}`;
   $("preview-note").hidden = !isPreview(data);
   periodTabs($("period-tabs"), data, period, onPeriod);
+  $("dash-headline").textContent = sectorHeadline(data, period, sectorId);
   $("kpis").replaceChildren(...sectorKpis(data, period, sectorId).map(kpiTile));
 
   const groups = themeGroups(data, period, sectorId);
@@ -251,7 +272,7 @@ export function renderDashboard({ data, sectorId, period, selectedTheme, onTheme
   side.replaceChildren();
   if (director) {
     $("side-title").textContent = "Principais elogios";
-    $("side-sub").textContent = "Avaliações que citam cada tema";
+    $("side-sub").textContent = "Quantas avaliações citam cada elogio. Clique num tema para ver comentários e perguntar ao chat.";
     const list = element("div", "theme-list");
     themeList(list, groups.praises, { ...listOptions, showSector: false });
     side.appendChild(list);
@@ -274,8 +295,9 @@ export function renderDashboard({ data, sectorId, period, selectedTheme, onTheme
   }
 
   const series = monthlySeries(data, period, sectorId);
-  $("chart-title").textContent = series.title;
+  $("chart-title").textContent = series.baseWide ? `${series.title}, na base inteira` : series.title;
   $("chart-sub").textContent = chartSubtitle(series);
+  $("chart-takeaway").textContent = chartTakeaway(series);
   lineChart($("chart"), series);
 
   const summaryBox = $("sector-summary");
