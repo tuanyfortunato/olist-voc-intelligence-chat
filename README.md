@@ -162,7 +162,7 @@ O filtro é aplicado dentro do banco, antes do score mínimo e do MMR. Para prov
 | O que os clientes mais elogiam em cama, mesa e banho? | Categoria | 15 de 15 | 8 de 15 |
 | Quais temas aparecem nas entregas atrasadas? | Entrega atrasada | 15 de 15 | 12 de 15 |
 
-A nota também pode vir da própria pergunta. "Notas baixas" e "notas altas" não aparecem no texto dos comentários, então buscar por essas palavras não adianta. A análise da pergunta identifica as notas mencionadas e o sistema as aplica como filtro, a menos que o gestor tenha marcado outra coisa na página, que sempre vale mais.
+A nota também pode vir da própria pergunta. "Notas baixas" e "notas altas" não aparecem no texto dos comentários, então buscar por essas palavras não adianta. A análise da pergunta identifica as notas mencionadas e o sistema as aplica como filtro, a menos que o gestor tenha marcado outra coisa na página, que sempre vale mais. Para não depender só do modelo, o código só aceita essas notas quando a pergunta fala de nota, estrelas, clientes satisfeitos ou insatisfeitos, ou avaliações positivas ou negativas.
 
 ## Painel por setor
 

@@ -1,3 +1,5 @@
+import pytest
+
 from src.rag.question_analysis import QuestionAnalysis, analyze_question, validate_analysis
 from src.rag.schemas import ConversationTurn
 
@@ -125,3 +127,41 @@ def test_analysis_prompt_covers_generic_words_and_satisfaction():
         "deixe esse assunto fora do tema",
     ]:
         assert rule in ANALYSIS_PROMPT, rule
+
+
+@pytest.mark.parametrize(
+    "topic, expected",
+    [
+        ("padrões nas avaliações de clientes insatisfeitos", "clientes insatisfeitos"),
+        (
+            "problemas recorrentes relacionados ao prazo de entrega",
+            "problemas relacionados ao prazo de entrega",
+        ),
+        ("padrões recorrentes na qualidade dos produtos", "qualidade dos produtos"),
+        ("elogios dos clientes em categorias de produtos", "elogios dos clientes"),
+        ("reclamações sobre entrega", "reclamações sobre entrega"),
+        ("padrões", "padrões"),
+    ],
+)
+def test_clean_search_topic(topic, expected):
+    from src.rag.question_analysis import clean_search_topic
+
+    assert clean_search_topic(topic) == expected
+
+
+@pytest.mark.parametrize(
+    "question, kept",
+    [
+        ("Quais os principais problemas nas avaliações com nota baixa?", True),
+        ("E nas notas altas?", True),
+        ("Quais problemas são relatados por clientes insatisfeitos?", True),
+        ("Já que 90% dos clientes reclamam de atraso, o que mais eles criticam?", False),
+    ],
+)
+def test_ratings_only_when_question_mentions_them(question, kept):
+    from src.rag.question_analysis import tidy_analysis
+
+    analysis = QuestionAnalysis(
+        kind="in_scope", search_topic="tema", clean_question=question, ratings=[1, 2]
+    )
+    assert tidy_analysis(question, analysis).ratings == ([1, 2] if kept else [])

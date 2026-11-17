@@ -139,6 +139,10 @@ Rodei no chat publicado os cinco exemplos de exploração e as três perguntas d
 
 Uma segunda rodada, com as dez perguntas de negócio do enunciado e os casos sem evidência, mostrou mais dois problemas no tema da busca. Na pergunta da premissa dos 90%, o tema mantinha "além do atraso na entrega", e a busca trazia só comentários sobre atraso, justamente o que a pergunta excluía; o assunto excluído agora fica fora do tema e continua na pergunta limpa. E "Existem padrões recorrentes nas avaliações relacionadas à qualidade dos produtos?" teve uma resposta de uma linha, só com elogios; "recorrentes", "frequentes" e "principais" entraram na lista de palavras de análise que saem do tema.
 
+Depois da publicação, as mesmas perguntas mostraram que o Nova Micro nem sempre obedece a essas instruções da análise. "Padrões" e "recorrentes" continuaram aparecendo no tema da busca, e as notas 1 e 2 foram aplicadas em perguntas que não falavam de nota, como a da premissa dos 90%. As duas regras passaram a valer também em código, depois da resposta do modelo (`tidy_analysis`, em `src/rag/question_analysis.py`): as palavras de análise saem do tema, e as notas só viram filtro quando a pergunta fala de nota, estrelas, satisfação ou avaliações positivas ou negativas.
+
+Também comparei o Nova Lite com o Nova Micro na geração da resposta, com as mesmas nove perguntas e o RAGAS. O Nova Micro ficou com faithfulness 0,97, relevancy 0,52 e precision 0,79. O Nova Lite ficou com 0,89, 0,48 e 0,61, e ainda escreveu "os principais" e "com mais frequência", que o prompt proíbe. O Nova Lite só foi melhor na pergunta da embalagem de presente. A geração continua com o Nova Micro.
+
 As cinco que ainda não estavam nas perguntas de teste com o mesmo texto entraram em `evaluation/questions.yaml` como perguntas 16 a 20.
 
 ## Horário de funcionamento
