@@ -178,9 +178,9 @@ test("recorte do chat: tema clicado, temas do setor ou a base inteira", () => {
 test("frase do recorte junto da resposta", () => {
   assert.equal(
     scopeLine(3300, 'do tema "Produto não recebido"', 15),
-    'Busca feita em 3.300 avaliações do tema "Produto não recebido". A resposta usa as 15 mais parecidas com a pergunta.',
+    '3.300 avaliações do tema "Produto não recebido" · 15 usadas na resposta',
   );
-  assert.equal(scopeLine(1, "da base inteira", 0), "Busca feita em 1 avaliação da base inteira.");
+  assert.equal(scopeLine(1, "da base inteira", 0), "1 avaliação da base inteira");
   assert.equal(scopeLine(null, "x", 3), null);
 });
 

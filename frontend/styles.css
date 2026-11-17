@@ -356,16 +356,6 @@ textarea {
   outline: none;
 }
 
-.fixed-note {
-  margin: 0;
-  padding: 12px 14px;
-  color: var(--muted);
-  font-size: 0.88rem;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-}
-
 /* Conversa */
 
 .conversation {
@@ -2415,12 +2405,6 @@ textarea:disabled {
   font-size: 1.02rem;
 }
 
-.chat-sub {
-  margin: 0;
-  font-size: 0.8rem;
-  color: var(--muted);
-}
-
 .chat-head-actions {
   display: flex;
   gap: 6px;
@@ -2718,5 +2702,196 @@ body[data-view="painel"] .top-actions .icon-button {
 @media (max-width: 640px) {
   .demo-strip {
     position: static;
+  }
+}
+
+/* Chat do painel, versão enxuta ----------------------------------------- */
+
+/* Topo numa linha só: título, recorte e, à direita, status e nova conversa */
+.chat-panel .chat-head {
+  padding: 10px 16px;
+}
+
+.chat-head-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  min-width: 0;
+}
+
+.chat-panel .chat-head-row {
+  align-items: center;
+}
+
+.chat-panel .scope-chips {
+  margin-top: 0;
+}
+
+.chat-panel .api-status {
+  padding: 6px;
+}
+
+.chat-panel #api-status-text {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Tela inicial curta: uma frase e três perguntas */
+.chat-panel .welcome-lead {
+  margin: 0 0 12px;
+  font-size: 0.95rem;
+}
+
+.chat-panel .area-panel-title {
+  font-size: 0.75rem;
+}
+
+.chat-panel .suggestion {
+  padding: 7px 12px;
+  font-size: 0.88rem;
+}
+
+.chat-panel .suggestions {
+  margin-top: 4px;
+}
+
+/* A resposta sem caixa em volta: o texto ocupa a largura da coluna */
+.chat-panel .message-bot {
+  padding: 2px 0 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.chat-panel .scope-line {
+  margin: 0 0 8px;
+  padding: 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+  background: none;
+}
+
+.chat-panel .answer > .claim,
+.chat-panel .answer .claims > .claim {
+  margin-bottom: 10px;
+}
+
+/* Um trecho por frase, discreto, com o restante atrás do "+N" */
+.chat-panel .answer .quotes {
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.chat-panel .answer .quote {
+  gap: 0 10px;
+  padding: 2px 0 2px 10px;
+  font-size: 0.84rem;
+  color: var(--muted);
+  background: none;
+  border-left: 2px solid var(--border);
+  border-radius: 0;
+}
+
+.chat-panel .quote-text {
+  font-style: normal;
+}
+
+.chat-panel .quote-meta {
+  font-size: 0.75rem;
+}
+
+.chat-panel .more-quotes {
+  margin-top: 0;
+  font-size: 0.78rem;
+}
+
+.chat-panel .evidence-line {
+  margin-top: 8px;
+  font-size: 0.78rem;
+}
+
+.chat-panel .copy-button {
+  margin-top: 8px;
+}
+
+/* Composer: filtros atrás do botão e contador só perto do limite */
+.chat-panel .ask-form:not([data-filters-open="true"]) .filter-bar {
+  display: none;
+}
+
+.chat-panel .filter-bar:not([data-active="true"]) .filter-scope {
+  display: none;
+}
+
+.chat-panel .filters-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  font-size: 0.85rem;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
+.chat-panel .filters-toggle[data-active="true"] {
+  color: var(--accent);
+  font-weight: 600;
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.chat-panel .filters-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  font-size: 0.75rem;
+  color: var(--on-accent);
+  background: var(--accent);
+  border-radius: 999px;
+}
+
+.chat-panel .filters-count[hidden] {
+  display: none;
+}
+
+.chat-panel .ask-footer {
+  justify-content: space-between;
+}
+
+.chat-panel .counter {
+  margin-left: auto;
+}
+
+.chat-panel .counter[data-state="ok"] {
+  display: none;
+}
+
+/* No celular, o "Painel" entra na mesma linha do título */
+@media (max-width: 960px) {
+  .chat-panel .chat-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .chat-panel .close-chat {
+    flex: none;
+    margin-bottom: 0;
+  }
+
+  .chat-panel .chat-head-row {
+    flex: 1;
+    min-width: 0;
   }
 }
