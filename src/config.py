@@ -21,7 +21,7 @@ class Settings:
     embedding_batch_size: int = 96
     llm_model_id: str = "amazon.nova-micro-v1:0"
     # Modelo que escreve a resposta; a análise da pergunta usa llm_model_id
-    answer_model_id: str = "amazon.nova-micro-v1:0"
+    answer_model_id: str = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
 
     # Embeddings gerados pela indexação
     index_dir: str = "data/index"
