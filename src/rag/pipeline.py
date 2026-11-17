@@ -17,6 +17,7 @@ from src.rag.context_builder import (
     extract_citations,
     remove_citations_from_negative_claims,
     remove_invalid_citations,
+    soften_unsupported_quantities,
 )
 from src.rag.generator import generate_answer
 from src.rag.prompts import (
@@ -147,6 +148,7 @@ class RagPipeline:
         if check.invalid:
             logger.warning("etapa=citacoes invalidas=%s", check.invalid)
             answer = remove_invalid_citations(answer, check.invalid)
+        answer = soften_unsupported_quantities(answer, reviews)
         by_number = {review.number: review for review in reviews}
         cited = [by_number[n] for n in check.cited]
         uncited = [review for review in reviews if review.number not in check.cited]

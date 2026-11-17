@@ -3,6 +3,7 @@ from src.rag.context_builder import (
     extract_citations,
     remove_citations_from_negative_claims,
     remove_invalid_citations,
+    soften_unsupported_quantities,
 )
 from src.rag.schemas import RetrievedReview
 
@@ -71,3 +72,65 @@ def test_negative_claim_only_touches_its_own_sentence():
 def test_answer_without_negative_claim_is_unchanged():
     answer = "- Atrasos [1][2].\n- Nenhum vendedor respondeu, segundo um cliente [3]."
     assert remove_citations_from_negative_claims(answer) == answer
+
+
+def numbered(*texts):
+    return [
+        RetrievedReview(f"r{i}", 1, "bebes", "no_prazo", "2018-03-10", text, 0.7, number=i)
+        for i, text in enumerate(texts, start=1)
+    ]
+
+
+def test_soften_many_customers_with_two_citations():
+    reviews = numbered("Veio quebrado", "Chegou com defeito")
+    answer = "Vários clientes relatam produtos com defeito [1][2]."
+    assert soften_unsupported_quantities(answer, reviews) == (
+        "Alguns clientes relatam produtos com defeito [1][2]."
+    )
+
+
+def test_soften_keeps_gender():
+    reviews = numbered("Demorou", "Atrasou")
+    answer = "Há muitas reclamações de atraso [1, 2]."
+    assert soften_unsupported_quantities(answer, reviews) == (
+        "Há algumas reclamações de atraso [1, 2]."
+    )
+
+
+def test_soften_keeps_many_with_three_citations():
+    reviews = numbered("Veio quebrado", "Defeito", "Não funciona")
+    answer = "Vários clientes relatam problemas recorrentes com defeito [1][2][3]."
+    assert soften_unsupported_quantities(answer, reviews) == answer
+
+
+def test_soften_removes_recurrence_without_cue():
+    reviews = numbered("Primeira vez que compro e veio errado")
+    answer = "Um cliente relata problemas recorrentes com o pedido [1]."
+    assert soften_unsupported_quantities(answer, reviews) == (
+        "Um cliente relata problemas com o pedido [1]."
+    )
+
+
+def test_soften_keeps_recurrence_when_review_says_so():
+    reviews = numbered("Mais uma vez o pedido veio errado", "Veio errado")
+    answer = "Vários clientes relatam erros recorrentes no pedido [1][2]."
+    assert soften_unsupported_quantities(answer, reviews) == (
+        "Alguns clientes relatam erros recorrentes no pedido [1][2]."
+    )
+
+
+def test_soften_only_touches_sentence_with_few_citations():
+    reviews = numbered("Atrasou", "Demorou", "Não chegou", "Veio errado")
+    answer = (
+        "Muitos clientes reclamam de atraso [1][2][3]. "
+        "Vários clientes citam o pedido errado com frequência [4]."
+    )
+    assert soften_unsupported_quantities(answer, reviews) == (
+        "Muitos clientes reclamam de atraso [1][2][3]. Alguns clientes citam o pedido errado [4]."
+    )
+
+
+def test_soften_ignores_sentences_without_citation_and_other_nouns():
+    reviews = numbered("Atrasou")
+    answer = "Vários clientes reclamam. O pedido atrasou muitos dias [1]."
+    assert soften_unsupported_quantities(answer, reviews) == answer
