@@ -204,3 +204,52 @@ test("o dashboard.json publicado tem os setores e os temas da classificação", 
     assert.notEqual(themeQuestion(theme), generic, theme.id);
   }
 });
+
+import {
+  chartTakeaway,
+  oneIn,
+  scopeSuggestionPool,
+  sectorHeadline,
+  themeSuggestions,
+} from "../../frontend/painel.js";
+import { SUGGESTION_AREAS } from "../../frontend/logic.js";
+
+test("oneIn diz a proporção do jeito que se fala", () => {
+  assert.equal(oneIn(25, 100), "1 em cada 4");
+  assert.equal(oneIn(149, 1000), "1 em cada 7");
+  assert.equal(oneIn(60, 100), null);
+  assert.equal(oneIn(39.6, 100), null);
+  assert.equal(oneIn(0, 100), null);
+});
+
+test("monthlySeries traz a média e avisa quando a curva é da base inteira", () => {
+  const product = monthlySeries(DATA, "todos", "produto");
+  assert.equal(product.baseWide, true);
+  assert.equal(typeof product.average, "number");
+  assert.equal(monthlySeries(DATA, "todos", "logistica").baseWide, false);
+  assert.equal(monthlySeries(DATA, "todos", DIRECTOR).baseWide, false);
+});
+
+test("chartTakeaway cita o mês mais crítico e a média", () => {
+  const text = chartTakeaway(monthlySeries(DATA, "todos", "logistica"));
+  assert.match(text, /^Mês mais crítico: /);
+  assert.match(text, /A média do período é /);
+});
+
+test("sectorHeadline resume cada painel numa frase", () => {
+  for (const id of [DIRECTOR, "logistica", "produto", "fortes"]) {
+    const text = sectorHeadline(DATA, "todos", id);
+    assert.ok(text.length > 20, id);
+    assert.ok(!text.includes("undefined") && !text.includes("NaN"), text);
+  }
+});
+
+test("com um tema escolhido, as sugestões falam só do tema", () => {
+  const theme = DATA.themes.find((item) => item.polarity === "reclamacao");
+  const pool = scopeSuggestionPool(DATA, SUGGESTION_AREAS, DIRECTOR, theme.id);
+  assert.deepEqual(pool, themeSuggestions(theme));
+  assert.equal(pool.length, 3);
+  assert.equal(scopeSuggestionPool(DATA, SUGGESTION_AREAS, DIRECTOR, null), null);
+  const sectorPool = scopeSuggestionPool(DATA, SUGGESTION_AREAS, "logistica", null);
+  assert.ok(sectorPool.length >= 3);
+});
