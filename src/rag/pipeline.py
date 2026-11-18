@@ -99,7 +99,7 @@ class RagPipeline:
     ) -> AskResult:
         timings = {}
         start = time.monotonic()
-        result = analyze_question(question, history or [], self.analysis_llm)
+        result = analyze_question(question, history or [], self.analysis_llm, filters)
         analysis = result.analysis
         timings["analise_ms"] = (time.monotonic() - start) * 1000
 
