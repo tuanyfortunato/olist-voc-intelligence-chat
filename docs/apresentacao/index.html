@@ -114,7 +114,7 @@ th, td { padding: 0.45em 0.6em; border-bottom: 1px solid #CFC8BA; vertical-align
 </div>
 <div class="topo">
 <h1>Voz do Cliente</h1>
-<p class="sub">Um RAG sobre as avaliações da Olist que responde com base no que os clientes escreveram, e diz quando não sabe.</p>
+<p class="sub">Um RAG sobre as avaliações da Olist. Ele responde com base no que os clientes escreveram e avisa quando não sabe.</p>
 </div>
 <div class="topo">
 <p style="font-size:30px;">Tuany Fortunato</p>
@@ -134,13 +134,13 @@ th, td { padding: 0.45em 0.6em; border-bottom: 1px solid #CFC8BA; vertical-align
 </div>
 <div class="cartao entra" style="--i:1">
 <p class="grande">40.977</p>
-<p class="txt">com comentário escrito. Ninguém lê tudo isso para decidir.</p>
+<p class="txt">têm comentário escrito. Ninguém consegue ler tudo isso.</p>
 </div>
 </div>
 <div class="linha">
 <div class="col">
 <h3>O que o gestor quer saber</h3>
-<p class="nota" style="font-size:28px;">O que mais incomoda, o que mais agrada, e se o problema é do vendedor ou da entrega.</p>
+<p class="nota" style="font-size:28px;">O que mais incomoda, o que mais agrada e se o problema é do vendedor ou da entrega.</p>
 </div>
 <div class="col">
 <h3>Por que um LLM sozinho não resolve</h3>
@@ -167,22 +167,23 @@ th, td { padding: 0.45em 0.6em; border-bottom: 1px solid #CFC8BA; vertical-align
 <section id="base">
 <div class="topo">
 <p class="rotulo">BASE DE CONHECIMENTO</p>
-<h2>Um documento por avaliação</h2>
+<h2>Cada avaliação vira um documento</h2>
 </div>
 <div class="funil">
 <div class="etapa entra" style="--i:0"><p class="valor">99.224</p><p class="txt">avaliações</p></div>
 <div class="etapa entra" style="--i:1"><p class="valor">40.977</p><p class="txt">com comentário</p></div>
-<div class="etapa entra" style="--i:2"><p class="valor">40.521</p><p class="txt">documentos (sem os comentários vazios)</p></div>
+<div class="etapa entra" style="--i:2"><p class="valor">40.521</p><p class="txt">documentos, sem os comentários vazios</p></div>
 </div>
 <table class="tabela" style="font-size:26px;">
 <tr><th style="width:20%">Etapa</th><th style="width:38%">O que fiz</th><th>Por quê</th></tr>
-<tr><td>Seleção</td><td>Avaliações + pedidos e produtos</td><td>Trazem categoria e entrega</td></tr>
-<tr><td>Limpeza</td><td>Mínima, mantém todas as palavras</td><td>Tirar um “não” inverte a reclamação</td></tr>
-<tr><td>Valores ausentes</td><td>Nenhum campo vazio</td><td>Campo vazio quebra o filtro</td></tr>
-<tr><td>Documentos</td><td>Título + comentário, inteiro</td><td>Os comentários são curtos</td></tr>
-<tr><td>Embeddings</td><td>Cohere Multilingual</td><td>25 min, contra 11 h do Titan</td></tr>
-<tr><td>Indexação</td><td>pgvector no PostgreSQL</td><td>Busca os comentários mais parecidos</td></tr>
+<tr><td>Seleção</td><td>Juntei avaliações, pedidos e produtos</td><td>Assim cada avaliação ganha categoria e entrega</td></tr>
+<tr><td>Limpeza</td><td>Limpeza mínima, sem tirar palavras</td><td>Tirar um “não” inverteria a reclamação</td></tr>
+<tr><td>Valores ausentes</td><td>Nenhum campo fica vazio</td><td>Um campo vazio quebraria os filtros</td></tr>
+<tr><td>Documentos</td><td>Título e comentário, juntos e inteiros</td><td>Os comentários são curtos, não precisa dividir</td></tr>
+<tr><td>Embeddings</td><td>Cohere, que entende português</td><td>Indexa em 25 minutos. O Titan levaria 11 horas</td></tr>
+<tr><td>Indexação</td><td>Vetores no PostgreSQL, com pgvector</td><td>Acha os comentários mais parecidos com a pergunta</td></tr>
 </table>
+<p class="nota" style="font-size:24px;"><b>Embedding</b> é uma lista de 1.024 números que representa o sentido do texto. Comentários com sentido parecido ganham números parecidos. É isso que permite buscar por sentido, e não só por palavra igual.</p>
 </section>
 
 <section id="pipeline" class="alt">
@@ -194,52 +195,62 @@ th, td { padding: 0.45em 0.6em; border-bottom: 1px solid #CFC8BA; vertical-align
 <div class="passo entra" style="--i:0">
 <p class="num">1</p>
 <h3>Entender a pergunta</h3>
-<p class="txt">Nova Micro limpa a pergunta e acha as notas pedidas</p>
+<p class="txt">O Nova Micro limpa a pergunta e identifica as notas pedidas.</p>
+<p class="nota" style="font-size:22px; margin-top:20px; padding-top:16px; border-top:2px dashed #CFC8BA;"><b>No exemplo:</b> o assunto vira “problemas na entrega”, e “insatisfeitos” vira filtro de notas 1 e 2.</p>
 </div>
 <div class="passo entra" style="--i:1">
 <p class="num">2</p>
 <h3>Buscar</h3>
-<p class="txt">Cohere + pgvector trazem os 40 comentários mais parecidos</p>
+<p class="txt">O Cohere transforma a pergunta em vetor, e o banco traz os 40 comentários mais parecidos.</p>
+<p class="nota" style="font-size:22px; margin-top:20px; padding-top:16px; border-top:2px dashed #CFC8BA;"><b>No exemplo:</b> 40 comentários sobre entrega, todos com nota 1 ou 2.</p>
 </div>
 <div class="passo entra" style="--i:2">
 <p class="num">3</p>
 <h3>Selecionar</h3>
-<p class="txt">Corta os fracos (score &lt; 0,58) e escolhe 15 variados (MMR)</p>
+<p class="txt">Descarto os comentários pouco parecidos e escolho 15 variados.</p>
+<p class="nota" style="font-size:22px; margin-top:20px; padding-top:16px; border-top:2px dashed #CFC8BA;"><b>No exemplo:</b> 15 comentários, sem repetir a mesma queixa.</p>
 </div>
 <div class="passo entra" style="--i:3">
 <p class="num">4</p>
 <h3>Montar o contexto</h3>
-<p class="txt">Os 15 comentários numerados, com nota e categoria</p>
+<p class="txt">Os 15 comentários vão numerados, com a nota e a categoria.</p>
+<p class="nota" style="font-size:22px; margin-top:20px; padding-top:16px; border-top:2px dashed #CFC8BA;"><b>No exemplo:</b> o modelo recebe a pergunta e os comentários de [1] a [15].</p>
 </div>
 <div class="passo entra" style="--i:4">
 <p class="num">5</p>
 <h3>Responder</h3>
-<p class="txt">Haiku 4.5 escreve citando; o código confere as citações</p>
+<p class="txt">O Haiku 4.5 escreve citando os comentários, e o código confere cada citação.</p>
+<p class="nota" style="font-size:22px; margin-top:20px; padding-top:16px; border-top:2px dashed #CFC8BA;"><b>No exemplo:</b> cada frase da resposta traz o trecho e o link da avaliação.</p>
 </div>
 </div>
-<p class="nota">Mesmo fluxo do enunciado, com duas etapas a mais: o corte e o MMR.</p>
+<p class="pergunta" style="font-size:26px;">Pergunta do exemplo: “O que os clientes insatisfeitos falam da entrega?”</p>
+<p class="nota">É o fluxo do enunciado, com duas etapas a mais: o corte dos comentários pouco parecidos e a escolha de comentários variados.</p>
 </section>
 
 <section id="busca">
 <div class="topo">
 <p class="rotulo">ETAPAS 1 A 3 · ANTES DE CHAMAR O MODELO DA RESPOSTA</p>
-<h2>Buscar pelo tema, cortar, diversificar</h2>
+<h2>Buscar pelo assunto, cortar o que é fraco, variar</h2>
 </div>
 <div class="linha">
 <div class="cartao entra" style="--i:0">
 <h3>Busca pelo assunto</h3>
-<p class="txt">“Clientes insatisfeitos” vira filtro de notas 1 e 2. Trouxe comentários mais específicos em 8 de 9 perguntas.</p>
+<p class="txt">A busca usa só o assunto da pergunta, e “clientes insatisfeitos” vira um filtro de notas 1 e 2. Isso trouxe comentários mais certeiros em 8 de 9 perguntas.</p>
 </div>
 <div class="cartao entra" style="--i:1">
 <h3>Busca por sentido</h3>
-<p class="txt">“Não chegou” e “até hoje espero” ficam próximos. Os filtros rodam no banco.</p>
+<p class="txt">“Não chegou” e “até hoje espero” são encontrados juntos, mesmo sem nenhuma palavra em comum.</p>
 </div>
 <div class="cartao entra" style="--i:2">
 <h3>Corte e variedade</h3>
-<p class="txt">Pix, sem resposta na base, ficou em 0,57. As perguntas com resposta ficaram acima de 0,62. O MMR evita 15 cópias de “produto com defeito”.</p>
+<p class="txt">Comentários com semelhança abaixo de 0,58 saem. Depois, o MMR escolhe comentários variados, para não trazer 15 vezes a mesma reclamação.</p>
 </div>
 </div>
-<p class="destaque entra" style="--i:3">Nada passou do corte? A resposta é “sem evidência”, sem chamar o modelo.</p>
+<p class="destaque entra" style="--i:3">Se nenhum comentário passa do corte, o chat avisa que não tem evidência, sem chamar o modelo.</p>
+<div class="linha">
+<p class="nota" style="font-size:24px; flex:1;"><b>Semelhança</b> é um número de 0 a 1 que diz o quanto o comentário se parece com a pergunta. Na calibração, a pergunta sobre Pix, que a base não responde, ficou em 0,57. As perguntas com resposta ficaram acima de 0,62. Por isso o corte fica em 0,58.</p>
+<p class="nota" style="font-size:24px; flex:1;"><b>MMR</b> escolhe os comentários um a um. A cada escolha, prefere o que é parecido com a pergunta, mas diferente dos que já foram escolhidos.</p>
+</div>
 </section>
 
 <section id="resposta" class="alt">
@@ -250,19 +261,21 @@ th, td { padding: 0.45em 0.6em; border-bottom: 1px solid #CFC8BA; vertical-align
 <div class="linha" style="align-items:flex-start;">
 <div class="col" style="gap:16px;">
 <p class="pergunta" style="background:#172033; font-family:'Courier New', monospace; font-size:24px;">[1] (avaliação &lt;id&gt;, nota 1, categoria cama_mesa_banho) texto original do cliente</p>
+<p class="nota" style="font-size:22px;">É assim que cada comentário chega ao modelo. O número [1] é o que a resposta cita.</p>
 <h3 style="font-size:34px;">Contexto</h3>
 <ul class="lista" style="font-size:26px;">
-<li>Só a pergunta e os 15 comentários</li>
-<li>Cada comentário tem número, e a frase aponta para ele</li>
+<li>O modelo recebe só a pergunta e os 15 comentários.</li>
+<li>Cada comentário tem um número, e cada frase da resposta aponta para ele.</li>
 </ul>
 <h3 style="font-size:34px;">Geração</h3>
 <ul class="lista" style="font-size:26px;">
-<li>Haiku 4.5 cita cada afirmação</li>
-<li>Não chama de “recorrente” sem prova</li>
+<li>O Haiku 4.5 cita um comentário em cada afirmação.</li>
+<li>Ele só chama um problema de recorrente se o comentário disser isso.</li>
 </ul>
 <h3 style="font-size:34px;">Checagem no código</h3>
 <ul class="lista" style="font-size:26px;">
-<li>Apaga citação inventada e suaviza exageros</li>
+<li>O código apaga citações que não existem e suaviza exageros.</li>
+<li>Ele também classifica a resposta: respondida, evidência fraca ou sem evidência. A página mostra um aviso para cada caso.</li>
 </ul>
 </div>
 <img src="img/chat-evidencias.png" alt="Resposta do chat sobre problemas de entrega, com o trecho do comentário e o link da avaliação embaixo de cada frase" style="width:332px; height:640px; object-fit:contain; border-radius:12px; border:2px solid #CFC8BA;">
@@ -276,16 +289,17 @@ th, td { padding: 0.45em 0.6em; border-bottom: 1px solid #CFC8BA; vertical-align
 </div>
 <table class="tabela" style="font-size:26px;">
 <tr><th style="width:26%">Metadado</th><th style="width:16%">Usa?</th><th>Como entra</th></tr>
-<tr><td>Nota</td><td>Sim</td><td>Filtro de 1 a 5, ou vindo da pergunta: “clientes insatisfeitos” vira notas 1 e 2</td></tr>
-<tr><td>Categoria</td><td>Sim</td><td>Filtro com as 73 categorias</td></tr>
-<tr><td>Entrega</td><td>Sim</td><td>No prazo, atrasada, não entregue ou “com problema”</td></tr>
-<tr><td>Pedido</td><td>Em parte</td><td>As datas viram a situação da entrega e os itens viram a categoria</td></tr>
-<tr><td>Período</td><td>No painel</td><td>Evolução mês a mês no painel. O chat busca de 2016 a 2018</td></tr>
+<tr><td>Nota</td><td>Sim</td><td>Filtro de 1 a 5. “Clientes insatisfeitos” vira notas 1 e 2</td></tr>
+<tr><td>Categoria</td><td>Sim</td><td>Filtro com as 73 categorias de produto</td></tr>
+<tr><td>Entrega</td><td>Sim</td><td>No prazo, atrasada, não entregue ou com problema</td></tr>
+<tr><td>Pedido</td><td>Em parte</td><td>Dele saem a situação da entrega e a categoria</td></tr>
+<tr><td>Período</td><td>Só no painel</td><td>O painel mostra mês a mês. O chat busca em todo o período</td></tr>
 </table>
+<p class="nota" style="font-size:24px;"><b>Por que ajuda:</b> “nota baixa” e “cama, mesa e banho” não aparecem no texto do comentário. Sem filtro, a busca acha comentários parecidos, mas de outras notas e categorias.</p>
 <div class="linha">
 <div class="cartao entra" style="--i:0; flex-direction:row; align-items:center; gap:32px;">
 <p class="grande" style="font-size:80px; white-space:nowrap;">15/15</p>
-<p class="txt">Com filtro, 15 de 15 comentários no recorte pedido. Sem filtro, 9, 8 e 12 de 15.</p>
+<p class="txt">Nas três perguntas de metadados do enunciado, com filtro os 15 comentários estão no recorte pedido. Sem filtro, só 9, 8 e 12 de 15.</p>
 </div>
 </div>
 </section>
@@ -295,9 +309,10 @@ th, td { padding: 0.45em 0.6em; border-bottom: 1px solid #CFC8BA; vertical-align
 <p class="rotulo">ARQUITETURA</p>
 <h2>Tudo na AWS, em um só endereço</h2>
 <ul class="lista" style="font-size:26px;">
-<li>Página e API no mesmo endereço, pelo CloudFront</li>
-<li>API no ECS, modelos no Bedrock, vetores no RDS</li>
-<li>Custo controlado: ligado das 9h às 22h, com limite de perguntas</li>
+<li>O gestor abre o site. O CloudFront entrega a página, guardada no S3, e manda as perguntas para a API.</li>
+<li>A API roda no ECS e faz o pipeline: chama os modelos no Bedrock e busca os vetores no RDS.</li>
+<li>A base é carregada pelo GitHub Actions: baixa do Kaggle, gera os embeddings e grava no banco.</li>
+<li>Para controlar o custo, a API e o banco ficam ligados das 9h às 22h, com limite de perguntas.</li>
 </ul>
 </div>
 <img src="../arquitetura.png" alt="Diagrama da arquitetura na AWS: gestor, CloudFront, S3, ALB, ECS Fargate, RDS com pgvector, Bedrock e a indexação pelo GitHub Actions" style="width:960px; height:936px; object-fit:contain; background:#FBFAF6; border-radius:16px;">
@@ -308,10 +323,10 @@ th, td { padding: 0.45em 0.6em; border-bottom: 1px solid #CFC8BA; vertical-align
 <p class="rotulo">CI/CD</p>
 <h2>Infra em código, sem chave no repositório</h2>
 <ul class="lista" style="font-size:26px;">
-<li>feature/* → develop → main, sempre por PR.</li>
-<li>CI com Ruff, pytest e testes da página, sem acesso à AWS.</li>
-<li>Merge na main: Terraform apply e Deploy.</li>
-<li>Acesso à AWS sem chave guardada (OIDC).</li>
+<li>Todo código passa por pull request: feature, develop e main.</li>
+<li>O CI roda os testes a cada mudança, sem acessar a AWS.</li>
+<li>Terraform: a infraestrutura é escrita em arquivos, não criada à mão. O merge na main aplica e publica o site.</li>
+<li>OIDC: a cada execução, o GitHub pede uma permissão temporária à AWS. Não há senha guardada.</li>
 </ul>
 </div>
 <img src="../cicd.png" alt="Diagrama de CI/CD: branches e pull requests no GitHub, CI, Terraform apply, Deploy e os sete workflows manuais na AWS" style="width:1128px; height:882px; object-fit:contain; background:#FBFAF6; border-radius:16px;">
@@ -327,15 +342,16 @@ th, td { padding: 0.45em 0.6em; border-bottom: 1px solid #CFC8BA; vertical-align
 <tr style="background:#D6EAE7"><td>Claude Haiku 4.5 (publicado)</td><td style="text-align:right">0,975</td><td style="text-align:right">0,560</td><td style="text-align:right">0,736</td><td style="text-align:right">10 de 11</td></tr>
 <tr><td>Nova Micro</td><td style="text-align:right">0,992</td><td style="text-align:right">0,552</td><td style="text-align:right">0,675</td><td style="text-align:right">10 de 11</td></tr>
 </table>
-<p class="nota">RAGAS em 17/11, mesmas 11 perguntas, juiz Nova Pro (modelo diferente dos que respondem).</p>
+<p class="nota">Avaliação com RAGAS: as mesmas 11 perguntas, julgadas pelo Nova Pro, um modelo diferente dos que respondem.</p>
+<p class="nota" style="font-size:22px;"><b>Faithfulness:</b> cada afirmação está nos comentários? · <b>Relevancy:</b> a resposta trata da pergunta feita? · <b>Precision:</b> os comentários úteis vêm primeiro na busca? · <b>Situação certa:</b> respondeu, recusou ou avisou quando devia?</p>
 <div class="linha">
 <div class="cartao entra" style="--i:0">
 <h3>O caso</h3>
-<p class="txt">O Nova afirmou que o atraso era recorrente e ganhou nota. O Haiku recusou, porque nenhum comentário dizia isso, e ficou com 0.</p>
+<p class="txt">Na pergunta sobre atrasos recorrentes, o Nova disse que eram recorrentes e ganhou nota. O Haiku recusou, porque nenhum comentário dizia isso, e ficou com zero.</p>
 </div>
 <div class="cartao entra" style="--i:1">
 <h3>A lição</h3>
-<p class="txt">A métrica premia quem responde do jeito pedido. Escolhi o modelo lendo as respostas.</p>
+<p class="txt">A métrica premia quem responde do jeito que a pergunta pede. Por isso escolhi o modelo lendo as respostas.</p>
 </div>
 </div>
 </section>
@@ -349,23 +365,23 @@ th, td { padding: 0.45em 0.6em; border-bottom: 1px solid #CFC8BA; vertical-align
 <div class="col">
 <h3>Desafios</h3>
 <ul class="lista" style="font-size:26px;">
-<li><b>Pix:</b> o score mínimo sozinho não segurou. A segunda proteção foi a regra no prompt.</li>
-<li><b>“Recorrente”:</b> resposta citou “foi a primeira vez” como recorrente. Virou regra no prompt e checagem no código.</li>
+<li><b>Pix:</b> o corte por semelhança não bastou. Uma regra no prompt completou a proteção.</li>
+<li><b>“Recorrente”:</b> uma resposta chamou de recorrente um comentário que dizia “foi a primeira vez”. Virou regra no prompt e checagem no código.</li>
 <li><b>Métrica:</b> o RAGAS deu notas quase iguais a respostas de qualidade bem diferente.</li>
 </ul>
 </div>
 <div class="col">
 <h3>Decisões técnicas</h3>
 <ul class="lista" style="font-size:26px;">
-<li>pgvector em vez de Knowledge Bases</li>
-<li>Cohere em vez de Titan</li>
-<li>Uma avaliação por documento, sem chunking</li>
-<li>Score mínimo de 0,58 com MMR</li>
-<li>Análise da pergunta separada da resposta</li>
+<li>pgvector em vez do Knowledge Bases, para controlar a busca</li>
+<li>Cohere em vez do Titan, pelo tempo de indexação</li>
+<li>Um documento por avaliação, sem dividir o texto</li>
+<li>Corte de 0,58 e comentários variados, para não responder sem base</li>
+<li>Um modelo barato entende a pergunta, outro mais forte responde</li>
 </ul>
 </div>
 </div>
-<p class="nota">Limites: o chat descreve 15 comentários, não a base inteira, e quem mostra frequência é o painel. Não há filtro de período no chat, e a base termina em 2018.</p>
+<p class="nota">Limites: o chat descreve 15 comentários, não a base inteira. Quem mostra a frequência é o painel. O chat não filtra por período, e a base termina em 2018.</p>
 </section>
 
 <section id="demo" class="escuro" style="padding:128px 128px 160px;">
