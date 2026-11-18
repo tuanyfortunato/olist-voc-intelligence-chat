@@ -114,7 +114,7 @@ th, td { padding: 0.45em 0.6em; border-bottom: 1px solid #CFC8BA; vertical-align
 </div>
 <div class="topo">
 <h1>Voz do Cliente</h1>
-<p class="sub">Um RAG sobre as avaliações da Olist. Ele responde com base no que os clientes escreveram e avisa quando não sabe.</p>
+<p class="sub">Um chat com RAG: antes de responder, ele busca nas avaliações dos clientes da Olist. E avisa quando não sabe.</p>
 </div>
 <div class="topo">
 <p style="font-size:30px;">Tuany Fortunato</p>
@@ -143,7 +143,7 @@ th, td { padding: 0.45em 0.6em; border-bottom: 1px solid #CFC8BA; vertical-align
 <p class="nota" style="font-size:28px;">O que mais incomoda, o que mais agrada e se o problema é do vendedor ou da entrega.</p>
 </div>
 <div class="col">
-<h3>Por que um LLM sozinho não resolve</h3>
+<h3>Por que um LLM (modelo de IA) sozinho não resolve</h3>
 <p class="nota" style="font-size:28px;">Ele responde algo plausível, mas inventado. Uma resposta convincente e sem base leva o gestor a decidir errado.</p>
 </div>
 </div>
@@ -169,67 +169,121 @@ th, td { padding: 0.45em 0.6em; border-bottom: 1px solid #CFC8BA; vertical-align
 <p class="rotulo">BASE DE CONHECIMENTO · O QUE FOI FEITO ANTES DE TUDO</p>
 <h2>Cada comentário vira um documento</h2>
 </div>
-<div class="funil">
-<div class="etapa entra" style="--i:0"><p class="valor">99.224</p><p class="txt">avaliações</p></div>
-<div class="etapa entra" style="--i:1"><p class="valor">40.977</p><p class="txt">com comentário</p></div>
-<div class="etapa entra" style="--i:2"><p class="valor">40.521</p><p class="txt">documentos, sem os comentários vazios</p></div>
-</div>
-<table class="tabela" style="font-size:26px;">
-<tr><th style="width:20%">Etapa</th><th style="width:38%">O que fiz</th><th>Por quê</th></tr>
-<tr><td>Seleção</td><td>Juntei avaliações, pedidos e produtos</td><td>Assim cada avaliação ganha categoria e entrega</td></tr>
-<tr><td>Limpeza</td><td>Limpeza mínima, sem tirar palavras</td><td>Tirar um “não” inverteria a reclamação</td></tr>
-<tr><td>Valores ausentes</td><td>Nenhum campo fica vazio</td><td>Um campo vazio quebraria os filtros</td></tr>
-<tr><td>Documentos</td><td>Título e comentário, juntos e inteiros</td><td>Os comentários são curtos, não precisa dividir</td></tr>
-<tr><td>Embeddings</td><td>Cohere, que entende português</td><td>Indexa em 25 minutos. O Titan levaria 11 horas</td></tr>
-<tr><td>Indexação</td><td>Vetores no PostgreSQL, com pgvector</td><td>Acha os comentários mais parecidos com a pergunta</td></tr>
+<p class="sub" style="font-size:28px;"><b>99.224</b> avaliações → <b>40.977</b> com comentário escrito → <b>40.521</b> documentos, depois de tirar os comentários sem nenhuma letra</p>
+<table class="tabela" style="font-size:22px; background:#FBFAF6; border-radius:14px; overflow:hidden; border:2px solid #CFC8BA;">
+<tr style="background:#D6EAE7;"><th style="width:15%">Etapa</th><th style="width:40%">O que fiz</th><th>Por quê</th></tr>
+<tr><td><b>Seleção</b></td><td>Usei as avaliações e juntei as tabelas de pedidos, itens e produtos do Kaggle.</td><td>O comentário sozinho não diz a categoria nem se a entrega atrasou. Essas tabelas trazem isso.</td></tr>
+<tr style="background:#F1EEE6;"><td><b>Limpeza</b></td><td>Tirei só quebras de linha, espaços repetidos e caracteres invisíveis. Acentos e palavras ficaram.</td><td>O modelo entende a frase como o cliente escreveu. Tirar um “não” inverteria a reclamação.</td></tr>
+<tr><td><b>Valores ausentes</b></td><td>Todo campo recebe um valor: sem categoria vira “desconhecido”, com várias vira “mista”.</td><td>Um campo vazio quebraria os filtros de nota, categoria e entrega.</td></tr>
+<tr style="background:#F1EEE6;"><td><b>Documentos</b></td><td>Um documento por avaliação, com título e comentário juntos e inteiros.</td><td>Os comentários são curtos. Cortar em pedaços separaria frases que se completam.</td></tr>
+<tr><td><b>Embeddings</b></td><td>Cohere Multilingual, que entende português.</td><td>Indexou a base em 25 minutos. O Titan levaria 11 horas, mais que o limite de 6 horas do GitHub.</td></tr>
+<tr style="background:#F1EEE6;"><td><b>Indexação</b></td><td>Vetores no PostgreSQL, com a extensão pgvector.</td><td>A busca fica comigo: eu defino a nota mínima de semelhança e a variedade.</td></tr>
 </table>
-<p class="nota" style="font-size:24px;"><b>Embedding</b> é uma lista de 1.024 números que representa o sentido do texto. Comentários com sentido parecido ganham números parecidos. É isso que permite buscar por sentido, e não só por palavra igual.</p>
+<p class="nota" style="font-size:22px;"><b>Embedding</b> é uma lista de 1.024 números que representa o sentido do texto. Comentários com sentido parecido ganham números parecidos, e por isso a busca acha comentários pelo sentido, não só pela palavra igual.</p>
 </section>
 
-<section id="pipeline" class="alt">
+<section id="limpeza" class="alt">
+<div class="topo">
+<p class="rotulo">BASE DE CONHECIMENTO · A LIMPEZA NA PRÁTICA</p>
+<h2>Um comentário, da base até a busca</h2>
+</div>
+<p class="sub" style="font-size:26px;">Cada avaliação com comentário passa pelos mesmos passos. O gestor sempre vê o texto como o cliente escreveu. Exemplo ilustrativo:</p>
+<div class="linha" style="align-items:stretch;">
+<div class="cartao entra" style="--i:0"><h3>1. Como vem do Kaggle</h3><p class="pergunta" style="background:#172033; font-family:'Courier New', monospace; font-size:22px;">título: Ótimo<br>mensagem: Chegou antes do prazo 👏👏</p><p class="txt" style="font-size:22px;">Título e mensagem ficam em campos separados.</p></div>
+<div class="cartao entra" style="--i:1"><h3>2. Texto do gestor</h3><p class="pergunta" style="background:#172033; font-family:'Courier New', monospace; font-size:22px;">Ótimo. Chegou antes do prazo 👏👏</p><p class="txt" style="font-size:22px;">Título e mensagem juntos, sem espaços repetidos nem caracteres invisíveis.</p></div>
+<div class="cartao entra" style="--i:2"><h3>3. Texto do embedding</h3><p class="pergunta" style="background:#172033; font-family:'Courier New', monospace; font-size:22px;">Ótimo. Chegou antes do prazo palmas palmas</p><p class="txt" style="font-size:22px;">O emoji vira palavra, para o modelo entender o sentido.</p></div>
+</div>
+<div class="linha" style="align-items:flex-start;">
+<div class="col">
+<h3 style="font-size:30px;">Regras da limpeza</h3>
+<ul class="lista" style="font-size:22px;">
+<li>Nenhuma palavra é removida: “gostei” e “não gostei” precisam continuar diferentes.</li>
+<li>Emojis que podem ser elogio ou crítica, como 😂 e 🤔, ficam como estão.</li>
+<li>Comentário sem nenhuma letra, como “...” ou “10”, sai da base.</li>
+</ul>
+</div>
+<div class="col">
+<h3 style="font-size:30px;">Nenhum campo vazio</h3>
+<ul class="lista" style="font-size:22px;">
+<li><b>Entrega:</b> 34.399 no prazo, 4.214 atrasadas, 1.819 não entregues e 89 desconhecidas.</li>
+<li><b>Categoria:</b> 73 categorias. Pedido com várias vira “mista” (528), e sem nenhuma vira “desconhecido” (1.065).</li>
+</ul>
+</div>
+</div>
+</section>
+
+<section id="pipeline">
 <div class="topo">
 <p class="rotulo">PIPELINE RAG · O QUE ACONTECE QUANDO O GESTOR PERGUNTA</p>
 <h2>Cinco etapas entre a pergunta e a resposta</h2>
 </div>
+<p class="pergunta" style="font-size:26px;">Exemplo: o gestor pergunta “O que os clientes insatisfeitos falam da entrega?”</p>
 <div class="passos">
 <div class="passo entra" style="--i:0">
 <p class="num">1</p>
 <h3>Entender a pergunta</h3>
-<p class="txt">O Nova Micro limpa a pergunta e identifica as notas pedidas.</p>
-<p class="nota" style="font-size:22px; margin-top:20px; padding-top:16px; border-top:2px dashed #CFC8BA;"><b>No exemplo:</b> o assunto vira “problemas na entrega”, e “insatisfeitos” vira filtro de notas 1 e 2.</p>
+<p class="txt" style="font-size:22px;">O Nova Micro lê a pergunta e separa duas coisas: o assunto e as notas que ela pede.</p>
+<p class="nota" style="font-size:20px; margin-top:16px; padding-top:14px; border-top:2px dashed #CFC8BA;"><b>No exemplo:</b> assunto “problemas na entrega”; “insatisfeitos” vira notas 1 e 2.</p>
 </div>
 <div class="passo entra" style="--i:1">
 <p class="num">2</p>
 <h3>Buscar</h3>
-<p class="txt">O Cohere transforma a pergunta em vetor, e o banco traz os 40 comentários mais parecidos.</p>
-<p class="nota" style="font-size:22px; margin-top:20px; padding-top:16px; border-top:2px dashed #CFC8BA;"><b>No exemplo:</b> 40 comentários sobre entrega, todos com nota 1 ou 2.</p>
+<p class="txt" style="font-size:22px;">O assunto vira um vetor. O banco compara esse vetor com os dos 40 mil comentários e traz os 40 mais parecidos.</p>
+<p class="nota" style="font-size:20px; margin-top:16px; padding-top:14px; border-top:2px dashed #CFC8BA;"><b>No exemplo:</b> 40 comentários sobre entrega, todos com nota 1 ou 2.</p>
 </div>
 <div class="passo entra" style="--i:2">
 <p class="num">3</p>
 <h3>Selecionar</h3>
-<p class="txt">Descarto os comentários pouco parecidos e escolho 15 variados.</p>
-<p class="nota" style="font-size:22px; margin-top:20px; padding-top:16px; border-top:2px dashed #CFC8BA;"><b>No exemplo:</b> 15 comentários, sem repetir a mesma queixa.</p>
+<p class="txt" style="font-size:22px;">Descarto os que ficam abaixo da nota mínima de semelhança. Dos que sobram, escolho 15 que não repetem a mesma queixa.</p>
+<p class="nota" style="font-size:20px; margin-top:16px; padding-top:14px; border-top:2px dashed #CFC8BA;"><b>No exemplo:</b> 15 comentários sobre entrega, sem repetir a mesma queixa.</p>
 </div>
 <div class="passo entra" style="--i:3">
 <p class="num">4</p>
 <h3>Montar o contexto</h3>
-<p class="txt">Os 15 comentários vão numerados, com a nota e a categoria.</p>
-<p class="nota" style="font-size:22px; margin-top:20px; padding-top:16px; border-top:2px dashed #CFC8BA;"><b>No exemplo:</b> o modelo recebe a pergunta e os comentários de [1] a [15].</p>
+<p class="txt" style="font-size:22px;">Junto a pergunta e os 15 comentários, cada um com número, nota e categoria. É só isso que o modelo lê.</p>
+<p class="nota" style="font-size:20px; margin-top:16px; padding-top:14px; border-top:2px dashed #CFC8BA;"><b>No exemplo:</b> o modelo recebe a pergunta e os comentários de [1] a [15].</p>
 </div>
 <div class="passo entra" style="--i:4">
 <p class="num">5</p>
 <h3>Responder</h3>
-<p class="txt">O Haiku 4.5 escreve citando os comentários, e o código confere cada citação.</p>
-<p class="nota" style="font-size:22px; margin-top:20px; padding-top:16px; border-top:2px dashed #CFC8BA;"><b>No exemplo:</b> cada frase da resposta traz o trecho e o link da avaliação.</p>
+<p class="txt" style="font-size:22px;">O Haiku escreve a resposta e põe o número do comentário em cada frase. O código confere se cada citação existe.</p>
+<p class="nota" style="font-size:20px; margin-top:16px; padding-top:14px; border-top:2px dashed #CFC8BA;"><b>No exemplo:</b> cada frase traz o trecho e o link da avaliação.</p>
 </div>
 </div>
-<p class="pergunta" style="font-size:26px;">Pergunta do exemplo: “O que os clientes insatisfeitos falam da entrega?”</p>
-<p class="nota">É o fluxo do enunciado, com duas etapas a mais: o corte dos comentários pouco parecidos e a escolha de comentários variados.</p>
+<p class="nota">São as etapas do enunciado, com duas a mais: descartar comentários pouco parecidos e escolher comentários variados.</p>
+</section>
+
+<section id="pergunta" class="alt">
+<div class="topo">
+<p class="rotulo">ETAPA 1 · ENTENDER A PERGUNTA</p>
+<h2>Antes de buscar, a pergunta é analisada</h2>
+</div>
+<p class="sub" style="font-size:26px;">Antes de procurar comentários, o sistema precisa entender o que o gestor quer saber. Um modelo pequeno e rápido, o Nova Micro, lê a pergunta e separa o que importa para a busca.</p>
+<div class="linha" style="align-items:flex-start;">
+<div class="col" style="gap:16px;">
+<h3 style="font-size:30px;">O que a análise devolve</h3>
+<ul class="lista" style="font-size:22px;">
+<li><b>Tipo:</b> no escopo, saudação ou fora do escopo.</li>
+<li><b>Assunto da busca:</b> só o que o cliente escreveria.</li>
+<li><b>Pergunta limpa:</b> sem números nem premissas do gestor.</li>
+<li><b>Notas:</b> as que a pergunta cita viram filtro.</li>
+</ul>
+<h3 style="font-size:30px;">Exemplo real</h3>
+<p class="pergunta" style="font-size:22px;">“Quais reclamações sobre entrega aparecem com mais frequência?”</p>
+<p class="pergunta" style="background:#172033; font-family:'Courier New', monospace; font-size:22px;">tipo: no escopo<br>assunto: reclamações sobre entrega</p>
+<p class="nota" style="font-size:22px;">“Com mais frequência” sai do assunto, porque nenhum cliente escreve assim.</p>
+</div>
+<div class="col" style="gap:14px;">
+<div class="cartao entra" style="--i:0; padding:24px 32px;"><h3 style="font-size:30px;">Premissa retirada</h3><p class="txt" style="font-size:22px;">Em “Já que 90% dos clientes reclamam de atraso…”, o 90% sai da pergunta. A resposta avisa que a base não mede frequência.</p></div>
+<div class="cartao entra" style="--i:1; padding:24px 32px;"><h3 style="font-size:30px;">Histórico só aqui</h3><p class="txt" style="font-size:22px;">As últimas trocas da conversa ajudam a entender perguntas como “E nas notas altas?”. Elas nunca chegam ao modelo que escreve a resposta.</p></div>
+<div class="cartao entra" style="--i:2; padding:24px 32px;"><h3 style="font-size:30px;">Pergunta vira vetor</h3><p class="txt" style="font-size:22px;">O Cohere transforma o assunto em vetor, no modo de perguntas. Os comentários foram transformados no modo de documentos.</p></div>
+</div>
+</div>
 </section>
 
 <section id="busca">
 <div class="topo">
-<p class="rotulo">ETAPAS 1 A 3 · ENTENDER, BUSCAR E SELECIONAR</p>
+<p class="rotulo">ETAPAS 2 E 3 · BUSCAR E SELECIONAR</p>
 <h2>Achar os comentários certos e descartar os fracos</h2>
 </div>
 <div class="linha">
@@ -242,13 +296,13 @@ th, td { padding: 0.45em 0.6em; border-bottom: 1px solid #CFC8BA; vertical-align
 <p class="txt">“Não chegou” e “até hoje espero” são encontrados juntos, mesmo sem nenhuma palavra em comum.</p>
 </div>
 <div class="cartao entra" style="--i:2">
-<h3>Corte e variedade</h3>
-<p class="txt">Comentários com semelhança abaixo de 0,58 saem. Depois, o MMR escolhe comentários variados, para não trazer 15 vezes a mesma reclamação.</p>
+<h3>Nota mínima e variedade</h3>
+<p class="txt">A nota mínima de semelhança é 0,58: comentário abaixo disso é descartado. Depois, o MMR escolhe comentários variados, para não trazer 15 vezes a mesma reclamação.</p>
 </div>
 </div>
-<p class="destaque entra" style="--i:3">Se nenhum comentário passa do corte, o chat avisa que não tem evidência, sem chamar o modelo.</p>
+<p class="destaque entra" style="--i:3">Se nenhum comentário chega à nota mínima, o chat avisa que não tem evidência, sem chamar o modelo.</p>
 <div class="linha">
-<p class="nota" style="font-size:24px; flex:1;"><b>Semelhança</b> é um número de 0 a 1 que diz o quanto o comentário se parece com a pergunta. Na calibração, a pergunta sobre Pix, que a base não responde, ficou em 0,57. As perguntas com resposta ficaram acima de 0,62. Por isso o corte fica em 0,58.</p>
+<p class="nota" style="font-size:24px; flex:1;"><b>Semelhança</b> é um número de 0 a 1 que diz o quanto o comentário se parece com a pergunta. Na calibração, a pergunta sobre Pix ficou em 0,57, e as perguntas com resposta, acima de 0,62. Por isso a nota mínima é 0,58.</p>
 <p class="nota" style="font-size:24px; flex:1;"><b>MMR</b> escolhe os comentários um a um. A cada escolha, prefere o que é parecido com a pergunta, mas diferente dos que já foram escolhidos.</p>
 </div>
 </section>
@@ -259,54 +313,74 @@ th, td { padding: 0.45em 0.6em; border-bottom: 1px solid #CFC8BA; vertical-align
 <h2>O modelo responde citando comentários reais</h2>
 </div>
 <div class="linha" style="align-items:flex-start;">
-<div class="col" style="gap:16px;">
-<p class="sub" style="font-size:28px;">Com os 15 comentários escolhidos, o sistema monta o que o modelo vai ler, o modelo escreve a resposta e o código confere cada citação.</p>
-<p class="pergunta" style="background:#172033; font-family:'Courier New', monospace; font-size:24px;">[1] (avaliação &lt;id&gt;, nota 1, categoria cama_mesa_banho) texto original do cliente</p>
-<p class="nota" style="font-size:22px;">É assim que cada comentário chega ao modelo. O número [1] é o que a resposta cita.</p>
-<h3 style="font-size:34px;">Contexto</h3>
-<ul class="lista" style="font-size:24px;">
-<li>O modelo recebe só a pergunta e os 15 comentários.</li>
-<li>Cada comentário tem um número, e cada frase da resposta aponta para ele.</li>
-</ul>
-<h3 style="font-size:34px;">Geração</h3>
-<ul class="lista" style="font-size:24px;">
-<li>O Haiku 4.5 cita um comentário em cada afirmação.</li>
-<li>Ele só chama um problema de recorrente se o comentário disser isso.</li>
-</ul>
-<h3 style="font-size:34px;">Checagem no código</h3>
-<ul class="lista" style="font-size:24px;">
-<li>O código apaga citações que não existem e suaviza exageros.</li>
-<li>Ele também classifica a resposta: respondida, evidência fraca ou sem evidência. A página mostra um aviso para cada caso.</li>
-</ul>
+<div class="col" style="gap:14px;">
+<p class="sub" style="font-size:26px;">Depois da busca, já temos 15 comentários. Agora eles viram uma resposta que o gestor consegue conferir, em três passos.</p>
+<p class="pergunta" style="background:#172033; font-family:'Courier New', monospace; font-size:22px;">[1] (avaliação &lt;id&gt;, nota 1, categoria cama_mesa_banho) texto original do cliente</p>
+<p class="nota" style="font-size:20px;">É assim que cada avaliação chega ao modelo. O número [1] é o que a resposta vai citar.</p>
+<div class="cartao entra" style="--i:1; flex-direction:row; align-items:flex-start; gap:24px; padding:22px 28px;">
+<p class="grande" style="font-size:48px; line-height:1; min-width:40px;">1</p>
+<div class="col" style="gap:6px;"><h3 style="font-size:28px;">O que o modelo recebe</h3><p class="txt" style="font-size:22px;">A pergunta e os 15 comentários, numerados de [1] a [15]. Só isso: nem a conversa anterior, nem informação de fora.</p></div>
 </div>
-<img src="img/chat-evidencias.png" alt="Resposta do chat sobre problemas de entrega, com o trecho do comentário e o link da avaliação embaixo de cada frase" style="width:332px; height:640px; object-fit:contain; border-radius:12px; border:2px solid #CFC8BA;">
+<div class="cartao entra" style="--i:2; flex-direction:row; align-items:flex-start; gap:24px; padding:22px 28px;">
+<p class="grande" style="font-size:48px; line-height:1; min-width:40px;">2</p>
+<div class="col" style="gap:6px;"><h3 style="font-size:28px;">O que o modelo faz</h3><p class="txt" style="font-size:22px;">O Haiku escreve a resposta usando só esses comentários e põe o número do comentário no fim de cada frase, como [3]. Ele não pode chamar um problema de recorrente se nenhum cliente disse isso.</p></div>
+</div>
+<div class="cartao entra" style="--i:3; flex-direction:row; align-items:flex-start; gap:24px; padding:22px 28px;">
+<p class="grande" style="font-size:48px; line-height:1; min-width:40px;">3</p>
+<div class="col" style="gap:6px;"><h3 style="font-size:28px;">O que o código confere depois</h3><p class="txt" style="font-size:22px;">Apaga citações de números que não existem e troca palavras exageradas, como “vários”, quando falta prova. Depois conta as citações e escolhe o aviso: respondida, evidência fraca ou sem evidência.</p></div>
+</div>
+</div>
+<div class="col" style="flex:0 0 332px; gap:10px;">
+<img src="img/chat-evidencias.png" alt="Resposta do chat sobre problemas de entrega, com o trecho do comentário e o link da avaliação embaixo de cada frase" style="width:332px; height:600px; object-fit:contain; border-radius:12px; border:2px solid #CFC8BA;">
+<p class="nota" style="font-size:20px;">Na tela, cada número vira o trecho e o link da avaliação.</p>
+</div>
 </div>
 </section>
 
-<section id="metadados">
+<section id="sem-evidencia">
+<div class="topo">
+<p class="rotulo">REQUISITO 4 · PERGUNTAS SEM EVIDÊNCIA SUFICIENTE</p>
+<h2>Quando não dá para responder, o chat avisa</h2>
+</div>
+<p class="sub" style="font-size:26px;">Nem toda pergunta tem resposta na base. O enunciado pede que o chat reconheça três casos, e em cada um ele mostra um aviso na tela em vez de inventar uma resposta.</p>
+<table class="tabela" style="font-size:24px; background:#FBFAF6; border-radius:14px; overflow:hidden; border:2px solid #CFC8BA;">
+<tr style="background:#D6EAE7;"><th style="width:27%">Caso do enunciado</th><th style="width:18%">Situação no chat</th><th style="width:33%">Quando acontece</th><th>Exemplo</th></tr>
+<tr><td>Não há avaliações relevantes</td><td><b>Sem evidência</b></td><td>Nenhum comentário chega à nota mínima de semelhança (0,58)</td><td>Pagamento por Pix</td></tr>
+<tr style="background:#F1EEE6;"><td>Evidências insuficientes</td><td><b>Evidência fraca</b></td><td>A resposta cita só um ou dois comentários</td><td>Embalagem de presente</td></tr>
+<tr><td>Fora do escopo da base</td><td><b>Fora do escopo</b></td><td>A pergunta trata de algo que avaliações não respondem</td><td>Faturamento da Olist em 2018</td></tr>
+<tr style="background:#F6E7C8; font-weight:600;"><td>Pergunta com evidência</td><td><b>Respondida</b></td><td>Três ou mais comentários citados</td><td>Produtos com defeito</td></tr>
+</table>
+<div class="linha">
+<div class="cartao entra" style="padding:26px 32px; --i:0"><h3 style="font-size:30px;">Três proteções</h3><p class="txt" style="font-size:22px;">A análise da pergunta, a nota mínima de semelhança e as regras no prompt, conferidas depois pelo código.</p></div>
+<div class="cartao entra" style="padding:26px 32px; --i:1"><h3 style="font-size:30px;">Premissa falsa</h3><p class="txt" style="font-size:22px;">“Já que 90% reclamam…”: a resposta não repete o número e avisa que a base não mede frequência.</p></div>
+<div class="cartao entra" style="padding:26px 32px; --i:2"><h3 style="font-size:30px;">Mudar as regras</h3><p class="txt" style="font-size:22px;">“Ignore as instruções anteriores…” é tratada como pergunta a classificar, nunca como ordem.</p></div>
+</div>
+</section>
+
+<section id="metadados" class="alt">
 <div class="topo">
 <p class="rotulo">DESAFIO ADICIONAL · METADADOS DA AVALIAÇÃO</p>
 <h2>Nota, categoria e entrega viram filtros da busca</h2>
 </div>
 <p class="sub" style="font-size:28px;">Além do texto, cada avaliação tem informações como a nota e a categoria. Aqui mostro quais delas uso, como entram na busca e o que isso melhora.</p>
-<table class="tabela" style="font-size:24px;">
-<tr><th style="width:26%">Metadado</th><th style="width:16%">Usa?</th><th>Como entra</th></tr>
+<table class="tabela" style="font-size:24px; background:#FBFAF6; border-radius:14px; overflow:hidden; border:2px solid #CFC8BA;">
+<tr style="background:#D6EAE7;"><th style="width:26%">Informação</th><th style="width:16%">Usa?</th><th>Como entra</th></tr>
 <tr><td>Nota</td><td>Sim</td><td>Filtro de 1 a 5. “Clientes insatisfeitos” vira notas 1 e 2</td></tr>
-<tr><td>Categoria</td><td>Sim</td><td>Filtro com as 73 categorias de produto</td></tr>
+<tr style="background:#F1EEE6;"><td>Categoria</td><td>Sim</td><td>Filtro com as 73 categorias de produto</td></tr>
 <tr><td>Entrega</td><td>Sim</td><td>No prazo, atrasada, não entregue ou com problema</td></tr>
-<tr><td>Pedido</td><td>Em parte</td><td>Dele saem a situação da entrega e a categoria</td></tr>
+<tr style="background:#F1EEE6;"><td>Pedido</td><td>Em parte</td><td>Dele saem a situação da entrega e a categoria</td></tr>
 <tr><td>Período</td><td>Só no painel</td><td>O painel mostra mês a mês. O chat busca em todo o período</td></tr>
 </table>
 <p class="nota" style="font-size:24px;"><b>Por que ajuda:</b> “nota baixa” e “cama, mesa e banho” não aparecem no texto do comentário. Sem filtro, a busca acha comentários parecidos, mas de outras notas e categorias.</p>
 <div class="linha">
 <div class="cartao entra" style="--i:0; flex-direction:row; align-items:center; gap:32px;">
 <p class="grande" style="font-size:64px; white-space:nowrap;">15/15</p>
-<p class="txt">Nas três perguntas de metadados do enunciado, com filtro os 15 comentários estão no recorte pedido. Sem filtro, só 9, 8 e 12 de 15.</p>
+<p class="txt">Nas três perguntas de metadados do enunciado, com filtro os 15 comentários são do grupo pedido (nota, categoria ou entrega). Sem filtro, só 9, 8 e 12 de 15.</p>
 </div>
 </div>
 </section>
 
-<section id="arquitetura" class="figura alt">
+<section id="arquitetura" class="figura">
 <div class="col">
 <p class="rotulo">ARQUITETURA · ONDE TUDO RODA</p>
 <h2>Tudo roda na nuvem da AWS</h2>
@@ -323,16 +397,16 @@ th, td { padding: 0.45em 0.6em; border-bottom: 1px solid #CFC8BA; vertical-align
 <img src="../arquitetura.png" alt="Diagrama da arquitetura na AWS: gestor, CloudFront, S3, ALB, ECS Fargate, RDS com pgvector, Bedrock e a indexação pelo GitHub Actions" style="width:960px; height:936px; object-fit:contain; background:#FBFAF6; border-radius:16px;">
 </section>
 
-<section id="cicd" class="figura">
+<section id="cicd" class="figura alt">
 <div class="col" style="flex:0 0 480px;">
 <p class="rotulo">CI/CD · DO CÓDIGO AO SITE</p>
 <h2>O código vai para o site sozinho</h2>
 <p class="sub" style="font-size:26px;">O caminho de uma mudança, do código até o site no ar:</p>
 <ul class="lista" style="font-size:24px;">
-<li><b>Mudança:</b> cada alteração é feita numa branch separada.</li>
-<li><b>Revisão:</b> entra por pull request, primeiro na develop e depois na main.</li>
+<li><b>Mudança:</b> cada alteração é feita numa cópia separada do código (branch).</li>
+<li><b>Revisão:</b> só entra no código principal depois de revisada (pull request).</li>
 <li><b>Testes:</b> a cada mudança, os testes rodam sozinhos, sem acessar a AWS.</li>
-<li><b>Publicação:</b> quando entra na main, a infraestrutura é atualizada e o site é publicado sozinho.</li>
+<li><b>Publicação:</b> depois de aprovada, a infraestrutura é atualizada e o site é publicado sozinho.</li>
 <li><b>Segurança:</b> o GitHub entra na AWS com uma permissão temporária, sem senha guardada.</li>
 </ul>
 </div>
@@ -344,10 +418,10 @@ th, td { padding: 0.45em 0.6em; border-bottom: 1px solid #CFC8BA; vertical-align
 <p class="rotulo">AVALIAÇÃO · DOIS MODELOS COMPARADOS COM RAGAS</p>
 <h2>Notas quase iguais, respostas bem diferentes</h2>
 </div>
-<p class="sub" style="font-size:26px;">Para escolher o modelo que escreve a resposta, testei dois com as mesmas 11 perguntas. Um terceiro modelo, o Nova Pro, deu as notas de 0 a 1.</p>
-<table class="tabela" style="font-size:26px;">
-<tr><th style="width:28%">Modelo da resposta</th><th style="width:18%; text-align:right">Fiel aos comentários<br><span style="font-size:20px; font-weight:400; color:#4A5568;">faithfulness</span></th><th style="width:18%; text-align:right">Responde à pergunta<br><span style="font-size:20px; font-weight:400; color:#4A5568;">relevancy</span></th><th style="width:18%; text-align:right">Busca útil<br><span style="font-size:20px; font-weight:400; color:#4A5568;">precision</span></th><th style="text-align:right">Situação certa<br><span style="font-size:20px; font-weight:400; color:#4A5568;">avisou quando devia</span></th></tr>
-<tr style="background:#D6EAE7"><td>Claude Haiku 4.5 (escolhido)</td><td style="text-align:right">0,975</td><td style="text-align:right">0,560</td><td style="text-align:right">0,736</td><td style="text-align:right">10 de 11</td></tr>
+<p class="sub" style="font-size:26px;">Para escolher o modelo que escreve a resposta, testei dois com as mesmas 11 perguntas no RAGAS, uma ferramenta que dá notas de 0 a 1. Quem deu as notas foi um terceiro modelo, o Nova Pro.</p>
+<table class="tabela" style="font-size:26px; background:#FBFAF6; border-radius:14px; overflow:hidden; border:2px solid #CFC8BA;">
+<tr style="background:#D6EAE7;"><th style="width:28%">Modelo da resposta</th><th style="width:18%; text-align:right">Fiel aos comentários<br><span style="font-size:20px; font-weight:400; color:#4A5568;">faithfulness</span></th><th style="width:18%; text-align:right">Responde à pergunta<br><span style="font-size:20px; font-weight:400; color:#4A5568;">relevancy</span></th><th style="width:18%; text-align:right">Comentários úteis primeiro<br><span style="font-size:20px; font-weight:400; color:#4A5568;">precision</span></th><th style="text-align:right">Situação certa<br><span style="font-size:20px; font-weight:400; color:#4A5568;">avisou quando devia</span></th></tr>
+<tr style="background:#F6E7C8; font-weight:600;"><td>Claude Haiku 4.5 (escolhido)</td><td style="text-align:right">0,975</td><td style="text-align:right">0,560</td><td style="text-align:right">0,736</td><td style="text-align:right">10 de 11</td></tr>
 <tr><td>Nova Micro</td><td style="text-align:right">0,992</td><td style="text-align:right">0,552</td><td style="text-align:right">0,675</td><td style="text-align:right">10 de 11</td></tr>
 </table>
 <div class="linha">
@@ -365,36 +439,21 @@ th, td { padding: 0.45em 0.6em; border-bottom: 1px solid #CFC8BA; vertical-align
 <section id="desafios" class="alt">
 <div class="topo">
 <p class="rotulo">DESAFIOS E DECISÕES</p>
-<h2>O que deu trabalho, o que decidi e o que ficou de fora</h2>
+<h2>Três problemas que encontrei e como resolvi</h2>
 </div>
-<p class="sub" style="font-size:26px;">Os problemas que encontrei no caminho, as escolhas técnicas mais importantes e o que a solução ainda não faz.</p>
-<div class="linha" style="align-items:flex-start;">
-<div class="col">
-<h3>O que deu trabalho</h3>
-<ul class="lista" style="font-size:24px;">
-<li><b>Pix:</b> o corte sozinho não bastou para uma pergunta que a base não cobre. Uma regra no prompt faz o chat dizer que não sabe.</li>
-<li><b>“Recorrente”:</b> uma resposta chamou de recorrente um problema que o cliente dizia ser “a primeira vez”. Virou regra no prompt e checagem no código.</li>
-<li><b>Métrica:</b> o RAGAS deu notas quase iguais para respostas de qualidade bem diferente. Precisei ler as respostas.</li>
-</ul>
+<div class="linha" style="align-items:stretch;">
+<div class="cartao entra" style="--i:0; padding:28px 32px; gap:10px;"><h3 style="font-size:30px;">1. Dizer “não sei”</h3><p class="txt" style="font-size:22px;"><b>O que aconteceu:</b> o Pix só surgiu em 2020, depois da base, mas comentários sobre pagamento pareciam com a pergunta.</p><p class="txt" style="font-size:22px;"><b>O que fiz:</b> uma segunda trava no prompt (as instruções do modelo): se nenhum comentário fala do assunto, ele diz que não encontrou.</p></div>
+<div class="cartao entra" style="--i:1; padding:28px 32px; gap:10px;"><h3 style="font-size:30px;">2. Uma conclusão inventada</h3><p class="txt" style="font-size:22px;"><b>O que aconteceu:</b> um modelo disse que os atrasos eram recorrentes, citando um cliente que escreveu “foi a primeira vez”.</p><p class="txt" style="font-size:22px;"><b>O que fiz:</b> uma regra nas instruções do modelo, uma checagem no código e a troca do modelo pelo Haiku.</p></div>
+<div class="cartao entra" style="--i:2; padding:28px 32px; gap:10px;"><h3 style="font-size:30px;">3. A nota não mostrou o erro</h3><p class="txt" style="font-size:22px;"><b>O que aconteceu:</b> o RAGAS deu notas quase iguais aos dois modelos, mas só um errou.</p><p class="txt" style="font-size:22px;"><b>O que fiz:</b> li as respostas e escolhi o modelo por elas, não só pela nota.</p></div>
 </div>
-<div class="col">
-<h3>O que decidi</h3>
-<ul class="lista" style="font-size:24px;">
-<li>Banco próprio com pgvector, em vez do Knowledge Bases, para controlar a busca</li>
-<li>Cohere em vez do Titan: 25 minutos de indexação, e não 11 horas</li>
-<li>Um documento por avaliação, sem dividir o texto</li>
-<li>Corte de 0,58 e comentários variados, para não responder sem base</li>
-<li>Um modelo barato entende a pergunta, outro mais forte responde</li>
-</ul>
+<h3 style="font-size:30px;">Decisões técnicas: o que escolhi e por quê</h3>
+<div class="linha" style="align-items:flex-start; gap:48px; margin-top:-8px;">
+<div class="col" style="gap:6px;"><p class="txt" style="font-size:24px;"><b>Montei a minha própria busca</b></p><p class="nota" style="font-size:22px;">Usei o pgvector, que guarda os vetores no banco, em vez do Knowledge Bases, o serviço pronto da AWS. Assim eu defino a nota mínima de semelhança e a variedade.</p></div>
+<div class="col" style="gap:6px;"><p class="txt" style="font-size:24px;"><b>Escolhi o embedding mais rápido</b></p><p class="nota" style="font-size:22px;">O Cohere transformou os 40 mil comentários em vetores em 25 minutos. O Titan levaria 11 horas.</p></div>
 </div>
-<div class="col">
-<h3>O que ficou de fora</h3>
-<ul class="lista" style="font-size:24px;">
-<li>O chat descreve 15 comentários, não a base inteira. Quem mostra a frequência é o painel.</li>
-<li>O chat não filtra por período.</li>
-<li>A base termina em 2018, então assuntos mais novos, como o Pix, não aparecem.</li>
-</ul>
-</div>
+<div class="linha" style="align-items:flex-start; gap:48px; margin-top:-8px;">
+<div class="col" style="gap:6px;"><p class="txt" style="font-size:24px;"><b>Cada comentário inteiro</b></p><p class="nota" style="font-size:22px;">Textos longos costumam ser cortados em pedaços. Os comentários são curtos, então ficaram inteiros.</p></div>
+<div class="col" style="gap:6px;"><p class="txt" style="font-size:24px;"><b>Um modelo para cada tarefa</b></p><p class="nota" style="font-size:22px;">O Nova Micro, barato e rápido, entende a pergunta. O Haiku, mais forte, escreve a resposta.</p></div>
 </div>
 </section>
 
@@ -477,7 +536,7 @@ th, td { padding: 0.45em 0.6em; border-bottom: 1px solid #CFC8BA; vertical-align
 <p class="sub" style="width:1600px; font-size:28px;">Este exemplo mostra o chat dizendo que não sabe, em vez de inventar.</p>
 <div class="linha" style="align-items:center; width:1600px;">
 <img src="img/reserva-pix.png" alt="Pergunta sobre pagamento por Pix respondida como sem evidência" style="width:1200px; height:675px; object-fit:contain; border-radius:12px; border:2px solid #CFC8BA; flex:none;">
-<div class="legenda"><h3>O que o print mostra</h3><ul class="lista"><li>A pergunta é sobre pagamento com Pix.</li><li>Nenhum comentário passou do corte de semelhança, porque o Pix não existia na época da base.</li><li>O chat responde “Sem evidência” e sugere perguntas que a base consegue responder.</li></ul></div>
+<div class="legenda"><h3>O que o print mostra</h3><ul class="lista"><li>A pergunta é sobre pagamento com Pix.</li><li>Nenhum comentário chegou à nota mínima de semelhança, porque o Pix não existia na época da base.</li><li>O chat responde “Sem evidência” e sugere perguntas que a base consegue responder.</li></ul></div>
 </div>
 </section>
 
