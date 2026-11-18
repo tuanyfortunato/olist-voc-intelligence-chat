@@ -461,6 +461,12 @@ export function scopeLabel(data, sectorId, themeId) {
   return `do setor ${sector ? sector.label : ""}`.trim();
 }
 
+// Com filtro de nota, categoria ou entrega, o total já não é o da base inteira
+export function filteredScopeLabel(label, filtered) {
+  if (!filtered) return label || "da base inteira";
+  return label ? `${label} com os filtros da busca` : "com os filtros da busca";
+}
+
 // Frase sobre o recorte da busca, embaixo da pergunta respondida
 export function scopeLine(scopeCount, label, used) {
   if (scopeCount === null || scopeCount === undefined) return null;

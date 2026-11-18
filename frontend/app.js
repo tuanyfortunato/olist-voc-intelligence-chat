@@ -49,6 +49,7 @@ import {
   parseSession,
   scopeLabel,
   scopeLine,
+  filteredScopeLabel,
   scopeThemes,
   sectorList,
   scopeSuggestionPool,
@@ -466,7 +467,14 @@ function renderAnswer(container, result, messageId) {
   const inferred = chosenRatings ? null : describeInferredRatings(result.inferred_ratings);
   if (inferred) container.appendChild(element("p", "inferred-filter", inferred));
   const used = result.cited.length + result.uncited.length;
-  const scopeText = scopeLine(result.scope_count, container.scopeLabel || "da base inteira", used);
+  const chosen = container.filters || {};
+  const filtered = Boolean(
+    (chosen.ratings && chosen.ratings.length) ||
+      chosen.category ||
+      chosen.delivery ||
+      (result.inferred_ratings && result.inferred_ratings.length),
+  );
+  const scopeText = scopeLine(result.scope_count, filteredScopeLabel(container.scopeLabel, filtered), used);
   if (scopeText) container.appendChild(element("p", "scope-line", scopeText));
   const reviews = new Map();
   for (const review of result.cited) reviews.set(review.number, { review, cited: true });
