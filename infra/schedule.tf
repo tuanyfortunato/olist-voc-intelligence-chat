@@ -1,5 +1,5 @@
 # Horário de funcionamento: o banco liga às 8h40 e a API às 9h; a API desliga
-# às 22h e o banco às 22h05, no fuso de São Paulo. Fora desse horário, o
+# à 0h e o banco à 0h05, no fuso de São Paulo. Fora desse horário, o
 # workflow Start API liga os dois.
 
 locals {
@@ -34,7 +34,7 @@ resource "aws_appautoscaling_scheduled_action" "api_stop" {
   service_namespace  = aws_appautoscaling_target.api.service_namespace
   resource_id        = aws_appautoscaling_target.api.resource_id
   scalable_dimension = aws_appautoscaling_target.api.scalable_dimension
-  schedule           = "cron(0 22 * * ? *)"
+  schedule           = "cron(0 0 * * ? *)"
   timezone           = local.timezone
 
   scalable_target_action {
@@ -100,7 +100,7 @@ resource "aws_scheduler_schedule" "db_start" {
 
 resource "aws_scheduler_schedule" "db_stop" {
   name                         = "olist-voc-db-stop"
-  schedule_expression          = "cron(5 22 * * ? *)"
+  schedule_expression          = "cron(5 0 * * ? *)"
   schedule_expression_timezone = local.timezone
 
   flexible_time_window {
