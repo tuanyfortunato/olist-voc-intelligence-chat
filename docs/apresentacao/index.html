@@ -93,6 +93,9 @@ p { margin: 0; font-size: 30px; line-height: 1.4; }
 @keyframes sobe { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
 .entra { animation: sobe 500ms ease-out both; animation-delay: calc(var(--i, 0) * 120ms); }
 
+section.reserva { padding: 40px 160px; gap: 16px; align-items: center; background: var(--paper2); }
+section.reserva .rotulo { width: 1600px; letter-spacing: 0; font-size: 28px; }
+
 
 table { border-collapse: collapse; }
 th { text-align: left; font-weight: 600; }
@@ -145,23 +148,14 @@ th, td { padding: 0.45em 0.6em; border-bottom: 1px solid #CFC8BA; vertical-align
 <section id="solucao" class="alt">
 <div class="topo">
 <p class="rotulo">A SOLUÇÃO</p>
-<h2>Um painel por setor e um chat que responde com as avaliações reais</h2>
+<h2>Um painel e um chat com evidências</h2>
 </div>
-<div class="linha" style="flex:1;">
-<div class="cartao entra" style="--i:0">
-<svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="#0E6E6A" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>
-<h3>Painel por setor</h3>
-<p class="txt">Os temas mais frequentes, com contagem, comentários reais e a evolução mês a mês. Mostra o quanto.</p>
-</div>
-<div class="cartao entra" style="--i:1">
-<svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="#0E6E6A" stroke-width="2"><path d="M21 12a8 8 0 0 1-11.6 7.1L3 21l1.9-6.4A8 8 0 1 1 21 12z"/></svg>
-<h3>Chat com evidências</h3>
-<p class="txt">Cada frase da resposta aponta para os comentários que a sustentam. Mostra o porquê.</p>
-</div>
-<div class="cartao entra" style="--i:2">
-<svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="#0E6E6A" stroke-width="2"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/></svg>
-<h3>Diz quando não sabe</h3>
-<p class="txt">Sem avaliação relevante, com evidência fraca ou fora do escopo, o chat avisa em vez de improvisar.</p>
+<div class="linha" style="align-items:flex-start;">
+<img src="img/solucao-painel-chat.png" alt="Tela do Voz do Cliente: painel da Diretoria geral com indicadores e temas, e o chat ao lado respondendo sobre os principais problemas com trechos das avaliações" style="width:1152px; height:648px; object-fit:contain; border-radius:12px; border:2px solid #CFC8BA;">
+<div class="col" style="gap:28px;">
+<div class="entra" style="--i:0"><h3 style="font-size:34px;">Painel por setor</h3><p class="nota" style="font-size:26px;">Temas com contagem e evolução mês a mês. Mostra o quanto.</p></div>
+<div class="entra" style="--i:1"><h3 style="font-size:34px;">Chat com evidências</h3><p class="nota" style="font-size:26px;">Cada frase traz os comentários que a sustentam. Mostra o porquê.</p></div>
+<div class="entra" style="--i:2"><h3 style="font-size:34px;">Diz quando não sabe</h3><p class="nota" style="font-size:26px;">Sem evidência ou fora do escopo, avisa em vez de improvisar.</p></div>
 </div>
 </div>
 </section>
@@ -249,23 +243,22 @@ th, td { padding: 0.45em 0.6em; border-bottom: 1px solid #CFC8BA; vertical-align
 <p class="rotulo">ETAPAS 4 E 5 · CONTEXTO E GERAÇÃO</p>
 <h2>Cada frase aponta para uma avaliação real</h2>
 </div>
-<p class="pergunta" style="background:#172033; font-family:'Courier New', monospace; font-size:26px;">[1] (avaliação &lt;id&gt;, nota 1, categoria cama_mesa_banho) texto original do cliente</p>
-<div class="linha">
-<div class="col">
-<h3>Contexto</h3>
-<ul class="lista" style="font-size:26px;">
+<div class="linha" style="align-items:flex-start;">
+<div class="col" style="gap:16px;">
+<p class="pergunta" style="background:#172033; font-family:'Courier New', monospace; font-size:24px;">[1] (avaliação &lt;id&gt;, nota 1, categoria cama_mesa_banho) texto original do cliente</p>
+<h3 style="font-size:34px;">Contexto</h3>
+<ul class="lista" style="font-size:24px;">
 <li>Só a pergunta limpa e os 15 comentários. O histórico da conversa não entra, e um teste confere isso.</li>
 <li>O número liga a frase ao review_id.</li>
 <li>A categoria entrou porque, sem ela, o modelo dizia que os comentários não informavam a categoria.</li>
 </ul>
-</div>
-<div class="col">
-<h3>Geração e checagem</h3>
-<ul class="lista" style="font-size:26px;">
+<h3 style="font-size:34px;">Geração e checagem</h3>
+<ul class="lista" style="font-size:24px;">
 <li>Claude Haiku 4.5, com regras: citar cada afirmação, não eleger “o principal”, não chamar de recorrente sem o comentário dizer que se repetiu.</li>
 <li>O código apaga citações inexistentes, suaviza “vários” e “recorrente” sem apoio e decide a situação.</li>
 </ul>
 </div>
+<img src="img/chat-evidencias.png" alt="Resposta do chat sobre problemas de entrega, com o trecho do comentário e o link da avaliação embaixo de cada frase" style="width:332px; height:640px; object-fit:contain; border-radius:12px; border:2px solid #CFC8BA;">
 </div>
 </section>
 
@@ -393,6 +386,31 @@ th, td { padding: 0.45em 0.6em; border-bottom: 1px solid #CFC8BA; vertical-align
 </div>
 </div>
 <p class="rodape">olist-chat.tuanyfortunato.com.br · github.com/tuanyfortunato/olist-voc-intelligence-chat</p>
+</section>
+
+<section id="reserva-recorrencia" class="reserva">
+<p class="rotulo">RESERVA DA DEMO · Problemas recorrentes de prazo: a resposta não aceita a premissa</p>
+<img src="img/reserva-recorrencia.png" alt="Resposta à pergunta sobre problemas recorrentes de prazo: diz que não há informação suficiente para sustentar a recorrência e trata os casos como isolados" style="width:1600px; height:900px; object-fit:contain; border-radius:12px; border:2px solid #CFC8BA;">
+</section>
+
+<section id="reserva-insatisfeitos" class="reserva">
+<p class="rotulo">RESERVA DA DEMO · Clientes insatisfeitos: notas 1 e 2 aplicadas a partir da pergunta</p>
+<img src="img/metadados-insatisfeitos.png" alt="Resposta à pergunta sobre padrões em clientes insatisfeitos, com o filtro de notas 1 e 2 aplicado sozinho" style="width:1600px; height:900px; object-fit:contain; border-radius:12px; border:2px solid #CFC8BA;">
+</section>
+
+<section id="reserva-categoria" class="reserva">
+<p class="rotulo">RESERVA DA DEMO · Elogios em cama, mesa e banho, com a categoria marcada</p>
+<img src="img/metadados-categoria.png" alt="Resposta à pergunta sobre elogios por categoria, com o filtro cama, mesa e banho marcado" style="width:1600px; height:900px; object-fit:contain; border-radius:12px; border:2px solid #CFC8BA;">
+</section>
+
+<section id="reserva-pix" class="reserva">
+<p class="rotulo">RESERVA DA DEMO · “Não sei”: sem avaliação relevante sobre Pix</p>
+<img src="img/reserva-pix.png" alt="Pergunta sobre pagamento por Pix respondida como sem evidência" style="width:1600px; height:900px; object-fit:contain; border-radius:12px; border:2px solid #CFC8BA;">
+</section>
+
+<section id="reserva-fora-escopo" class="reserva">
+<p class="rotulo">RESERVA DA DEMO · “Não sei”: pergunta fora do escopo da base</p>
+<img src="img/reserva-fora-escopo.png" alt="Pergunta sobre o faturamento da Olist em 2018 reconhecida como fora do escopo" style="width:1600px; height:900px; object-fit:contain; border-radius:12px; border:2px solid #CFC8BA;">
 </section>
 
 </div>
