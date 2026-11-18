@@ -165,3 +165,44 @@ def test_ratings_only_when_question_mentions_them(question, kept):
         kind="in_scope", search_topic="tema", clean_question=question, ratings=[1, 2]
     )
     assert tidy_analysis(question, analysis).ratings == ([1, 2] if kept else [])
+
+
+def out_of_scope():
+    return QuestionAnalysis(kind="out_of_scope", search_topic="", clean_question="")
+
+
+@pytest.mark.parametrize(
+    "question",
+    ["Quais avaliações temos desse tipo?", "Me mostre as avaliações", "Quero ver os comentários"],
+)
+def test_list_request_is_never_out_of_scope(question):
+    from src.rag.question_analysis import LIST_QUESTION, LIST_TOPIC
+
+    llm = FakeStructuredLLM([out_of_scope()])
+    analysis = analyze_question(question, [], llm).analysis
+    assert analysis.kind == "in_scope"
+    assert analysis.search_topic == LIST_TOPIC
+    assert analysis.clean_question == LIST_QUESTION
+
+
+@pytest.mark.parametrize(
+    "question",
+    ["Qual foi o faturamento da Olist em 2018?", "Quais avaliações falam do clima?"],
+)
+def test_other_out_of_scope_questions_stay_out(question):
+    llm = FakeStructuredLLM([out_of_scope()])
+    assert analyze_question(question, [], llm).analysis.kind == "out_of_scope"
+
+
+def test_filters_are_described_to_the_model():
+    from src.rag.schemas import SearchFilters
+
+    llm = FakeStructuredLLM([ok_analysis(), ok_analysis()])
+    analyze_question("Quais avaliações temos desse tipo?", [], llm)
+    assert "Filtros que o gestor escolheu" not in str(llm.messages[0])
+    filters = SearchFilters(ratings=[1, 2], category="cama_mesa_banho", delivery="atrasada")
+    analyze_question("Quais avaliações temos desse tipo?", [], llm, filters)
+    sent = str(llm.messages[1])
+    assert "categoria cama mesa banho" in sent
+    assert "notas 1, 2" in sent
+    assert "entregue com atraso" in sent

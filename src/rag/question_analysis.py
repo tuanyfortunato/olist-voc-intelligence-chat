@@ -15,8 +15,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ValidationError, field_validator
 
-from src.rag.prompts import ANALYSIS_PROMPT, HISTORY_INTRO
-from src.rag.schemas import ConversationTurn
+from src.rag.prompts import ANALYSIS_PROMPT, FILTERS_INTRO, HISTORY_INTRO
+from src.rag.schemas import ConversationTurn, SearchFilters
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +41,79 @@ RATING_CUE = re.compile(
     r"\b(?:notas?|estrelas?|insatisfeit\w*|satisfeit\w*|negativ\w*|positiv\w*)\b",
     re.IGNORECASE,
 )
+
+
+# Pedido para ver as avaliações, sem assunto próprio, como "Me mostre as avaliações"
+# ou "Quais avaliações temos desse tipo?". Com uma categoria marcada na tela, o Nova
+# Micro chegou a classificar esses pedidos como fora do escopo. Só vale quando a
+# frase não tem nenhuma outra palavra: "Quais avaliações falam do clima?" continua
+# com a classificação do modelo.
+LIST_NOUNS = re.compile(r"^(?:avalia\w*|coment\w*|reviews?|opini\w+)$", re.IGNORECASE)
+LIST_FILLER = {
+    "me",
+    "mostre",
+    "mostra",
+    "mostrar",
+    "liste",
+    "lista",
+    "listar",
+    "exiba",
+    "exibir",
+    "ver",
+    "veja",
+    "quero",
+    "gostaria",
+    "de",
+    "traga",
+    "trazer",
+    "quais",
+    "que",
+    "as",
+    "os",
+    "a",
+    "o",
+    "temos",
+    "tem",
+    "têm",
+    "existem",
+    "há",
+    "desse",
+    "deste",
+    "dessa",
+    "desta",
+    "tipo",
+    "essas",
+    "estas",
+    "esses",
+    "estes",
+    "dessas",
+    "destas",
+    "todas",
+    "todos",
+    "algumas",
+    "alguns",
+    "por",
+    "favor",
+    "pode",
+    "poderia",
+    "você",
+    "e",
+    "sobre",
+    "isso",
+    "aqui",
+    "dos",
+    "das",
+    "clientes",
+    "deles",
+}
+LIST_TOPIC = "opinião dos clientes sobre a compra e o produto"
+LIST_QUESTION = "O que os clientes relatam nessas avaliações?"
+
+DELIVERY_NAMES = {
+    "no_prazo": "entregue no prazo",
+    "atrasada": "entregue com atraso",
+    "nao_entregue": "não entregue",
+}
 
 
 class QuestionAnalysis(BaseModel):
@@ -109,6 +182,39 @@ def tidy_analysis(question: str, analysis: QuestionAnalysis) -> QuestionAnalysis
     )
 
 
+def describe_filters(filters: SearchFilters | None) -> str:
+    """Filtros da tela em texto, para o modelo entender "desse tipo" e "essas avaliações"."""
+    if not filters:
+        return ""
+    parts = []
+    if filters.ratings:
+        parts.append("notas " + ", ".join(str(r) for r in sorted(filters.ratings)))
+    if filters.category:
+        parts.append("categoria " + filters.category.replace("_", " "))
+    if filters.delivery:
+        parts.append("entrega " + DELIVERY_NAMES.get(filters.delivery, filters.delivery))
+    if filters.themes:
+        parts.append("temas " + ", ".join(t.replace("_", " ") for t in filters.themes))
+    return "; ".join(parts)
+
+
+def is_list_request(question: str) -> bool:
+    words = re.findall(r"\w+", question.lower())
+    nouns = [word for word in words if LIST_NOUNS.match(word)]
+    return bool(nouns) and all(LIST_NOUNS.match(word) or word in LIST_FILLER for word in words)
+
+
+def list_request_fix(question: str, analysis: QuestionAnalysis) -> QuestionAnalysis:
+    """Um pedido para ver as avaliações nunca é fora do escopo: vira uma busca geral
+    dentro dos filtros escolhidos."""
+    if analysis.kind != "out_of_scope":
+        return analysis
+    if not is_list_request(question):
+        return analysis
+    logger.info("etapa=analise ajuste=pedido_de_listagem pergunta=%r", question)
+    return QuestionAnalysis(kind="in_scope", search_topic=LIST_TOPIC, clean_question=LIST_QUESTION)
+
+
 def format_history(history: list[ConversationTurn]) -> str:
     lines = []
     for turn in history:
@@ -118,18 +224,25 @@ def format_history(history: list[ConversationTurn]) -> str:
 
 
 def build_analysis_messages(
-    question: str, history: list[ConversationTurn]
+    question: str, history: list[ConversationTurn], filters_text: str = ""
 ) -> list[tuple[str, str]]:
     messages = [("system", ANALYSIS_PROMPT)]
     if history:
         messages.append(("human", f"{HISTORY_INTRO}\n{format_history(history)}"))
+    if filters_text:
+        messages.append(("human", f"{FILTERS_INTRO}\n{filters_text}"))
     messages.append(("human", f"Mensagem do gestor a classificar:\n{question}"))
     return messages
 
 
-def analyze_question(question: str, history: list[ConversationTurn], llm) -> AnalysisResult:
+def analyze_question(
+    question: str,
+    history: list[ConversationTurn],
+    llm,
+    filters: SearchFilters | None = None,
+) -> AnalysisResult:
     structured = llm.with_structured_output(QuestionAnalysis)
-    messages = build_analysis_messages(question, history)
+    messages = build_analysis_messages(question, history, describe_filters(filters))
     for attempt in range(1, ATTEMPTS + 1):
         try:
             analysis = validate_analysis(structured.invoke(messages))
@@ -137,7 +250,7 @@ def analyze_question(question: str, history: list[ConversationTurn], llm) -> Ana
             logger.warning("etapa=analise tentativa=%d erro=chamada", attempt, exc_info=True)
             analysis = None
         if analysis is not None:
-            analysis = tidy_analysis(question, analysis)
+            analysis = tidy_analysis(question, list_request_fix(question, analysis))
             logger.info(
                 "etapa=analise tipo=%s tema=%r pergunta=%r",
                 analysis.kind,
