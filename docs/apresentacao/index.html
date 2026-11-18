@@ -93,8 +93,12 @@ p { margin: 0; font-size: 30px; line-height: 1.4; }
 @keyframes sobe { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
 .entra { animation: sobe 500ms ease-out both; animation-delay: calc(var(--i, 0) * 120ms); }
 
-section.reserva { padding: 40px 160px; gap: 16px; align-items: center; background: var(--paper2); }
+section.reserva { padding: 40px 160px; gap: 32px; justify-content: center; align-items: center; background: var(--paper2); }
 section.reserva .rotulo { width: 1600px; letter-spacing: 0; font-size: 28px; }
+section.reserva .legenda { display: flex; flex-direction: column; gap: 20px; flex: 1; }
+section.reserva .legenda h3 { font-size: 30px; color: var(--teal); }
+section.reserva .legenda .lista { font-size: 23px; line-height: 1.4; padding-left: 28px; }
+section.reserva .legenda .lista li { margin-bottom: 12px; }
 
 
 table { border-collapse: collapse; }
@@ -151,7 +155,7 @@ th, td { padding: 0.45em 0.6em; border-bottom: 1px solid #CFC8BA; vertical-align
 <h2>Um painel e um chat com evidências</h2>
 </div>
 <div class="linha" style="align-items:flex-start;">
-<img src="img/solucao-painel-chat.png" alt="Tela do Voz do Cliente: painel da Diretoria geral com indicadores e temas, e o chat ao lado respondendo sobre os principais problemas com trechos das avaliações" style="width:1152px; height:648px; object-fit:contain; border-radius:12px; border:2px solid #CFC8BA;">
+<img src="img/solucao-painel-chat.png" alt="Tela do Voz do Cliente: painel da Diretoria geral com indicadores e temas, e o chat ao lado respondendo sobre os aspectos mais elogiados com trechos das avaliações" style="width:1152px; height:648px; object-fit:contain; border-radius:12px; border:2px solid #CFC8BA;">
 <div class="col" style="gap:28px;">
 <div class="entra" style="--i:0"><h3 style="font-size:34px;">Painel por setor</h3><p class="nota" style="font-size:26px;">Temas com contagem e evolução mês a mês. Mostra o quanto.</p></div>
 <div class="entra" style="--i:1"><h3 style="font-size:34px;">Chat com evidências</h3><p class="nota" style="font-size:26px;">Cada frase traz os comentários que a sustentam. Mostra o porquê.</p></div>
@@ -389,28 +393,51 @@ th, td { padding: 0.45em 0.6em; border-bottom: 1px solid #CFC8BA; vertical-align
 </section>
 
 <section id="reserva-recorrencia" class="reserva">
-<p class="rotulo">RESERVA DA DEMO · Problemas recorrentes de prazo: a resposta não aceita a premissa</p>
-<img src="img/reserva-recorrencia.png" alt="Resposta à pergunta sobre problemas recorrentes de prazo: diz que não há informação suficiente para sustentar a recorrência e trata os casos como isolados" style="width:1600px; height:900px; object-fit:contain; border-radius:12px; border:2px solid #CFC8BA;">
+<p class="rotulo">EXEMPLO NO CHAT · Problemas recorrentes de prazo: a resposta não aceita a premissa</p>
+<div class="linha" style="align-items:center; width:1600px;">
+<img src="img/reserva-recorrencia.png" alt="Resposta à pergunta sobre problemas recorrentes de prazo: diz que não há informação suficiente para sustentar a recorrência e trata os casos como isolados" style="width:1200px; height:675px; object-fit:contain; border-radius:12px; border:2px solid #CFC8BA; flex:none;">
+<div class="legenda"><h3>O que o print mostra</h3><ul class="lista"><li>Pergunta do enunciado sobre problemas recorrentes de prazo, na base inteira.</li><li>A resposta diz que não há informação suficiente: os comentários falam de atraso, mas nenhum conta que aconteceu mais de uma vez.</li><li>Embaixo, o trecho da avaliação citada e o aviso “9 avaliações citadas, de 15 recuperadas”.</li></ul></div>
+</div>
 </section>
 
 <section id="reserva-insatisfeitos" class="reserva">
-<p class="rotulo">RESERVA DA DEMO · Clientes insatisfeitos: notas 1 e 2 aplicadas a partir da pergunta</p>
-<img src="img/metadados-insatisfeitos.png" alt="Resposta à pergunta sobre padrões em clientes insatisfeitos, com o filtro de notas 1 e 2 aplicado sozinho" style="width:1600px; height:900px; object-fit:contain; border-radius:12px; border:2px solid #CFC8BA;">
+<p class="rotulo">EXEMPLO NO CHAT · Clientes insatisfeitos: notas 1 e 2 aplicadas a partir da pergunta</p>
+<div class="linha" style="align-items:center; width:1600px;">
+<img src="img/metadados-insatisfeitos.png" alt="Resposta à pergunta sobre padrões em clientes insatisfeitos, com o filtro de notas 1 e 2 aplicado sozinho" style="width:1200px; height:675px; object-fit:contain; border-radius:12px; border:2px solid #CFC8BA; flex:none;">
+<div class="legenda"><h3>O que o print mostra</h3><ul class="lista"><li>Pergunta sobre padrões nas avaliações de clientes insatisfeitos.</li><li>O chat avisa que a busca considerou só notas 1 e 2, tiradas da própria pergunta. Recorte de 10.749 avaliações.</li><li>Cada padrão (entrega, falta de respeito, falta de comunicação) vem com o trecho e o link da avaliação.</li></ul></div>
+</div>
 </section>
 
 <section id="reserva-categoria" class="reserva">
-<p class="rotulo">RESERVA DA DEMO · Elogios em cama, mesa e banho, com a categoria marcada</p>
-<img src="img/metadados-categoria.png" alt="Resposta à pergunta sobre elogios por categoria, com o filtro cama, mesa e banho marcado" style="width:1600px; height:900px; object-fit:contain; border-radius:12px; border:2px solid #CFC8BA;">
+<p class="rotulo">EXEMPLO NO CHAT · Elogios em cama, mesa e banho, com a categoria marcada</p>
+<div class="linha" style="align-items:center; width:1600px;">
+<img src="img/metadados-categoria.png" alt="Resposta à pergunta sobre elogios por categoria, com o filtro cama, mesa e banho marcado" style="width:1200px; height:675px; object-fit:contain; border-radius:12px; border:2px solid #CFC8BA; flex:none;">
+<div class="legenda"><h3>O que o print mostra</h3><ul class="lista"><li>Pergunta sobre elogios por categoria, com o filtro Cama, mesa e banho marcado à mão.</li><li>O balão da pergunta mostra o filtro e o recorte cai para 4.105 avaliações.</li><li>Os elogios (qualidade, aparência, satisfação geral) vêm com nota 5 e o link de cada avaliação.</li></ul></div>
+</div>
+</section>
+
+<section id="reserva-entrega" class="reserva">
+<p class="rotulo">EXEMPLO NO CHAT · Entregas insatisfatórias, com o filtro de entrega marcado</p>
+<div class="linha" style="align-items:center; width:1600px;">
+<img src="img/reserva-entrega-insatisfatoria.png" alt="Resposta à pergunta sobre temas em entregas insatisfatórias, com o filtro Entrega: com problema marcado e recorte de 6.033 avaliações" style="width:1200px; height:675px; object-fit:contain; border-radius:12px; border:2px solid #CFC8BA; flex:none;">
+<div class="legenda"><h3>O que o print mostra</h3><ul class="lista"><li>Pergunta sobre temas em entregas insatisfatórias, com o filtro “Entrega: com problema”.</li><li>O filtro junta pedidos atrasados e não entregues. Recorte de 6.033 avaliações.</li><li>Temas: produto não recebido, atraso e falta de comunicação, cada um com o comentário que sustenta.</li></ul></div>
+</div>
 </section>
 
 <section id="reserva-pix" class="reserva">
-<p class="rotulo">RESERVA DA DEMO · “Não sei”: sem avaliação relevante sobre Pix</p>
-<img src="img/reserva-pix.png" alt="Pergunta sobre pagamento por Pix respondida como sem evidência" style="width:1600px; height:900px; object-fit:contain; border-radius:12px; border:2px solid #CFC8BA;">
+<p class="rotulo">EXEMPLO NO CHAT · “Não sei”: sem avaliação relevante sobre Pix</p>
+<div class="linha" style="align-items:center; width:1600px;">
+<img src="img/reserva-pix.png" alt="Pergunta sobre pagamento por Pix respondida como sem evidência" style="width:1200px; height:675px; object-fit:contain; border-radius:12px; border:2px solid #CFC8BA; flex:none;">
+<div class="legenda"><h3>O que o print mostra</h3><ul class="lista"><li>Pergunta sobre pagamento com Pix, assunto que não aparece nos comentários.</li><li>O chat responde “Sem evidência”: nenhum comentário ficou parecido o bastante com a pergunta.</li><li>Não inventa resposta e sugere outras perguntas que a base consegue responder.</li></ul></div>
+</div>
 </section>
 
 <section id="reserva-fora-escopo" class="reserva">
-<p class="rotulo">RESERVA DA DEMO · “Não sei”: pergunta fora do escopo da base</p>
-<img src="img/reserva-fora-escopo.png" alt="Pergunta sobre o faturamento da Olist em 2018 reconhecida como fora do escopo" style="width:1600px; height:900px; object-fit:contain; border-radius:12px; border:2px solid #CFC8BA;">
+<p class="rotulo">EXEMPLO NO CHAT · “Não sei”: pergunta fora do escopo da base</p>
+<div class="linha" style="align-items:center; width:1600px;">
+<img src="img/reserva-fora-escopo.png" alt="Pergunta sobre o faturamento da Olist em 2018 reconhecida como fora do escopo" style="width:1200px; height:675px; object-fit:contain; border-radius:12px; border:2px solid #CFC8BA; flex:none;">
+<div class="legenda"><h3>O que o print mostra</h3><ul class="lista"><li>Pergunta sobre o faturamento da Olist em 2018.</li><li>O chat responde “Fora do escopo”: só fala do que os clientes contam nas avaliações, não tem dados de vendas.</li><li>A recusa acontece antes da busca, sem gastar a chamada que gera a resposta.</li></ul></div>
+</div>
 </section>
 
 </div>
