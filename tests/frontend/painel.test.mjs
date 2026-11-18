@@ -16,6 +16,7 @@ import {
   parseSession,
   scopeLabel,
   scopeLine,
+  filteredScopeLabel,
   scopeThemes,
   sectorKpis,
   sectorList,
@@ -252,4 +253,11 @@ test("com um tema escolhido, as sugestões falam só do tema", () => {
   assert.equal(scopeSuggestionPool(DATA, SUGGESTION_AREAS, DIRECTOR, null), null);
   const sectorPool = scopeSuggestionPool(DATA, SUGGESTION_AREAS, "logistica", null);
   assert.ok(sectorPool.length >= 3);
+});
+
+test("filteredScopeLabel não chama de base inteira o total filtrado", () => {
+  assert.equal(filteredScopeLabel(null, false), "da base inteira");
+  assert.equal(filteredScopeLabel(null, true), "com os filtros da busca");
+  assert.equal(filteredScopeLabel("do setor Logística", true), "do setor Logística com os filtros da busca");
+  assert.equal(filteredScopeLabel("do setor Logística", false), "do setor Logística");
 });
