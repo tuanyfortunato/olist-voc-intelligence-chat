@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Voz do Cliente Olist</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&family=Inter:wght@400;600&display=swap">
+<style>
+html, body { margin:0; height:100%; background:#0B1220; overflow:hidden; }
+#palco { position:absolute; left:50%; top:50%; width:1920px; height:1080px; transform-origin:0 0; }
+#palco > section { position:absolute; inset:0; width:1920px; height:1080px; display:none; }
+#palco > section.ativo { display:flex; }
+#contador { position:fixed; right:16px; bottom:12px; font:14px Inter, Arial, sans-serif; color:#8A94A6; }
+:root {
+  --ink: #172033;
+  --paper: #F6F4EF;
+  --paper2: #ECE8DF;
+  --teal: #0E6E6A;
+  --teal-soft: #D6EAE7;
+  --amber: #E39B45;
+  --muted: #4A5568;
+  --muted-dark: #BFCBDA;
+  --line: #CFC8BA;
+}
+
+body { font-family: 'Inter', Arial, sans-serif; color: var(--ink); }
+
+section { padding: 128px; background: var(--paper); color: var(--ink); display: flex; flex-direction: column; gap: 40px; box-sizing: border-box; counter-increment: page; }
+section.escuro { background: var(--ink); color: var(--paper); }
+section.alt { background: var(--paper2); }
+
+h1, h2, h3 { font-family: 'Space Grotesk', Arial, sans-serif; margin: 0; }
+h1 { font-size: 112px; font-weight: 700; line-height: 1.02; }
+h2 { font-size: 64px; font-weight: 600; line-height: 1.1; }
+h3 { font-size: 40px; font-weight: 600; line-height: 1.15; }
+p { margin: 0; font-size: 30px; line-height: 1.4; }
+
+.rotulo { font-size: 24px; font-weight: 600; letter-spacing: 3px; color: var(--teal); }
+.escuro .rotulo { color: var(--amber); }
+.sub { font-size: 36px; line-height: 1.35; color: var(--muted); }
+.escuro .sub { color: var(--muted-dark); }
+.nota { font-size: 24px; color: var(--muted); line-height: 1.4; }
+.escuro .nota { color: var(--muted-dark); }
+
+.topo { display: flex; flex-direction: column; gap: 16px; }
+
+.linha { display: flex; flex-direction: row; gap: 32px; }
+.col { display: flex; flex-direction: column; gap: 24px; flex: 1; }
+
+.cartao { flex: 1; background: #FBFAF6; border: 2px solid var(--line); border-radius: 20px; padding: 40px; display: flex; flex-direction: column; gap: 16px; }
+.alt .cartao { background: var(--paper); }
+.escuro .cartao { background: #222D45; border: 2px solid #34405C; }
+.cartao .txt { font-size: 28px; color: var(--muted); line-height: 1.4; }
+.escuro .cartao .txt { color: var(--muted-dark); }
+.cartao .num { font-family: 'Space Grotesk', Arial, sans-serif; font-size: 24px; font-weight: 700; color: var(--teal); }
+.escuro .cartao .num { color: var(--amber); }
+
+.grande { font-family: 'Space Grotesk', Arial, sans-serif; font-size: 120px; font-weight: 700; line-height: 1; color: var(--teal); }
+.escuro .grande { color: var(--amber); }
+
+.frase { font-family: 'Space Grotesk', Arial, sans-serif; font-size: 56px; font-weight: 500; line-height: 1.2; }
+
+.passos { display: flex; flex-direction: row; gap: 16px; }
+.passo { flex: 1; background: #FBFAF6; border: 2px solid var(--line); border-top: 8px solid var(--teal); border-radius: 16px; padding: 32px 28px; display: flex; flex-direction: column; gap: 14px; }
+.passo .num { font-family: 'Space Grotesk', Arial, sans-serif; font-size: 24px; font-weight: 700; color: var(--teal); }
+.passo h3 { font-size: 34px; }
+.passo .txt { font-size: 24px; color: var(--muted); line-height: 1.4; }
+
+.lista { margin: 0; padding-left: 36px; font-size: 30px; line-height: 1.45; }
+.lista li { margin-bottom: 14px; }
+
+.tabela { font-size: 28px; color: var(--ink); width: 100%; }
+.escuro .tabela { color: var(--paper); }
+
+.funil { display: flex; flex-direction: row; gap: 16px; align-items: stretch; }
+.etapa { flex: 1; background: var(--teal-soft); border-radius: 16px; padding: 28px 32px; display: flex; flex-direction: column; gap: 8px; }
+.etapa .valor { font-family: 'Space Grotesk', Arial, sans-serif; font-size: 64px; font-weight: 700; color: var(--teal); line-height: 1; }
+.etapa .txt { font-size: 26px; color: var(--ink); }
+
+.destaque { background: var(--teal); color: var(--paper); border-radius: 16px; padding: 28px 36px; font-size: 30px; line-height: 1.4; }
+
+.pergunta { font-size: 28px; line-height: 1.35; padding: 18px 24px; border-left: 6px solid var(--amber); background: #222D45; border-radius: 8px; color: var(--paper); }
+
+.capa { justify-content: space-between; }
+.capa h1 { color: var(--paper); }
+
+.figura { padding: 72px 128px; flex-direction: row; gap: 56px; align-items: center; }
+.figura .col { flex: 0 0 560px; }
+
+.rodape { position: absolute; left: 128px; bottom: 56px; width: 1664px; font-size: 24px; color: var(--muted); }
+.escuro .rodape { color: var(--muted-dark); }
+
+@keyframes sobe { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+.entra { animation: sobe 500ms ease-out both; animation-delay: calc(var(--i, 0) * 120ms); }
+
+section.reserva { padding: 40px 160px; gap: 32px; justify-content: center; align-items: center; background: var(--paper2); }
+section.reserva .rotulo { width: 1600px; letter-spacing: 0; font-size: 28px; }
+section.reserva .legenda { display: flex; flex-direction: column; gap: 20px; flex: 1; }
+section.reserva .legenda h3 { font-size: 30px; color: var(--teal); }
+section.reserva .legenda .lista { font-size: 23px; line-height: 1.4; padding-left: 28px; }
+section.reserva .legenda .lista li { margin-bottom: 12px; }
+
+
+table { border-collapse: collapse; }
+th { text-align: left; font-weight: 600; }
+th, td { padding: 0.45em 0.6em; border-bottom: 1px solid #CFC8BA; vertical-align: top; }
+</style>
+</head>
+<body>
+<div id="palco">
+<section id="capa" class="escuro capa" data-transition="fade">
+<div class="topo">
+<p class="rotulo">TECH CHALLENGE · FASE 4</p>
+</div>
+<div class="topo">
+<h1>Voz do Cliente</h1>
+<p class="sub">Um RAG sobre as avaliações da Olist que responde com base no que os clientes escreveram, e diz quando não sabe.</p>
+</div>
+<div class="topo">
+<p style="font-size:30px;">Tuany Fortunato</p>
+<p class="nota">Pós-graduação AI Scientist · FIAP</p>
+</div>
+</section>
+
+<section id="dor">
+<div class="topo">
+<p class="rotulo">O PROBLEMA</p>
+<h2>A nota diz se o cliente ficou satisfeito. O comentário diz por quê.</h2>
+</div>
+<div class="linha">
+<div class="cartao entra" style="--i:0">
+<p class="grande">99.224</p>
+<p class="txt">avaliações na base da Olist, de 2016 a 2018</p>
+</div>
+<div class="cartao entra" style="--i:1">
+<p class="grande">40.977</p>
+<p class="txt">com comentário escrito. Ninguém lê tudo isso para decidir.</p>
+</div>
+</div>
+<div class="linha">
+<div class="col">
+<h3>O que o gestor quer saber</h3>
+<p class="nota" style="font-size:28px;">O que mais incomoda, o que mais agrada, e se o problema é do vendedor ou da entrega.</p>
+</div>
+<div class="col">
+<h3>Por que um LLM sozinho não resolve</h3>
+<p class="nota" style="font-size:28px;">Ele responde algo plausível e inventado. Para decidir, uma resposta convincente e sem base é pior do que nenhuma.</p>
+</div>
+</div>
+</section>
+
+<section id="solucao" class="alt">
+<div class="topo">
+<p class="rotulo">A SOLUÇÃO</p>
+<h2>Um painel e um chat com evidências</h2>
+</div>
+<div class="linha" style="align-items:flex-start;">
+<img src="img/solucao-painel-chat.png" alt="Tela do Voz do Cliente: painel da Diretoria geral com indicadores e temas, e o chat ao lado respondendo sobre os aspectos mais elogiados com trechos das avaliações" style="width:1152px; height:648px; object-fit:contain; border-radius:12px; border:2px solid #CFC8BA;">
+<div class="col" style="gap:28px;">
+<div class="entra" style="--i:0"><h3 style="font-size:34px;">Painel por setor</h3><p class="nota" style="font-size:26px;">Temas com contagem e evolução mês a mês. Mostra o quanto.</p></div>
+<div class="entra" style="--i:1"><h3 style="font-size:34px;">Chat com evidências</h3><p class="nota" style="font-size:26px;">Cada frase traz os comentários que a sustentam. Mostra o porquê.</p></div>
+<div class="entra" style="--i:2"><h3 style="font-size:34px;">Diz quando não sabe</h3><p class="nota" style="font-size:26px;">Sem evidência ou fora do escopo, avisa em vez de improvisar.</p></div>
+</div>
+</div>
+</section>
+
+<section id="base">
+<div class="topo">
+<p class="rotulo">BASE DE CONHECIMENTO</p>
+<h2>Um documento por avaliação</h2>
+</div>
+<div class="funil">
+<div class="etapa entra" style="--i:0"><p class="valor">99.224</p><p class="txt">avaliações</p></div>
+<div class="etapa entra" style="--i:1"><p class="valor">40.977</p><p class="txt">com mensagem</p></div>
+<div class="etapa entra" style="--i:2"><p class="valor">40.521</p><p class="txt">documentos finais</p></div>
+</div>
+<table class="tabela" style="font-size:24px;">
+<tr><th style="width:24%">Etapa</th><th>Decisão e motivo</th></tr>
+<tr><td>Seleção</td><td>Kaggle, cinco tabelas: avaliações, pedidos, itens, produtos e tradução das categorias</td></tr>
+<tr><td>Limpeza</td><td>Leve: mantém acentos, maiúsculas e o “não”. Sem stopwords nem stemming. Emoji vira palavra só no embedding</td></tr>
+<tr><td>Valores ausentes</td><td>Nenhum metadado vazio (“desconhecido”, “mista”), porque nulo quebra o filtro</td></tr>
+<tr><td>Documentos</td><td>Título + mensagem, sem chunking: os comentários são curtos</td></tr>
+<tr><td>Embeddings</td><td>Cohere Embed Multilingual v3, 1.024 dimensões. Titan: 11 h de indexação; Cohere: 25 min</td></tr>
+<tr><td>Indexação</td><td>pgvector no RDS, índice HNSW com cosseno</td></tr>
+</table>
+</section>
+
+<section id="pipeline" class="alt">
+<div class="topo">
+<p class="rotulo">PIPELINE RAG</p>
+<h2>Cinco etapas, da pergunta à resposta</h2>
+</div>
+<div class="passos">
+<div class="passo entra" style="--i:0">
+<p class="num">1</p>
+<h3>Transformação da pergunta</h3>
+<p class="txt">Nova Micro classifica a mensagem, reescreve o tema da busca, tira premissas e identifica as notas pedidas.</p>
+</div>
+<div class="passo entra" style="--i:1">
+<p class="num">2</p>
+<h3>Recuperação semântica</h3>
+<p class="txt">O tema vira embedding no Cohere e o pgvector devolve os 40 comentários mais próximos, já filtrados.</p>
+</div>
+<div class="passo entra" style="--i:2">
+<p class="num">3</p>
+<h3>Seleção</h3>
+<p class="txt">Corta abaixo do score 0,58 e o MMR escolhe 15, equilibrando proximidade e diversidade.</p>
+</div>
+<div class="passo entra" style="--i:3">
+<p class="num">4</p>
+<h3>Contexto</h3>
+<p class="txt">Os 15 comentários vão numerados, com id, nota, categoria e o texto original.</p>
+</div>
+<div class="passo entra" style="--i:4">
+<p class="num">5</p>
+<h3>Geração</h3>
+<p class="txt">Claude Haiku 4.5 escreve citando cada afirmação. O código confere as citações e decide a situação.</p>
+</div>
+</div>
+<p class="nota">É o mesmo fluxo da página 6 do enunciado: pergunta, processamento, embeddings, recuperação, contexto, geração e resposta fundamentada. Score mínimo e MMR são as duas etapas a mais.</p>
+</section>
+
+<section id="busca">
+<div class="topo">
+<p class="rotulo">ETAPAS 1 A 3 · ANTES DE CHAMAR O MODELO DA RESPOSTA</p>
+<h2>Buscar pelo tema, cortar, diversificar</h2>
+</div>
+<div class="linha">
+<div class="cartao entra" style="--i:0">
+<h3>Tema reescrito</h3>
+<p class="txt">Buscar pelo tema trouxe comentários mais específicos em 8 de 9 perguntas da calibração. “Padrões” e “determinadas categorias” saem do tema, porque nenhum cliente escreve assim. “Clientes insatisfeitos” vira filtro de notas 1 e 2.</p>
+</div>
+<div class="cartao entra" style="--i:1">
+<h3>Busca por sentido</h3>
+<p class="txt">“O produto não chegou” e “até hoje espero a encomenda” ficam próximos. Os filtros de nota, categoria e entrega rodam dentro do PostgreSQL, antes do corte.</p>
+</div>
+<div class="cartao entra" style="--i:2">
+<h3>Score 0,58 e MMR</h3>
+<p class="txt">Na calibração, o Pix, sem resposta na base, ficou em 0,572. Nas perguntas com resposta, o 15º comentário ficou entre 0,62 e 0,73. Sem MMR, vinham várias cópias de “produto com defeito”.</p>
+</div>
+</div>
+<p class="destaque entra" style="--i:3">Se nada passa do corte, a resposta é “sem evidência”, sem chamar o modelo. Pergunta fora do escopo para já na primeira etapa.</p>
+</section>
+
+<section id="resposta" class="alt">
+<div class="topo">
+<p class="rotulo">ETAPAS 4 E 5 · CONTEXTO E GERAÇÃO</p>
+<h2>Cada frase aponta para uma avaliação real</h2>
+</div>
+<div class="linha" style="align-items:flex-start;">
+<div class="col" style="gap:16px;">
+<p class="pergunta" style="background:#172033; font-family:'Courier New', monospace; font-size:24px;">[1] (avaliação &lt;id&gt;, nota 1, categoria cama_mesa_banho) texto original do cliente</p>
+<h3 style="font-size:34px;">Contexto</h3>
+<ul class="lista" style="font-size:24px;">
+<li>Só a pergunta limpa e os 15 comentários. O histórico da conversa não entra, e um teste confere isso.</li>
+<li>O número liga a frase ao review_id.</li>
+<li>A categoria entrou porque, sem ela, o modelo dizia que os comentários não informavam a categoria.</li>
+</ul>
+<h3 style="font-size:34px;">Geração e checagem</h3>
+<ul class="lista" style="font-size:24px;">
+<li>Claude Haiku 4.5, com regras: citar cada afirmação, não eleger “o principal”, não chamar de recorrente sem o comentário dizer que se repetiu.</li>
+<li>O código apaga citações inexistentes, suaviza “vários” e “recorrente” sem apoio e decide a situação.</li>
+</ul>
+</div>
+<img src="img/chat-evidencias.png" alt="Resposta do chat sobre problemas de entrega, com o trecho do comentário e o link da avaliação embaixo de cada frase" style="width:332px; height:640px; object-fit:contain; border-radius:12px; border:2px solid #CFC8BA;">
+</div>
+</section>
+
+<section id="metadados">
+<div class="topo">
+<p class="rotulo">DESAFIO ADICIONAL · METADADOS</p>
+<h2>O que não está no texto vira filtro</h2>
+</div>
+<table class="tabela" style="font-size:26px;">
+<tr><th style="width:26%">Metadado</th><th style="width:16%">Usa?</th><th>Como entra</th></tr>
+<tr><td>Nota</td><td>Sim</td><td>Filtro de 1 a 5, ou vindo da pergunta: “clientes insatisfeitos” vira notas 1 e 2</td></tr>
+<tr><td>Categoria</td><td>Sim</td><td>Filtro com as 73 categorias</td></tr>
+<tr><td>Entrega</td><td>Sim</td><td>No prazo, atrasada, não entregue ou “com problema”</td></tr>
+<tr><td>Pedido</td><td>Em parte</td><td>As datas viram a situação da entrega e os itens viram a categoria</td></tr>
+<tr><td>Período</td><td>No painel</td><td>Evolução mês a mês no painel. O chat busca de 2016 a 2018</td></tr>
+</table>
+<div class="linha">
+<div class="cartao entra" style="--i:0; flex-direction:row; align-items:center; gap:32px;">
+<p class="grande" style="font-size:80px; white-space:nowrap;">15/15</p>
+<p class="txt">comentários dentro do recorte com o filtro, nas três perguntas de metadados do enunciado</p>
+</div>
+<div class="cartao entra" style="--i:1; flex-direction:row; align-items:center; gap:32px;">
+<p class="grande" style="font-size:80px; white-space:nowrap; color:#4A5568;">9 · 8 · 12</p>
+<p class="txt">sem filtro: notas baixas, cama, mesa e banho, entregas atrasadas</p>
+</div>
+</div>
+</section>
+
+<section id="arquitetura" class="figura alt">
+<div class="col">
+<p class="rotulo">ARQUITETURA</p>
+<h2>Tudo na AWS, em um só endereço</h2>
+<ul class="lista" style="font-size:26px;">
+<li>CloudFront serve a página do S3 e manda /api/* ao ALB. Sem CORS.</li>
+<li>FastAPI no ECS Fargate, modelos no Bedrock, vetores no RDS com pgvector.</li>
+<li>pgvector: o filtro vira SQL e o score mínimo e o MMR ficam no código.</li>
+<li>Custo: ligado das 9h às 22h, 100 perguntas por hora por IP, teto de 1.000 por dia.</li>
+</ul>
+</div>
+<img src="../arquitetura.png" alt="Diagrama da arquitetura na AWS: gestor, CloudFront, S3, ALB, ECS Fargate, RDS com pgvector, Bedrock e a indexação pelo GitHub Actions" style="width:960px; height:936px; object-fit:contain; background:#FBFAF6; border-radius:16px;">
+</section>
+
+<section id="cicd" class="figura">
+<div class="col" style="flex:0 0 480px;">
+<p class="rotulo">CI/CD</p>
+<h2>Infra em código, sem chave no repositório</h2>
+<ul class="lista" style="font-size:26px;">
+<li>feature/* → develop → main, sempre por PR.</li>
+<li>CI com Ruff, pytest e testes da página, sem acesso à AWS.</li>
+<li>Merge na main: Terraform apply e Deploy.</li>
+<li>Acesso à AWS por OIDC.</li>
+</ul>
+</div>
+<img src="../cicd.png" alt="Diagrama de CI/CD: branches e pull requests no GitHub, CI, Terraform apply, Deploy e os sete workflows manuais na AWS" style="width:1128px; height:882px; object-fit:contain; background:#FBFAF6; border-radius:16px;">
+</section>
+
+<section id="avaliacao">
+<div class="topo">
+<p class="rotulo">AVALIAÇÃO</p>
+<h2>As notas quase empatam. As respostas, não.</h2>
+</div>
+<table class="tabela" style="font-size:28px;">
+<tr><th style="width:34%">Modelo da resposta</th><th style="width:17%; text-align:right">Faithfulness</th><th style="width:16%; text-align:right">Relevancy</th><th style="width:16%; text-align:right">Precision</th><th style="text-align:right">Situação certa</th></tr>
+<tr style="background:#D6EAE7"><td>Claude Haiku 4.5 (publicado)</td><td style="text-align:right">0,975</td><td style="text-align:right">0,560</td><td style="text-align:right">0,736</td><td style="text-align:right">10 de 11</td></tr>
+<tr><td>Nova Micro</td><td style="text-align:right">0,992</td><td style="text-align:right">0,552</td><td style="text-align:right">0,675</td><td style="text-align:right">10 de 11</td></tr>
+</table>
+<p class="nota">RAGAS em 17/11, mesmas 11 perguntas, juiz Nova Pro (modelo diferente dos que respondem).</p>
+<div class="linha">
+<div class="cartao entra" style="--i:0">
+<h3>Problemas recorrentes de prazo</h3>
+<p class="txt">O Nova afirmou a recorrência e levou relevancy 0,70. O Haiku recusou a conclusão, porque nenhum comentário conta que o problema se repetiu, e levou 0.</p>
+</div>
+<div class="cartao entra" style="--i:1">
+<h3>O que isso ensina</h3>
+<p class="txt">A métrica pune quem não responde do jeito que a pergunta pediu, e a faithfulness não pega exagero de quantidade. A troca de modelo foi decidida lendo as respostas.</p>
+</div>
+</div>
+</section>
+
+<section id="desafios" class="alt">
+<div class="topo">
+<p class="rotulo">DESAFIOS E DECISÕES</p>
+<h2>O que deu trabalho e o que ficou de fora</h2>
+</div>
+<div class="linha">
+<div class="col">
+<h3>Desafios</h3>
+<ul class="lista" style="font-size:26px;">
+<li><b>Pix:</b> o score mínimo sozinho não segurou. A segunda proteção foi a regra no prompt.</li>
+<li><b>“Recorrente”:</b> uma resposta citou comentários que diziam “foi a primeira vez”. Virou regra no prompt, checagem no código e troca para o Haiku 4.5.</li>
+<li><b>Métrica:</b> o RAGAS deu notas quase iguais a respostas de qualidade bem diferente.</li>
+</ul>
+</div>
+<div class="col">
+<h3>Decisões técnicas</h3>
+<ul class="lista" style="font-size:26px;">
+<li>pgvector em vez de Knowledge Bases</li>
+<li>Cohere em vez de Titan</li>
+<li>Uma avaliação por documento, sem chunking</li>
+<li>Score mínimo de 0,58 com MMR</li>
+<li>Análise da pergunta separada da resposta</li>
+</ul>
+</div>
+</div>
+<p class="nota">Limites: o chat descreve 15 comentários, não a base inteira, e quem mostra frequência é o painel. Não há filtro de período no chat, e a base termina em 2018.</p>
+</section>
+
+<section id="demo" class="escuro" style="padding:128px 128px 160px;">
+<div class="topo">
+<p class="rotulo">DEMONSTRAÇÃO</p>
+<h2>Agora no site</h2>
+</div>
+<div class="linha">
+<div class="col" style="gap:16px;">
+<p class="pergunta" style="font-size:26px;">Quais são os principais problemas relatados pelos clientes em suas avaliações?</p>
+<p class="pergunta" style="font-size:26px;">O que os clientes relatam sobre problemas relacionados à entrega?</p>
+<p class="pergunta" style="font-size:26px;">Quais aspectos da experiência de compra são mais elogiados pelos clientes?</p>
+<p class="pergunta" style="font-size:26px;">Quais padrões podem ser identificados nas avaliações de clientes insatisfeitos?</p>
+<p class="pergunta" style="font-size:26px;">Quais avaliações sustentam a conclusão de que existem problemas recorrentes relacionados ao prazo de entrega?</p>
+</div>
+<div class="col" style="flex:0 0 560px; gap:24px;">
+<h3>E também</h3>
+<p class="sub" style="font-size:28px;">Metadados: elogios em cama, mesa e banho, com a categoria marcada.</p>
+<p class="sub" style="font-size:28px;">“Não sei”: pagamento por Pix e o faturamento da Olist em 2018.</p>
+</div>
+</div>
+<p class="rodape">olist-chat.tuanyfortunato.com.br · github.com/tuanyfortunato/olist-voc-intelligence-chat</p>
+</section>
+
+<section id="reserva-recorrencia" class="reserva">
+<p class="rotulo">EXEMPLO NO CHAT · Problemas recorrentes de prazo: a resposta não aceita a premissa</p>
+<div class="linha" style="align-items:center; width:1600px;">
+<img src="img/reserva-recorrencia.png" alt="Resposta à pergunta sobre problemas recorrentes de prazo: diz que não há informação suficiente para sustentar a recorrência e trata os casos como isolados" style="width:1200px; height:675px; object-fit:contain; border-radius:12px; border:2px solid #CFC8BA; flex:none;">
+<div class="legenda"><h3>O que o print mostra</h3><ul class="lista"><li>Pergunta do enunciado sobre problemas recorrentes de prazo, na base inteira.</li><li>A resposta diz que não há informação suficiente: os comentários falam de atraso, mas nenhum conta que aconteceu mais de uma vez.</li><li>Embaixo, o trecho da avaliação citada e o aviso “9 avaliações citadas, de 15 recuperadas”.</li></ul></div>
+</div>
+</section>
+
+<section id="reserva-insatisfeitos" class="reserva">
+<p class="rotulo">EXEMPLO NO CHAT · Clientes insatisfeitos: notas 1 e 2 aplicadas a partir da pergunta</p>
+<div class="linha" style="align-items:center; width:1600px;">
+<img src="img/metadados-insatisfeitos.png" alt="Resposta à pergunta sobre padrões em clientes insatisfeitos, com o filtro de notas 1 e 2 aplicado sozinho" style="width:1200px; height:675px; object-fit:contain; border-radius:12px; border:2px solid #CFC8BA; flex:none;">
+<div class="legenda"><h3>O que o print mostra</h3><ul class="lista"><li>Pergunta sobre padrões nas avaliações de clientes insatisfeitos.</li><li>O chat avisa que a busca considerou só notas 1 e 2, tiradas da própria pergunta. Recorte de 10.749 avaliações.</li><li>Cada padrão (entrega, falta de respeito, falta de comunicação) vem com o trecho e o link da avaliação.</li></ul></div>
+</div>
+</section>
+
+<section id="reserva-categoria" class="reserva">
+<p class="rotulo">EXEMPLO NO CHAT · Elogios em cama, mesa e banho, com a categoria marcada</p>
+<div class="linha" style="align-items:center; width:1600px;">
+<img src="img/metadados-categoria.png" alt="Resposta à pergunta sobre elogios por categoria, com o filtro cama, mesa e banho marcado" style="width:1200px; height:675px; object-fit:contain; border-radius:12px; border:2px solid #CFC8BA; flex:none;">
+<div class="legenda"><h3>O que o print mostra</h3><ul class="lista"><li>Pergunta sobre elogios por categoria, com o filtro Cama, mesa e banho marcado à mão.</li><li>O balão da pergunta mostra o filtro e o recorte cai para 4.105 avaliações.</li><li>Os elogios (qualidade, aparência, satisfação geral) vêm com nota 5 e o link de cada avaliação.</li></ul></div>
+</div>
+</section>
+
+<section id="reserva-entrega" class="reserva">
+<p class="rotulo">EXEMPLO NO CHAT · Entregas insatisfatórias, com o filtro de entrega marcado</p>
+<div class="linha" style="align-items:center; width:1600px;">
+<img src="img/reserva-entrega-insatisfatoria.png" alt="Resposta à pergunta sobre temas em entregas insatisfatórias, com o filtro Entrega: com problema marcado e recorte de 6.033 avaliações" style="width:1200px; height:675px; object-fit:contain; border-radius:12px; border:2px solid #CFC8BA; flex:none;">
+<div class="legenda"><h3>O que o print mostra</h3><ul class="lista"><li>Pergunta sobre temas em entregas insatisfatórias, com o filtro “Entrega: com problema”.</li><li>O filtro junta pedidos atrasados e não entregues. Recorte de 6.033 avaliações.</li><li>Temas: produto não recebido, atraso e falta de comunicação, cada um com o comentário que sustenta.</li></ul></div>
+</div>
+</section>
+
+<section id="reserva-pix" class="reserva">
+<p class="rotulo">EXEMPLO NO CHAT · “Não sei”: sem avaliação relevante sobre Pix</p>
+<div class="linha" style="align-items:center; width:1600px;">
+<img src="img/reserva-pix.png" alt="Pergunta sobre pagamento por Pix respondida como sem evidência" style="width:1200px; height:675px; object-fit:contain; border-radius:12px; border:2px solid #CFC8BA; flex:none;">
+<div class="legenda"><h3>O que o print mostra</h3><ul class="lista"><li>Pergunta sobre pagamento com Pix, assunto que não aparece nos comentários.</li><li>O chat responde “Sem evidência”: nenhum comentário ficou parecido o bastante com a pergunta.</li><li>Não inventa resposta e sugere outras perguntas que a base consegue responder.</li></ul></div>
+</div>
+</section>
+
+<section id="reserva-fora-escopo" class="reserva">
+<p class="rotulo">EXEMPLO NO CHAT · “Não sei”: pergunta fora do escopo da base</p>
+<div class="linha" style="align-items:center; width:1600px;">
+<img src="img/reserva-fora-escopo.png" alt="Pergunta sobre o faturamento da Olist em 2018 reconhecida como fora do escopo" style="width:1200px; height:675px; object-fit:contain; border-radius:12px; border:2px solid #CFC8BA; flex:none;">
+<div class="legenda"><h3>O que o print mostra</h3><ul class="lista"><li>Pergunta sobre o faturamento da Olist em 2018.</li><li>O chat responde “Fora do escopo”: só fala do que os clientes contam nas avaliações, não tem dados de vendas.</li><li>A recusa acontece antes da busca, sem gastar a chamada que gera a resposta.</li></ul></div>
+</div>
+</section>
+
+</div>
+<div id="contador"></div>
+<script>
+const slides=[...document.querySelectorAll('#palco > section')];
+const palco=document.getElementById('palco');
+const contador=document.getElementById('contador');
+let atual=Math.max(0,Math.min(slides.length-1,(parseInt(location.hash.slice(1))||1)-1));
+function ajustar(){const e=Math.min(innerWidth/1920,innerHeight/1080);palco.style.transform=`scale(${e}) translate(-50%,-50%)`;}
+function mostrar(i){atual=Math.max(0,Math.min(slides.length-1,i));slides.forEach((s,k)=>s.classList.toggle('ativo',k===atual));contador.textContent=(atual+1)+' / '+slides.length;history.replaceState(null,'','#'+(atual+1));}
+addEventListener('keydown',e=>{if(['ArrowRight','PageDown',' ','Enter'].includes(e.key))mostrar(atual+1);if(['ArrowLeft','PageUp','Backspace'].includes(e.key))mostrar(atual-1);if(e.key==='Home')mostrar(0);if(e.key==='End')mostrar(slides.length-1);if(e.key==='f')document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();});
+addEventListener('click',e=>mostrar(atual+(e.clientX<innerWidth/3?-1:1)));
+addEventListener('resize',ajustar);ajustar();mostrar(atual);
+</script>
+</body>
+</html>
