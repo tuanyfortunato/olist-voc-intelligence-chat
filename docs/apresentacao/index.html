@@ -424,14 +424,18 @@ th, td { padding: 0.45em 0.6em; border-bottom: 1px solid #CFC8BA; vertical-align
 <tr style="background:#F6E7C8; font-weight:600;"><td>Claude Haiku 4.5 (escolhido)</td><td style="text-align:right">0,975</td><td style="text-align:right">0,560</td><td style="text-align:right">0,736</td><td style="text-align:right">10 de 11</td></tr>
 <tr><td>Nova Micro</td><td style="text-align:right">0,992</td><td style="text-align:right">0,552</td><td style="text-align:right">0,675</td><td style="text-align:right">10 de 11</td></tr>
 </table>
-<div class="linha">
-<div class="cartao entra" style="--i:0">
-<h3>O caso que decidiu</h3>
-<p class="txt">Na pergunta sobre atrasos recorrentes, o Nova disse que eram recorrentes e ganhou nota. O Haiku recusou, porque nenhum comentário dizia isso, e ficou com zero.</p>
+<div class="linha" style="align-items:flex-start; gap:40px;">
+<p class="nota" style="font-size:22px; flex:1;"><b>Por que “Responde à pergunta” é baixa:</b> essa nota cai quando a resposta diz o que não sabe. O chat faz isso de propósito, para não inventar.</p>
+<p class="nota" style="font-size:22px; flex:1;"><b>De onde vem o “10 de 11”:</b> quando o certo é recusar, o RAGAS não avalia. O código confere se o chat respondeu, recusou ou avisou como devia.</p>
 </div>
-<div class="cartao entra" style="--i:1">
-<h3>Por que o Haiku</h3>
-<p class="txt">Com notas quase iguais, decidi lendo as respostas. O Haiku não afirma o que os comentários não dizem, mesmo quando isso custa nota.</p>
+<div class="linha">
+<div class="cartao entra" style="--i:0; padding:24px 32px;">
+<h3 style="font-size:30px;">O caso que decidiu</h3>
+<p class="txt" style="font-size:24px;">Na pergunta sobre atrasos recorrentes, o Nova disse que eram recorrentes e ganhou nota. O Haiku recusou, porque nenhum comentário dizia isso, e ficou com zero.</p>
+</div>
+<div class="cartao entra" style="--i:1; padding:24px 32px;">
+<h3 style="font-size:30px;">Por que o Haiku</h3>
+<p class="txt" style="font-size:24px;">Com notas quase iguais, decidi lendo as respostas. O Haiku não afirma o que os comentários não dizem, mesmo quando isso custa nota.</p>
 </div>
 </div>
 </section>
