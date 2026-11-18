@@ -166,8 +166,8 @@ th, td { padding: 0.45em 0.6em; border-bottom: 1px solid #CFC8BA; vertical-align
 
 <section id="base">
 <div class="topo">
-<p class="rotulo">BASE DE CONHECIMENTO</p>
-<h2>Cada avaliação vira um documento</h2>
+<p class="rotulo">BASE DE CONHECIMENTO · O QUE FOI FEITO ANTES DE TUDO</p>
+<h2>Cada comentário vira um documento</h2>
 </div>
 <div class="funil">
 <div class="etapa entra" style="--i:0"><p class="valor">99.224</p><p class="txt">avaliações</p></div>
@@ -188,8 +188,8 @@ th, td { padding: 0.45em 0.6em; border-bottom: 1px solid #CFC8BA; vertical-align
 
 <section id="pipeline" class="alt">
 <div class="topo">
-<p class="rotulo">PIPELINE RAG</p>
-<h2>Cinco etapas, da pergunta à resposta</h2>
+<p class="rotulo">PIPELINE RAG · O QUE ACONTECE QUANDO O GESTOR PERGUNTA</p>
+<h2>Cinco etapas entre a pergunta e a resposta</h2>
 </div>
 <div class="passos">
 <div class="passo entra" style="--i:0">
@@ -229,8 +229,8 @@ th, td { padding: 0.45em 0.6em; border-bottom: 1px solid #CFC8BA; vertical-align
 
 <section id="busca">
 <div class="topo">
-<p class="rotulo">ETAPAS 1 A 3 · ANTES DE CHAMAR O MODELO DA RESPOSTA</p>
-<h2>Buscar pelo assunto, cortar o que é fraco, variar</h2>
+<p class="rotulo">ETAPAS 1 A 3 · ENTENDER, BUSCAR E SELECIONAR</p>
+<h2>Achar os comentários certos e descartar os fracos</h2>
 </div>
 <div class="linha">
 <div class="cartao entra" style="--i:0">
@@ -255,25 +255,26 @@ th, td { padding: 0.45em 0.6em; border-bottom: 1px solid #CFC8BA; vertical-align
 
 <section id="resposta" class="alt">
 <div class="topo">
-<p class="rotulo">ETAPAS 4 E 5 · CONTEXTO E GERAÇÃO</p>
-<h2>Cada frase aponta para uma avaliação real</h2>
+<p class="rotulo">ETAPAS 4 E 5 · MONTAR O CONTEXTO E RESPONDER</p>
+<h2>O modelo responde citando comentários reais</h2>
 </div>
 <div class="linha" style="align-items:flex-start;">
 <div class="col" style="gap:16px;">
+<p class="sub" style="font-size:28px;">Com os 15 comentários escolhidos, o sistema monta o que o modelo vai ler, o modelo escreve a resposta e o código confere cada citação.</p>
 <p class="pergunta" style="background:#172033; font-family:'Courier New', monospace; font-size:24px;">[1] (avaliação &lt;id&gt;, nota 1, categoria cama_mesa_banho) texto original do cliente</p>
 <p class="nota" style="font-size:22px;">É assim que cada comentário chega ao modelo. O número [1] é o que a resposta cita.</p>
 <h3 style="font-size:34px;">Contexto</h3>
-<ul class="lista" style="font-size:26px;">
+<ul class="lista" style="font-size:24px;">
 <li>O modelo recebe só a pergunta e os 15 comentários.</li>
 <li>Cada comentário tem um número, e cada frase da resposta aponta para ele.</li>
 </ul>
 <h3 style="font-size:34px;">Geração</h3>
-<ul class="lista" style="font-size:26px;">
+<ul class="lista" style="font-size:24px;">
 <li>O Haiku 4.5 cita um comentário em cada afirmação.</li>
 <li>Ele só chama um problema de recorrente se o comentário disser isso.</li>
 </ul>
 <h3 style="font-size:34px;">Checagem no código</h3>
-<ul class="lista" style="font-size:26px;">
+<ul class="lista" style="font-size:24px;">
 <li>O código apaga citações que não existem e suaviza exageros.</li>
 <li>Ele também classifica a resposta: respondida, evidência fraca ou sem evidência. A página mostra um aviso para cada caso.</li>
 </ul>
@@ -284,10 +285,11 @@ th, td { padding: 0.45em 0.6em; border-bottom: 1px solid #CFC8BA; vertical-align
 
 <section id="metadados">
 <div class="topo">
-<p class="rotulo">DESAFIO ADICIONAL · METADADOS</p>
-<h2>O que não está no texto vira filtro</h2>
+<p class="rotulo">DESAFIO ADICIONAL · METADADOS DA AVALIAÇÃO</p>
+<h2>Nota, categoria e entrega viram filtros da busca</h2>
 </div>
-<table class="tabela" style="font-size:26px;">
+<p class="sub" style="font-size:28px;">Além do texto, cada avaliação tem informações como a nota e a categoria. Aqui mostro quais delas uso, como entram na busca e o que isso melhora.</p>
+<table class="tabela" style="font-size:24px;">
 <tr><th style="width:26%">Metadado</th><th style="width:16%">Usa?</th><th>Como entra</th></tr>
 <tr><td>Nota</td><td>Sim</td><td>Filtro de 1 a 5. “Clientes insatisfeitos” vira notas 1 e 2</td></tr>
 <tr><td>Categoria</td><td>Sim</td><td>Filtro com as 73 categorias de produto</td></tr>
@@ -298,7 +300,7 @@ th, td { padding: 0.45em 0.6em; border-bottom: 1px solid #CFC8BA; vertical-align
 <p class="nota" style="font-size:24px;"><b>Por que ajuda:</b> “nota baixa” e “cama, mesa e banho” não aparecem no texto do comentário. Sem filtro, a busca acha comentários parecidos, mas de outras notas e categorias.</p>
 <div class="linha">
 <div class="cartao entra" style="--i:0; flex-direction:row; align-items:center; gap:32px;">
-<p class="grande" style="font-size:80px; white-space:nowrap;">15/15</p>
+<p class="grande" style="font-size:64px; white-space:nowrap;">15/15</p>
 <p class="txt">Nas três perguntas de metadados do enunciado, com filtro os 15 comentários estão no recorte pedido. Sem filtro, só 9, 8 e 12 de 15.</p>
 </div>
 </div>
@@ -306,13 +308,16 @@ th, td { padding: 0.45em 0.6em; border-bottom: 1px solid #CFC8BA; vertical-align
 
 <section id="arquitetura" class="figura alt">
 <div class="col">
-<p class="rotulo">ARQUITETURA</p>
-<h2>Tudo na AWS, em um só endereço</h2>
-<ul class="lista" style="font-size:26px;">
-<li>O gestor abre o site. O CloudFront entrega a página, guardada no S3, e manda as perguntas para a API.</li>
-<li>A API roda no ECS e faz o pipeline: chama os modelos no Bedrock e busca os vetores no RDS.</li>
-<li>A base é carregada pelo GitHub Actions: baixa do Kaggle, gera os embeddings e grava no banco.</li>
-<li>Para controlar o custo, a API e o banco ficam ligados das 9h às 22h, com limite de perguntas.</li>
+<p class="rotulo">ARQUITETURA · ONDE TUDO RODA</p>
+<h2>Tudo roda na nuvem da AWS</h2>
+<p class="sub" style="font-size:26px;">O caminho de uma pergunta, do navegador do gestor até a resposta:</p>
+<ul class="lista" style="font-size:24px;">
+<li><b>Site:</b> o gestor abre a página, que fica guardada na AWS.</li>
+<li><b>API:</b> a pergunta vai para o programa que faz as cinco etapas.</li>
+<li><b>Banco de dados:</b> guarda os 40 mil comentários e acha os mais parecidos.</li>
+<li><b>Bedrock:</b> é onde ficam os modelos de IA que entendem e respondem.</li>
+<li><b>Antes de tudo:</b> o GitHub Actions carregou a base do Kaggle no banco.</li>
+<li><b>Custo:</b> fica ligado só das 9h às 22h, com limite de perguntas.</li>
 </ul>
 </div>
 <img src="../arquitetura.png" alt="Diagrama da arquitetura na AWS: gestor, CloudFront, S3, ALB, ECS Fargate, RDS com pgvector, Bedrock e a indexação pelo GitHub Actions" style="width:960px; height:936px; object-fit:contain; background:#FBFAF6; border-radius:16px;">
@@ -320,13 +325,15 @@ th, td { padding: 0.45em 0.6em; border-bottom: 1px solid #CFC8BA; vertical-align
 
 <section id="cicd" class="figura">
 <div class="col" style="flex:0 0 480px;">
-<p class="rotulo">CI/CD</p>
-<h2>Infra em código, sem chave no repositório</h2>
-<ul class="lista" style="font-size:26px;">
-<li>Todo código passa por pull request: feature, develop e main.</li>
-<li>O CI roda os testes a cada mudança, sem acessar a AWS.</li>
-<li>Terraform: a infraestrutura é escrita em arquivos, não criada à mão. O merge na main aplica e publica o site.</li>
-<li>OIDC: a cada execução, o GitHub pede uma permissão temporária à AWS. Não há senha guardada.</li>
+<p class="rotulo">CI/CD · DO CÓDIGO AO SITE</p>
+<h2>O código vai para o site sozinho</h2>
+<p class="sub" style="font-size:26px;">O caminho de uma mudança, do código até o site no ar:</p>
+<ul class="lista" style="font-size:24px;">
+<li><b>Mudança:</b> cada alteração é feita numa branch separada.</li>
+<li><b>Revisão:</b> entra por pull request, primeiro na develop e depois na main.</li>
+<li><b>Testes:</b> a cada mudança, os testes rodam sozinhos, sem acessar a AWS.</li>
+<li><b>Publicação:</b> quando entra na main, a infraestrutura é atualizada e o site é publicado sozinho.</li>
+<li><b>Segurança:</b> o GitHub entra na AWS com uma permissão temporária, sem senha guardada.</li>
 </ul>
 </div>
 <img src="../cicd.png" alt="Diagrama de CI/CD: branches e pull requests no GitHub, CI, Terraform apply, Deploy e os sete workflows manuais na AWS" style="width:1128px; height:882px; object-fit:contain; background:#FBFAF6; border-radius:16px;">
@@ -334,24 +341,23 @@ th, td { padding: 0.45em 0.6em; border-bottom: 1px solid #CFC8BA; vertical-align
 
 <section id="avaliacao">
 <div class="topo">
-<p class="rotulo">AVALIAÇÃO</p>
-<h2>As notas quase empatam. As respostas, não.</h2>
+<p class="rotulo">AVALIAÇÃO · DOIS MODELOS COMPARADOS COM RAGAS</p>
+<h2>Notas quase iguais, respostas bem diferentes</h2>
 </div>
-<table class="tabela" style="font-size:28px;">
-<tr><th style="width:34%">Modelo da resposta</th><th style="width:17%; text-align:right">Faithfulness</th><th style="width:16%; text-align:right">Relevancy</th><th style="width:16%; text-align:right">Precision</th><th style="text-align:right">Situação certa</th></tr>
-<tr style="background:#D6EAE7"><td>Claude Haiku 4.5 (publicado)</td><td style="text-align:right">0,975</td><td style="text-align:right">0,560</td><td style="text-align:right">0,736</td><td style="text-align:right">10 de 11</td></tr>
+<p class="sub" style="font-size:26px;">Para escolher o modelo que escreve a resposta, testei dois com as mesmas 11 perguntas. Um terceiro modelo, o Nova Pro, deu as notas de 0 a 1.</p>
+<table class="tabela" style="font-size:26px;">
+<tr><th style="width:28%">Modelo da resposta</th><th style="width:18%; text-align:right">Fiel aos comentários<br><span style="font-size:20px; font-weight:400; color:#4A5568;">faithfulness</span></th><th style="width:18%; text-align:right">Responde à pergunta<br><span style="font-size:20px; font-weight:400; color:#4A5568;">relevancy</span></th><th style="width:18%; text-align:right">Busca útil<br><span style="font-size:20px; font-weight:400; color:#4A5568;">precision</span></th><th style="text-align:right">Situação certa<br><span style="font-size:20px; font-weight:400; color:#4A5568;">avisou quando devia</span></th></tr>
+<tr style="background:#D6EAE7"><td>Claude Haiku 4.5 (escolhido)</td><td style="text-align:right">0,975</td><td style="text-align:right">0,560</td><td style="text-align:right">0,736</td><td style="text-align:right">10 de 11</td></tr>
 <tr><td>Nova Micro</td><td style="text-align:right">0,992</td><td style="text-align:right">0,552</td><td style="text-align:right">0,675</td><td style="text-align:right">10 de 11</td></tr>
 </table>
-<p class="nota">Avaliação com RAGAS: as mesmas 11 perguntas, julgadas pelo Nova Pro, um modelo diferente dos que respondem.</p>
-<p class="nota" style="font-size:22px;"><b>Faithfulness:</b> cada afirmação está nos comentários? · <b>Relevancy:</b> a resposta trata da pergunta feita? · <b>Precision:</b> os comentários úteis vêm primeiro na busca? · <b>Situação certa:</b> respondeu, recusou ou avisou quando devia?</p>
 <div class="linha">
 <div class="cartao entra" style="--i:0">
-<h3>O caso</h3>
+<h3>O caso que decidiu</h3>
 <p class="txt">Na pergunta sobre atrasos recorrentes, o Nova disse que eram recorrentes e ganhou nota. O Haiku recusou, porque nenhum comentário dizia isso, e ficou com zero.</p>
 </div>
 <div class="cartao entra" style="--i:1">
-<h3>A lição</h3>
-<p class="txt">A métrica premia quem responde do jeito que a pergunta pede. Por isso escolhi o modelo lendo as respostas.</p>
+<h3>Por que o Haiku</h3>
+<p class="txt">Com notas quase iguais, decidi lendo as respostas. O Haiku não afirma o que os comentários não dizem, mesmo quando isso custa nota.</p>
 </div>
 </div>
 </section>
@@ -359,36 +365,45 @@ th, td { padding: 0.45em 0.6em; border-bottom: 1px solid #CFC8BA; vertical-align
 <section id="desafios" class="alt">
 <div class="topo">
 <p class="rotulo">DESAFIOS E DECISÕES</p>
-<h2>O que deu trabalho e o que ficou de fora</h2>
+<h2>O que deu trabalho, o que decidi e o que ficou de fora</h2>
 </div>
-<div class="linha">
+<p class="sub" style="font-size:26px;">Os problemas que encontrei no caminho, as escolhas técnicas mais importantes e o que a solução ainda não faz.</p>
+<div class="linha" style="align-items:flex-start;">
 <div class="col">
-<h3>Desafios</h3>
-<ul class="lista" style="font-size:26px;">
-<li><b>Pix:</b> o corte por semelhança não bastou. Uma regra no prompt completou a proteção.</li>
-<li><b>“Recorrente”:</b> uma resposta chamou de recorrente um comentário que dizia “foi a primeira vez”. Virou regra no prompt e checagem no código.</li>
-<li><b>Métrica:</b> o RAGAS deu notas quase iguais a respostas de qualidade bem diferente.</li>
+<h3>O que deu trabalho</h3>
+<ul class="lista" style="font-size:24px;">
+<li><b>Pix:</b> o corte sozinho não bastou para uma pergunta que a base não cobre. Uma regra no prompt faz o chat dizer que não sabe.</li>
+<li><b>“Recorrente”:</b> uma resposta chamou de recorrente um problema que o cliente dizia ser “a primeira vez”. Virou regra no prompt e checagem no código.</li>
+<li><b>Métrica:</b> o RAGAS deu notas quase iguais para respostas de qualidade bem diferente. Precisei ler as respostas.</li>
 </ul>
 </div>
 <div class="col">
-<h3>Decisões técnicas</h3>
-<ul class="lista" style="font-size:26px;">
-<li>pgvector em vez do Knowledge Bases, para controlar a busca</li>
-<li>Cohere em vez do Titan, pelo tempo de indexação</li>
+<h3>O que decidi</h3>
+<ul class="lista" style="font-size:24px;">
+<li>Banco próprio com pgvector, em vez do Knowledge Bases, para controlar a busca</li>
+<li>Cohere em vez do Titan: 25 minutos de indexação, e não 11 horas</li>
 <li>Um documento por avaliação, sem dividir o texto</li>
 <li>Corte de 0,58 e comentários variados, para não responder sem base</li>
 <li>Um modelo barato entende a pergunta, outro mais forte responde</li>
 </ul>
 </div>
+<div class="col">
+<h3>O que ficou de fora</h3>
+<ul class="lista" style="font-size:24px;">
+<li>O chat descreve 15 comentários, não a base inteira. Quem mostra a frequência é o painel.</li>
+<li>O chat não filtra por período.</li>
+<li>A base termina em 2018, então assuntos mais novos, como o Pix, não aparecem.</li>
+</ul>
 </div>
-<p class="nota">Limites: o chat descreve 15 comentários, não a base inteira. Quem mostra a frequência é o painel. O chat não filtra por período, e a base termina em 2018.</p>
+</div>
 </section>
 
 <section id="demo" class="escuro" style="padding:128px 128px 160px;">
 <div class="topo">
 <p class="rotulo">DEMONSTRAÇÃO</p>
-<h2>Agora no site</h2>
+<h2>Agora, o chat funcionando no site</h2>
 </div>
+<p class="sub" style="font-size:26px;">Vou fazer no site as cinco perguntas do enunciado e mostrar, em cada resposta, os comentários que a sustentam.</p>
 <div class="linha">
 <div class="col" style="gap:16px;">
 <p class="pergunta" style="font-size:26px;">Quais são os principais problemas relatados pelos clientes em suas avaliações?</p>
@@ -399,58 +414,79 @@ th, td { padding: 0.45em 0.6em; border-bottom: 1px solid #CFC8BA; vertical-align
 </div>
 <div class="col" style="flex:0 0 560px; gap:24px;">
 <h3>E também</h3>
-<p class="sub" style="font-size:28px;">Metadados: elogios em cama, mesa e banho, com a categoria marcada.</p>
-<p class="sub" style="font-size:28px;">“Não sei”: pagamento por Pix e o faturamento da Olist em 2018.</p>
+<p class="sub" style="font-size:26px;"><b>Um filtro:</b> elogios em cama, mesa e banho, com a categoria marcada.</p>
+<p class="sub" style="font-size:26px;"><b>Quando o chat não sabe:</b> pagamento por Pix, que a base não cobre, e o faturamento da Olist em 2018, que avaliações não respondem.</p>
 </div>
 </div>
 <p class="rodape">olist-chat.tuanyfortunato.com.br · github.com/tuanyfortunato/olist-voc-intelligence-chat</p>
 </section>
 
+<section id="fim" class="escuro capa" data-transition="fade">
+<div class="topo">
+<p class="rotulo">FIM</p>
+</div>
+<div class="topo">
+<h1>Agradeço a atenção</h1>
+<p class="sub">Voz do Cliente: um chat que responde com base no que os clientes da Olist escreveram, e avisa quando não sabe.</p>
+</div>
+<div class="topo">
+<p style="font-size:30px;">Tuany Fortunato</p>
+<p class="nota">Pós-graduação AI Scientist · FIAP</p>
+<p class="nota">olist-chat.tuanyfortunato.com.br · github.com/tuanyfortunato/olist-voc-intelligence-chat</p>
+</div>
+</section>
+
 <section id="reserva-recorrencia" class="reserva">
-<p class="rotulo">EXEMPLO NO CHAT · Problemas recorrentes de prazo: a resposta não aceita a premissa</p>
+<p class="rotulo">EXEMPLO NO CHAT · Problemas recorrentes de prazo</p>
+<p class="sub" style="width:1600px; font-size:28px;">Este exemplo mostra que o chat não aceita uma conclusão só porque a pergunta já a traz pronta.</p>
 <div class="linha" style="align-items:center; width:1600px;">
 <img src="img/reserva-recorrencia.png" alt="Resposta à pergunta sobre problemas recorrentes de prazo: diz que não há informação suficiente para sustentar a recorrência e trata os casos como isolados" style="width:1200px; height:675px; object-fit:contain; border-radius:12px; border:2px solid #CFC8BA; flex:none;">
-<div class="legenda"><h3>O que o print mostra</h3><ul class="lista"><li>Pergunta do enunciado sobre problemas recorrentes de prazo, na base inteira.</li><li>A resposta diz que não há informação suficiente: os comentários falam de atraso, mas nenhum conta que aconteceu mais de uma vez.</li><li>Embaixo, o trecho da avaliação citada e o aviso “9 avaliações citadas, de 15 recuperadas”.</li></ul></div>
+<div class="legenda"><h3>O que o print mostra</h3><ul class="lista"><li>A pergunta pede provas de que os atrasos se repetem.</li><li>Os comentários falam de atraso, mas nenhum diz que aconteceu mais de uma vez.</li><li>Por isso a resposta diz que não há informação suficiente e trata os casos como isolados.</li><li>No fim, o aviso: 9 avaliações citadas, de 15 recuperadas.</li></ul></div>
 </div>
 </section>
 
 <section id="reserva-insatisfeitos" class="reserva">
-<p class="rotulo">EXEMPLO NO CHAT · Clientes insatisfeitos: notas 1 e 2 aplicadas a partir da pergunta</p>
+<p class="rotulo">EXEMPLO NO CHAT · Clientes insatisfeitos</p>
+<p class="sub" style="width:1600px; font-size:28px;">Este exemplo mostra o chat transformando uma palavra da pergunta em filtro, sem o gestor marcar nada.</p>
 <div class="linha" style="align-items:center; width:1600px;">
 <img src="img/metadados-insatisfeitos.png" alt="Resposta à pergunta sobre padrões em clientes insatisfeitos, com o filtro de notas 1 e 2 aplicado sozinho" style="width:1200px; height:675px; object-fit:contain; border-radius:12px; border:2px solid #CFC8BA; flex:none;">
-<div class="legenda"><h3>O que o print mostra</h3><ul class="lista"><li>Pergunta sobre padrões nas avaliações de clientes insatisfeitos.</li><li>O chat avisa que a busca considerou só notas 1 e 2, tiradas da própria pergunta. Recorte de 10.749 avaliações.</li><li>Cada padrão (entrega, falta de respeito, falta de comunicação) vem com o trecho e o link da avaliação.</li></ul></div>
+<div class="legenda"><h3>O que o print mostra</h3><ul class="lista"><li>A pergunta fala de clientes insatisfeitos.</li><li>O chat entende isso como notas 1 e 2 e avisa que buscou só nelas: 10.749 avaliações.</li><li>Cada padrão encontrado (entrega, falta de respeito, falta de comunicação) vem com o trecho e o link da avaliação.</li></ul></div>
 </div>
 </section>
 
 <section id="reserva-categoria" class="reserva">
-<p class="rotulo">EXEMPLO NO CHAT · Elogios em cama, mesa e banho, com a categoria marcada</p>
+<p class="rotulo">EXEMPLO NO CHAT · Elogios em cama, mesa e banho</p>
+<p class="sub" style="width:1600px; font-size:28px;">Este exemplo mostra o filtro de categoria, marcado pelo gestor antes de perguntar.</p>
 <div class="linha" style="align-items:center; width:1600px;">
 <img src="img/metadados-categoria.png" alt="Resposta à pergunta sobre elogios por categoria, com o filtro cama, mesa e banho marcado" style="width:1200px; height:675px; object-fit:contain; border-radius:12px; border:2px solid #CFC8BA; flex:none;">
-<div class="legenda"><h3>O que o print mostra</h3><ul class="lista"><li>Pergunta sobre elogios por categoria, com o filtro Cama, mesa e banho marcado à mão.</li><li>O balão da pergunta mostra o filtro e o recorte cai para 4.105 avaliações.</li><li>Os elogios (qualidade, aparência, satisfação geral) vêm com nota 5 e o link de cada avaliação.</li></ul></div>
+<div class="legenda"><h3>O que o print mostra</h3><ul class="lista"><li>O gestor marcou a categoria Cama, mesa e banho.</li><li>A busca fica só nessa categoria: 4.105 avaliações.</li><li>Os elogios (qualidade, aparência, satisfação geral) vêm de avaliações com nota 5, cada uma com o link.</li></ul></div>
 </div>
 </section>
 
 <section id="reserva-entrega" class="reserva">
-<p class="rotulo">EXEMPLO NO CHAT · Entregas insatisfatórias, com o filtro de entrega marcado</p>
+<p class="rotulo">EXEMPLO NO CHAT · Entregas com problema</p>
+<p class="sub" style="width:1600px; font-size:28px;">Este exemplo mostra o filtro de entrega, que junta pedidos atrasados e não entregues.</p>
 <div class="linha" style="align-items:center; width:1600px;">
 <img src="img/reserva-entrega-insatisfatoria.png" alt="Resposta à pergunta sobre temas em entregas insatisfatórias, com o filtro Entrega: com problema marcado e recorte de 6.033 avaliações" style="width:1200px; height:675px; object-fit:contain; border-radius:12px; border:2px solid #CFC8BA; flex:none;">
-<div class="legenda"><h3>O que o print mostra</h3><ul class="lista"><li>Pergunta sobre temas em entregas insatisfatórias, com o filtro “Entrega: com problema”.</li><li>O filtro junta pedidos atrasados e não entregues. Recorte de 6.033 avaliações.</li><li>Temas: produto não recebido, atraso e falta de comunicação, cada um com o comentário que sustenta.</li></ul></div>
+<div class="legenda"><h3>O que o print mostra</h3><ul class="lista"><li>O gestor marcou “Entrega: com problema”.</li><li>A busca fica em 6.033 avaliações de pedidos atrasados ou não entregues.</li><li>Os temas (produto não recebido, atraso, falta de comunicação) vêm com o comentário que sustenta cada um.</li></ul></div>
 </div>
 </section>
 
 <section id="reserva-pix" class="reserva">
-<p class="rotulo">EXEMPLO NO CHAT · “Não sei”: sem avaliação relevante sobre Pix</p>
+<p class="rotulo">EXEMPLO NO CHAT · Quando a base não tem a resposta</p>
+<p class="sub" style="width:1600px; font-size:28px;">Este exemplo mostra o chat dizendo que não sabe, em vez de inventar.</p>
 <div class="linha" style="align-items:center; width:1600px;">
 <img src="img/reserva-pix.png" alt="Pergunta sobre pagamento por Pix respondida como sem evidência" style="width:1200px; height:675px; object-fit:contain; border-radius:12px; border:2px solid #CFC8BA; flex:none;">
-<div class="legenda"><h3>O que o print mostra</h3><ul class="lista"><li>Pergunta sobre pagamento com Pix, assunto que não aparece nos comentários.</li><li>O chat responde “Sem evidência”: nenhum comentário ficou parecido o bastante com a pergunta.</li><li>Não inventa resposta e sugere outras perguntas que a base consegue responder.</li></ul></div>
+<div class="legenda"><h3>O que o print mostra</h3><ul class="lista"><li>A pergunta é sobre pagamento com Pix.</li><li>Nenhum comentário passou do corte de semelhança, porque o Pix não existia na época da base.</li><li>O chat responde “Sem evidência” e sugere perguntas que a base consegue responder.</li></ul></div>
 </div>
 </section>
 
 <section id="reserva-fora-escopo" class="reserva">
-<p class="rotulo">EXEMPLO NO CHAT · “Não sei”: pergunta fora do escopo da base</p>
+<p class="rotulo">EXEMPLO NO CHAT · Quando a pergunta foge do assunto</p>
+<p class="sub" style="width:1600px; font-size:28px;">Este exemplo mostra o chat reconhecendo uma pergunta que avaliações de clientes não respondem.</p>
 <div class="linha" style="align-items:center; width:1600px;">
 <img src="img/reserva-fora-escopo.png" alt="Pergunta sobre o faturamento da Olist em 2018 reconhecida como fora do escopo" style="width:1200px; height:675px; object-fit:contain; border-radius:12px; border:2px solid #CFC8BA; flex:none;">
-<div class="legenda"><h3>O que o print mostra</h3><ul class="lista"><li>Pergunta sobre o faturamento da Olist em 2018.</li><li>O chat responde “Fora do escopo”: só fala do que os clientes contam nas avaliações, não tem dados de vendas.</li><li>A recusa acontece antes da busca, sem gastar a chamada que gera a resposta.</li></ul></div>
+<div class="legenda"><h3>O que o print mostra</h3><ul class="lista"><li>A pergunta é sobre o faturamento da Olist em 2018.</li><li>O chat responde “Fora do escopo”: ele só fala do que os clientes contam, e não tem dados de vendas.</li><li>A recusa acontece na primeira etapa, antes da busca e sem chamar o modelo da resposta.</li></ul></div>
 </div>
 </section>
 
